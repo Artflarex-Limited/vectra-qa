@@ -13,9 +13,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Configuration
-VAULT_PATH = Path("/home/bugra/Documents/projects/vectra-qa/obsidian_vault")
-AGENTS_DIR = Path("/home/bugra/Documents/projects/vectra-qa/agents")
+# Configuration - use environment variable or default
+VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", "/app/obsidian_vault"))
+AGENTS_DIR = Path(os.getenv("AGENTS_DIR", "/app/agents"))
 
 
 class ObsidianVault:

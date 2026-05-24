@@ -8,7 +8,7 @@ import sys
 import asyncio
 import argparse
 from typing import Any, Dict
-from tools import execute_tool, vault, spawner
+from mcp_server.tools import execute_tool, vault, spawner
 
 
 class MCPServer:
@@ -25,7 +25,7 @@ class MCPServer:
         req_id = request.get("id", 0)
         
         if method == "tools/list":
-            from tools import TOOLS
+            from mcp_server.tools import TOOLS
             return {
                 "jsonrpc": "2.0",
                 "id": req_id,
@@ -103,8 +103,13 @@ class MCPServer:
                 }
                 print(json.dumps(error_response), flush=True)
     
-    async def run_sse(self, host: str = "0.0.0.0", port: int = 8080):
-        """Run MCP server with SSE transport using FastAPI."""
+    def run_sse(self, host: str = "0.0.0.0", port: int = 8080):
+        """Run MCP server with SSE transport using FastAPI.
+        
+        Note: This is a regular (non-async) method because uvicorn.run()
+        creates and manages its own event loop. Wrapping it in asyncio.run()
+        would create a nested event loop, which causes RuntimeError.
+        """
         from fastapi import FastAPI, Request
         from fastapi.responses import StreamingResponse
         import uvicorn
@@ -131,7 +136,7 @@ class MCPServer:
         
         @app.get("/mcp/tools")
         async def list_tools():
-            from tools import TOOLS
+            from mcp_server.tools import TOOLS
             return {
                 "tools": [
                     {
@@ -158,4 +163,4 @@ if __name__ == "__main__":
     if args.transport == "stdio":
         asyncio.run(server.run_stdio())
     else:
-        asyncio.run(server.run_sse(args.host, args.port))
+        server.run_sse(args.host, args.port)

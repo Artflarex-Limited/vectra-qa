@@ -1,0 +1,130 @@
+# Vectra QA - Docker Compose Quickstart
+# 
+# This compose file sets up the entire multi-agent testing framework
+# with a single command: docker compose up
+#
+# Services:
+#   - mcp-server: MCP Tool Server (port 8080)
+#   - command-center: HTMX Dashboard (port 3000)
+#   - vault-watcher: File watcher for Obsidian vault changes
+#
+# Usage:
+#   1. Copy .env.example to .env and fill in your API keys
+#   2. Run: docker compose up --build
+#   3. Open http://localhost:3000
+
+version: '3.8'
+
+services:
+  # MCP Tool Server - Exposes agent tools via SSE transport
+  mcp-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mcp
+    container_name: vectra-mcp-server
+    ports:
+      - "${MCP_SERVER_PORT:-8080}:8080"
+    environment:
+      - PYTHONPATH=/app
+      - OBSIDIAN_VAULT_PATH=/app/obsidian_vault
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      - MINIMAX_BASE_URL=${MINIMAX_BASE_URL:-https://api.minimax.chat/v1}
+      - KIMI_API_KEY=${KIMI_API_KEY}
+      - KIMI_BASE_URL=${KIMI_BASE_URL:-https://api.moonshot.cn/v1}
+      - LOCAL_LLM_BASE_URL=${LOCAL_LLM_BASE_URL:-}
+      - LOCAL_LLM_MODEL=${LOCAL_LLM_MODEL:-llama3.1:70b}
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-sse}
+      - MCP_SERVER_PORT=${MCP_SERVER_PORT:-8080}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MCP_API_KEY=${MCP_API_KEY:-}
+    volumes:
+      - obsidian-vault:/app/obsidian_vault
+      - ./agents:/app/agents:ro
+    networks:
+      - vectra-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/mcp/tools')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Command Center Dashboard - FastAPI + HTMX + SSE
+  command-center:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+    container_name: vectra-command-center
+    ports:
+      - "${COMMAND_CENTER_PORT:-3000}:3000"
+    environment:
+      - PYTHONPATH=/app
+      - OBSIDIAN_VAULT_PATH=/app/obsidian_vault
+      - MCP_SERVER_URL=http://mcp-server:8080
+      - COMMAND_CENTER_PORT=${COMMAND_CENTER_PORT:-3000}
+      - COMMAND_CENTER_HOST=0.0.0.0
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - COMMAND_CENTER_SECRET_KEY=${COMMAND_CENTER_SECRET_KEY:-dev-secret-key-change-in-production}
+    volumes:
+      - obsidian-vault:/app/obsidian_vault
+      - ./command_center/static:/app/command_center/static:ro
+    networks:
+      - vectra-network
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/orchestrator/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Vault Watcher - Monitors Obsidian vault for changes
+  # This ensures file changes are immediately reflected in the dashboard
+  vault-watcher:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+    container_name: vectra-vault-watcher
+    command: python -m command_center.obsidian_reader
+    environment:
+      - PYTHONPATH=/app
+      - OBSIDIAN_VAULT_PATH=/app/obsidian_vault
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - obsidian-vault:/app/obsidian_vault
+    networks:
+      - vectra-network
+    depends_on:
+      - command-center
+    restart: unless-stopped
+
+  # Optional: Local LLM (Ollama) for privacy-first testing
+  # Uncomment if you want to run local models
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: vectra-ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   networks:
+  #     - vectra-network
+  #   restart: unless-stopped
+
+volumes:
+  obsidian-vault:
+    driver: local
+  # ollama-data:
+  #   driver: local
+
+networks:
+  vectra-network:
+    driver: bridge

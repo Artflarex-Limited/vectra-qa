@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+tests/
+pytest.ini
+
+# Documentation (keep for context, but not needed in containers)
+# README.md
+# ARCHITECTURE.md
+# CONTRIBUTING.md
+
+# Local development files
+.env.local
+.env.*.local
+
+# Obsidian vault (will be mounted as volume)
+# obsidian_vault/Runs/*.md
+# obsidian_vault/Global/*.md
+
+# Playwright
+node_modules/
+playwright-report/
+test-results/

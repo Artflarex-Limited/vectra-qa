@@ -13,7 +13,7 @@ from typing import Dict, Any, List, Optional, AsyncGenerator
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-VAULT_PATH = Path("/home/bugra/Documents/projects/vectra-qa/obsidian_vault")
+VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", "/app/obsidian_vault"))
 
 
 class ObsidianNode:
@@ -228,3 +228,14 @@ class ObsidianReader:
 # Global reader instance
 reader = ObsidianReader(VAULT_PATH)
 reader.start_watching()
+
+
+if __name__ == "__main__":
+    import time
+    print("Vault watcher started. Monitoring for changes...")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        reader.stop_watching()
+        print("Vault watcher stopped.")

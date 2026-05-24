@@ -14,9 +14,10 @@ import time
 import asyncio
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "mcp_server"))
+# Add parent directory to Python path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from tools import execute_tool, vault
+from mcp_server.tools import execute_tool, vault
 
 
 def log_step(step: str):

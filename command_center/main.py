@@ -12,9 +12,16 @@ from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-from obsidian_reader import reader
+from command_center.obsidian_reader import reader
 
 app = FastAPI(title="Vectra QA Command Center")
+
+
+def json_serialize(obj):
+    """Custom JSON serializer that handles datetime objects from YAML frontmatter."""
+    if isinstance(obj, datetime):
+        return obj.isoformat() + "Z"
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 # CORS for HTMX
 app.add_middleware(
@@ -25,13 +32,13 @@ app.add_middleware(
 )
 
 # Static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="command_center/static"), name="static")
 
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
     """Serve the main dashboard HTML."""
-    with open("static/index.html", "r") as f:
+    with open("command_center/static/index.html", "r") as f:
         return f.read()
 
 
@@ -84,7 +91,7 @@ async def event_generator() -> AsyncGenerator[str, None]:
             }
         }
         
-        yield f"data: {json.dumps(data)}\n\n"
+        yield f"data: {json.dumps(data, default=json_serialize)}\n\n"
         await asyncio.sleep(2)
 
 
@@ -112,7 +119,7 @@ async def agents_sse(request: Request):
                 "agents": agents,
                 "count": len(agents)
             }
-            yield f"data: {json.dumps(data)}\n\n"
+            yield f"data: {json.dumps(data, default=json_serialize)}\n\n"
             await asyncio.sleep(3)
     
     return StreamingResponse(
@@ -135,7 +142,7 @@ async def orchestrator_sse(request: Request):
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "status": status
             }
-            yield f"data: {json.dumps(data)}\n\n"
+            yield f"data: {json.dumps(data, default=json_serialize)}\n\n"
             await asyncio.sleep(2)
     
     return StreamingResponse(

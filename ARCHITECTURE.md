@@ -260,6 +260,34 @@ execute_tool("update_frontmatter", {
 
 Tools are registered in `mcp_server/tools.py` and automatically exposed via the MCP protocol.
 
+## LLM Router
+
+The framework includes a multi-provider LLM router (`mcp_server/llm_router.py`) that supports:
+
+- **OpenAI** — GPT-4o, GPT-4o-mini
+- **Anthropic** — Claude 3.5 Sonnet
+- **Google** — Gemini 1.5 Pro
+- **MiniMax** — MiniMax Text-01 (OpenAI-compatible API)
+- **Kimi** — Kimi K2, Kimi K1.5 (OpenAI-compatible API, up to 2M context)
+- **Local** — Ollama, LM Studio
+
+Model selection uses the format `provider/model-name`:
+
+```python
+from mcp_server.llm_router import LLMRouter
+
+router = LLMRouter()
+response = router.complete(
+    model="kimi/kimi-k2",  # Ultra-long context for data analysis
+    messages=[{"role": "user", "content": "Analyze this API payload"}]
+)
+```
+
+Each agent role can be configured with a different provider via environment variables:
+- `ORCHESTRATOR_MODEL=openai/gpt-4o`
+- `UI_EXPLORER_MODEL=anthropic/claude-3-5-sonnet-20241022`
+- `DATA_VALIDATOR_MODEL=kimi/kimi-k2`  # Long context for large payloads
+
 ## Command Center Dashboard
 
 The dashboard is intentionally lightweight:

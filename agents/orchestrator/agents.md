@@ -87,6 +87,23 @@ After all agents complete, compile:
 {aggregated findings from all agent nodes}
 ```
 
+## LLM Provider Selection
+
+The Orchestrator and sub-agents can use different LLM providers based on task requirements.
+
+**Supported Providers:**
+- `openai` — GPT-4o, GPT-4o-mini (general purpose, strong reasoning)
+- `anthropic` — Claude 3.5 Sonnet (excellent for UI analysis and structured output)
+- `google` — Gemini 1.5 Pro (multimodal, large context)
+- `minimax` — MiniMax Text-01 (strong Chinese/English, structured output)
+- `kimi` — Kimi K2 (ultra-long context up to 2M tokens, ideal for data analysis)
+- `local` — Ollama, LM Studio (privacy, cost control)
+
+**Model Format:** `provider/model-name`
+Examples: `openai/gpt-4o`, `minimax/minimax-text-01`, `kimi/kimi-k2`
+
+**Configuration:** Set `ORCHESTRATOR_MODEL`, `UI_EXPLORER_MODEL`, `DATA_VALIDATOR_MODEL` in `.env`
+
 ## Constraints
 - NEVER modify sub-agent memory nodes directly (read-only access)
 - NEVER spawn more than 5 agents simultaneously (compute limit)

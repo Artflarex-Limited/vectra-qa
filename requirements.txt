@@ -7,6 +7,10 @@ fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 python-multipart>=0.0.6
 
+# LLM Routing (Multi-Provider Support)
+# OpenAI SDK is used for OpenAI, MiniMax, Kimi (OpenAI-compatible APIs)
+openai>=1.30.0
+
 # Optional: For actual browser automation
 # playwright>=1.40.0
 # pytest-playwright>=0.4.0

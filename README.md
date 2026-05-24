@@ -76,7 +76,7 @@ nano .env  # or vim, code, etc.
 
 To run your first agentic test, you **only** need to configure:
 
-1. **One LLM provider** (`OPENAI_API_KEY` or `ANTHROPIC_API_KEY`)
+1. **One LLM provider** (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `MINIMAX_API_KEY`, or `KIMI_API_KEY`)
 2. **Obsidian Vault path** (`OBSIDIAN_VAULT_PATH`)
 
 ```bash
@@ -86,6 +86,13 @@ OBSIDIAN_VAULT_PATH=/home/$(whoami)/Documents/obsidian_vault
 MCP_SERVER_PORT=8080
 COMMAND_CENTER_PORT=3000
 ```
+
+**Supported Providers:**
+- **OpenAI** — GPT-4o, GPT-4o-mini (general purpose)
+- **Anthropic** — Claude 3.5 Sonnet (UI analysis, reasoning)
+- **MiniMax** — minimax-text-01 (Chinese/English, structured output)
+- **Kimi** — kimi-k2 (ultra-long context up to 2M tokens)
+- **Local** — Ollama, LM Studio (privacy, cost control)
 
 #### Setting Up Your Obsidian Vault
 
@@ -107,8 +114,11 @@ mkdir -p ~/Documents/vectra-qa-vault/{Global,Runs,Templates}
 #### Verifying Your Setup
 
 ```bash
-# Test LLM connectivity
+# Test LLM connectivity (OpenAI example)
 python -c "import openai; print('OpenAI OK')" 
+
+# For MiniMax/Kimi, the framework uses the OpenAI SDK with custom base URLs
+# Just ensure your API keys are set in .env
 
 # Test vault path
 ls $OBSIDIAN_VAULT_PATH
@@ -120,7 +130,105 @@ python command_center/main.py &
 
 Open `http://localhost:3000` — you should see the dark-mode Command Center.
 
-### Start the System
+### 🐳 Docker Quickstart (Recommended)
+
+The fastest way to get started is with Docker Compose. This spins up the entire stack—MCP Server, Command Center Dashboard, and Obsidian Vault—with a single command.
+
+#### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) 20.10+
+- [Docker Compose](https://docs.docker.com/compose/install/) 2.0+
+
+#### One-Command Setup
+
+```bash
+# 1. Clone and enter the repository
+git clone https://github.com/your-org/vectra-qa.git
+cd vectra-qa
+
+# 2. Configure your environment
+cp .env.example .env
+# Edit .env and add at least one LLM API key
+
+# 3. Launch the entire stack
+docker compose up --build
+
+# 4. Open the dashboard
+open http://localhost:3000
+```
+
+That's it! The dashboard will be available at **`http://localhost:3000`** and the MCP Server at **`http://localhost:8080`**.
+
+#### Docker Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| `mcp-server` | `8080` | MCP Tool Server (spawn_agent, Obsidian tools) |
+| `command-center` | `3000` | HTMX Dashboard with live SSE updates |
+| `vault-watcher` | — | File watcher for Obsidian vault changes |
+
+#### Useful Docker Commands
+
+```bash
+# Start in detached mode (background)
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# View specific service logs
+docker compose logs -f mcp-server
+
+# Restart a service
+docker compose restart command-center
+
+# Stop everything
+docker compose down
+
+# Stop and remove volumes (clears Obsidian vault)
+docker compose down -v
+```
+
+#### Running Test Scenarios in Docker
+
+```bash
+# Execute a test scenario inside the MCP container
+docker compose exec mcp-server python examples/test_scenario.py
+
+# Or mount the examples directory and run from host
+docker compose exec mcp-server python -m examples.test_scenario
+```
+
+#### Local LLM with Docker (Optional)
+
+To use a local LLM like Ollama, uncomment the `ollama` service in `docker-compose.yml`:
+
+```yaml
+# docker-compose.yml
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+```
+
+Then pull a model:
+
+```bash
+docker compose exec ollama ollama pull llama3.1:70b
+```
+
+And set your `.env`:
+
+```bash
+LOCAL_LLM_BASE_URL=http://localhost:11434/v1
+LOCAL_LLM_MODEL=llama3.1:70b
+DATA_VALIDATOR_MODEL=local/llama3.1:70b
+```
+
+### Start the System (Manual)
 
 ```bash
 # Terminal 1: Start the MCP Server
