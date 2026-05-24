@@ -39,7 +39,11 @@ app.add_middleware(
 
 # Static files
 app.mount("/static", StaticFiles(directory="command_center/static"), name="static")
-app.mount("/screenshots", StaticFiles(directory="obsidian_vault/Screenshots"), name="screenshots")
+
+# Ensure screenshots directory exists
+screenshots_dir = Path("obsidian_vault/Screenshots")
+screenshots_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/screenshots", StaticFiles(directory=str(screenshots_dir)), name="screenshots")
 
 
 @app.get("/", response_class=HTMLResponse)

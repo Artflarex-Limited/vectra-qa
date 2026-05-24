@@ -1,16 +1,3 @@
----
-title: Agent Spawn Template
-agent_role: "{{ROLE}}"
-agent_id: "{{AGENT_ID}}"
-parent_run: "{{RUN_ID}}"
-status: spawned
-objective: "{{OBJECTIVE}}"
-spawned_at: "{{TIMESTAMP}}"
-terminated_at: null
-result: pending
-compute_pid: null
----
-
 # {{ROLE}} Agent Log
 
 ## Objective

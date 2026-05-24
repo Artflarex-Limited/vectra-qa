@@ -170,12 +170,16 @@ class AgentSpawner:
                 stderr=subprocess.PIPE
             )
         else:
-            process = subprocess.Popen(
-                ["python3", worker_script, agent_id, memory_node],
-                env=env,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+            # Log output for debugging
+            log_file = f"/app/obsidian_vault/Runs/{agent_id}_worker.log"
+            with open(log_file, 'w') as f:
+                process = subprocess.Popen(
+                    ["/opt/venv/bin/python3", worker_script, agent_id, memory_node],
+                    env=env,
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                    cwd="/app"
+                )
         
         self.active_processes[agent_id] = process
         
