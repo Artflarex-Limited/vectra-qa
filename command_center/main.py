@@ -7,12 +7,18 @@ import json
 import asyncio
 from datetime import datetime
 from typing import AsyncGenerator
-from fastapi import FastAPI, Request
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import StreamingResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from command_center.obsidian_reader import reader
+
+# Import MCP tools for spawning agents
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from mcp_server.tools import execute_tool
 
 app = FastAPI(title="Vectra QA Command Center")
 
@@ -93,6 +99,100 @@ async def event_generator() -> AsyncGenerator[str, None]:
         
         yield f"data: {json.dumps(data, default=json_serialize)}\n\n"
         await asyncio.sleep(2)
+
+
+@app.post("/api/tests/run")
+async def run_test(url: str = Form(...), test_type: str = Form(...)):
+    """Run a test against a target URL by spawning agents."""
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    
+    test_configs = {
+        "homepage": {
+            "role": "ui_explorer",
+            "objective": f"Test the homepage at {url}. Verify page loads, check hero section, navigation, CTAs, footer, and console errors.",
+            "memory_node": f"Runs/Homepage_Test_{timestamp}.md"
+        },
+        "navigation": {
+            "role": "ui_explorer",
+            "objective": f"Test navigation on {url}. Click all menu items, verify no 404s, check page titles, test mobile menu.",
+            "memory_node": f"Runs/Navigation_Test_{timestamp}.md"
+        },
+        "contact": {
+            "role": "ui_explorer",
+            "objective": f"Test contact form on {url}. Verify form fields, test validation, check accessibility.",
+            "memory_node": f"Runs/Contact_UI_Test_{timestamp}.md"
+        },
+        "api": {
+            "role": "data_validator",
+            "objective": f"Monitor API calls on {url}. Intercept requests, check response codes, validate payloads, verify headers.",
+            "memory_node": f"Runs/API_Test_{timestamp}.md"
+        },
+        "accessibility": {
+            "role": "ui_explorer",
+            "objective": f"Accessibility audit of {url}. Test keyboard navigation, check ARIA labels, verify alt text, check color contrast.",
+            "memory_node": f"Runs/Accessibility_Test_{timestamp}.md"
+        },
+        "responsive": {
+            "role": "ui_explorer",
+            "objective": f"Test responsive design of {url} on desktop (1920x1080), tablet (768x1024), and mobile (375x667).",
+            "memory_node": f"Runs/Responsive_Test_{timestamp}.md"
+        },
+        "full": {
+            "role": "ui_explorer",
+            "objective": f"Comprehensive test of {url}. Homepage, navigation, forms, responsive design, and basic accessibility checks.",
+            "memory_node": f"Runs/Full_Test_{timestamp}.md"
+        }
+    }
+    
+    if test_type not in test_configs:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Unknown test type: {test_type}. Available: {list(test_configs.keys())}"}
+        )
+    
+    config = test_configs[test_type]
+    
+    try:
+        result = execute_tool("spawn_agent", {
+            "role": config["role"],
+            "objective": config["objective"],
+            "memory_node": config["memory_node"]
+        })
+        
+        if result["status"] == "success":
+            return {
+                "status": "success",
+                "message": f"Test '{test_type}' initiated for {url}",
+                "agent_id": result["result"]["agent_id"],
+                "memory_node": config["memory_node"],
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+        else:
+            return JSONResponse(
+                status_code=500,
+                content={"error": result.get("error", "Failed to spawn agent")}
+            )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
+
+
+@app.get("/api/tests/types")
+async def get_test_types():
+    """Get available test types."""
+    return {
+        "types": [
+            {"id": "homepage", "name": "Homepage", "description": "Test homepage structure and content"},
+            {"id": "navigation", "name": "Navigation", "description": "Test all navigation links and page transitions"},
+            {"id": "contact", "name": "Contact Form", "description": "Test contact form functionality"},
+            {"id": "api", "name": "API Monitoring", "description": "Monitor backend API calls"},
+            {"id": "accessibility", "name": "Accessibility", "description": "WCAG compliance audit"},
+            {"id": "responsive", "name": "Responsive Design", "description": "Test on multiple viewports"},
+            {"id": "full", "name": "Full Suite", "description": "Comprehensive test coverage"}
+        ]
+    }
 
 
 @app.get("/api/sse/stream")
