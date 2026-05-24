@@ -60,6 +60,66 @@ playwright install chromium
 # Or use it headlessly—the agents write Markdown directly
 ```
 
+### Environment Setup
+
+Vectra QA uses a `.env` file for configuration. This keeps secrets out of code and lets you customize the framework for your stack.
+
+```bash
+# 1. Copy the example file
+cp .env.example .env
+
+# 2. Edit .env with your favorite editor
+nano .env  # or vim, code, etc.
+```
+
+#### Minimum Required for "Hello World"
+
+To run your first agentic test, you **only** need to configure:
+
+1. **One LLM provider** (`OPENAI_API_KEY` or `ANTHROPIC_API_KEY`)
+2. **Obsidian Vault path** (`OBSIDIAN_VAULT_PATH`)
+
+```bash
+### Minimal .env for first run ###
+OPENAI_API_KEY=sk-your-key-here
+OBSIDIAN_VAULT_PATH=/home/$(whoami)/Documents/obsidian_vault
+MCP_SERVER_PORT=8080
+COMMAND_CENTER_PORT=3000
+```
+
+#### Setting Up Your Obsidian Vault
+
+The vault is just a directory of Markdown files. Create it anywhere safe:
+
+```bash
+# Create vault directory
+mkdir -p ~/Documents/vectra-qa-vault/{Global,Runs,Templates}
+
+# The framework will create memory nodes here automatically
+# Open this folder in Obsidian for the visual graph experience
+```
+
+**Important:** The vault path must be:
+- **Absolute** (not relative like `./vault`)
+- **Writable** by the user running the agents
+- **Outside version control** (add it to `.gitignore`)
+
+#### Verifying Your Setup
+
+```bash
+# Test LLM connectivity
+python -c "import openai; print('OpenAI OK')" 
+
+# Test vault path
+ls $OBSIDIAN_VAULT_PATH
+
+# Start services
+python mcp_server/server.py &
+python command_center/main.py &
+```
+
+Open `http://localhost:3000` — you should see the dark-mode Command Center.
+
 ### Start the System
 
 ```bash
