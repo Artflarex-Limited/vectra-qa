@@ -172,14 +172,60 @@ class AgentSpawner:
         else:
             # Log output for debugging
             log_file = f"/app/obsidian_vault/Runs/{agent_id}_worker.log"
-            with open(log_file, 'w') as f:
+            worker_path = f"/app/{worker_script}"
+            
+            # Verify worker exists before spawning
+            import os as os_module
+            if not os_module.path.exists(worker_path):
+                # Try to find the worker script
+                alt_paths = [
+                    worker_script,
+                    f"./{worker_script}",
+                    f"/app/agents/{role}/worker.py",
+                    f"agents/{role}/worker.py"
+                ]
+                for alt in alt_paths:
+                    if os_module.path.exists(alt):
+                        worker_path = alt
+                        break
+                else:
+                    return {
+                        "agent_id": agent_id,
+                        "role": role,
+                        "status": "error",
+                        "error": f"Worker script not found: {worker_path}",
+                        "checked_paths": alt_paths
+                    }
+            
+            # Debug: verify subprocess can see the file
+            import tempfile
+            debug_log = f"/app/obsidian_vault/Runs/{agent_id}_debug.log"
+            with open(debug_log, 'w') as df:
+                df.write(f"Worker path: {worker_path}\n")
+                df.write(f"CWD: /app\n")
+                df.write(f"File exists check: {os_module.path.exists(worker_path)}\n")
+                df.write(f"PYTHONPATH: {env.get('PYTHONPATH')}\n")
+                df.flush()
+                
                 process = subprocess.Popen(
-                    ["/opt/venv/bin/python3", worker_script, agent_id, memory_node],
+                    ['/opt/venv/bin/python3', worker_path, agent_id, memory_node],
                     env=env,
-                    stdout=f,
+                    stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    cwd="/app"
+                    cwd='/app'
                 )
+            
+            # Start a thread to capture output to log file
+            def capture_output(proc, log_path):
+                with open(log_path, 'w') as f:
+                    for line in proc.stdout:
+                        f.write(line.decode('utf-8', errors='replace'))
+                        f.flush()
+            
+            import threading
+            t = threading.Thread(target=capture_output, args=(process, log_file))
+            t.daemon = True
+            t.start()
         
         self.active_processes[agent_id] = process
         

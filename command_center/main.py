@@ -12,15 +12,37 @@ from fastapi.responses import StreamingResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
+from pathlib import Path
 from command_center.obsidian_reader import reader
 
-# Import MCP tools for spawning agents
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from mcp_server.tools import execute_tool
+# MCP Server Configuration
+import os
+MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8080")
 
 app = FastAPI(title="Vectra QA Command Center")
+
+async def call_mcp_tool(tool_name: str, params: dict) -> dict:
+    """Call an MCP tool on the MCP server via HTTP."""
+    import httpx
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{MCP_SERVER_URL}/mcp",
+            json={
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                    "name": tool_name,
+                    "arguments": params
+                }
+            },
+            timeout=30.0
+        )
+        result = response.json()
+        # MCP wraps the result in result.result
+        if "result" in result:
+            return result["result"]
+        return {"status": "error", "error": result.get("error", "Unknown error")}
 
 
 def json_serialize(obj):
@@ -158,17 +180,18 @@ async def run_test(url: str = Form(...), test_type: str = Form(...)):
     config = test_configs[test_type]
     
     try:
-        result = execute_tool("spawn_agent", {
+        result = await call_mcp_tool("spawn_agent", {
             "role": config["role"],
             "objective": config["objective"],
             "memory_node": config["memory_node"]
         })
         
-        if result["status"] == "success":
+        if result.get("status") == "success":
+            spawn_result = result.get("result", {})
             return {
                 "status": "success",
                 "message": f"Test '{test_type}' initiated for {url}",
-                "agent_id": result["result"]["agent_id"],
+                "agent_id": spawn_result.get("agent_id"),
                 "memory_node": config["memory_node"],
                 "timestamp": datetime.utcnow().isoformat() + "Z"
             }

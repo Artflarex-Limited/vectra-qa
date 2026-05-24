@@ -42,7 +42,7 @@ services:
       - MCP_API_KEY=${MCP_API_KEY:-}
     volumes:
       - obsidian-vault:/app/obsidian_vault
-      - ./agents:/app/agents:ro
+      - ./agents:/app/agents
     networks:
       - vectra-network
     healthcheck:

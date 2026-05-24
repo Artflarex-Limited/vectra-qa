@@ -338,7 +338,7 @@ async def run_agent(agent_id: str, memory_node: str):
         # Determine test type from objective
         objective_lower = objective.lower()
         
-        if "navigation" in objective_lower or "nav" in objective_lower:
+        if "test navigation" in objective_lower or "test nav" in objective_lower:
             success = await test_navigation(browser, url, agent_id, memory_node)
         elif "contact" in objective_lower or "form" in objective_lower:
             success = await test_contact_form(browser, url, agent_id, memory_node)
