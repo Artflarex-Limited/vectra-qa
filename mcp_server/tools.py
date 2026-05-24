@@ -146,22 +146,36 @@ class AgentSpawner:
             }
         )
         
-        # Spawn agent process (simulated - in production, this would launch the actual agent)
-        # For demo, we create a mock process
+        # Spawn real agent worker process
         env = os.environ.copy()
         env["AGENT_ID"] = agent_id
         env["AGENT_ROLE"] = role
         env["AGENT_OBJECTIVE"] = objective
         env["AGENT_MEMORY_NODE"] = str(VAULT_PATH / memory_node)
+        env["PYTHONPATH"] = "/app"
         
-        # In a real implementation, this would launch the agent runtime
-        # For now, we simulate with a Python script that runs the agent logic
-        process = subprocess.Popen(
-            ["python3", "-c", f"print('Agent {agent_id} started')"],
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        # Map role to worker script
+        worker_scripts = {
+            "ui_explorer": "agents/ui_explorer/worker.py",
+            "data_validator": "agents/data_validator/worker.py"
+        }
+        
+        worker_script = worker_scripts.get(role)
+        if not worker_script:
+            # Fallback for unknown roles
+            process = subprocess.Popen(
+                ["python3", "-c", f"print('Agent {agent_id} started - no worker for role {role}')"],
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        else:
+            process = subprocess.Popen(
+                ["python3", worker_script, agent_id, memory_node],
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
         
         self.active_processes[agent_id] = process
         

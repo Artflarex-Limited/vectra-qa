@@ -38,7 +38,7 @@ COPY mcp_server/ ./mcp_server/
 COPY obsidian_vault/ ./obsidian_vault/
 
 # Create directories for runtime
-RUN mkdir -p /app/obsidian_vault/Runs /app/obsidian_vault/Global /app/obsidian_vault/Templates
+RUN mkdir -p /app/obsidian_vault/Runs /app/obsidian_vault/Global /app/obsidian_vault/Templates /app/obsidian_vault/Screenshots
 
 # Expose dashboard port
 EXPOSE 3000

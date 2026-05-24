@@ -591,6 +591,62 @@
             font-size: 9px;
         }
 
+        .agent-progress {
+            margin: 10px 0;
+        }
+
+        .progress-bar-bg {
+            background: var(--void);
+            border-radius: 1px;
+            height: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--phosphor);
+            border-radius: 1px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 8px var(--phosphor-glow);
+        }
+
+        .progress-bar-fill.complete {
+            background: var(--phosphor-dim);
+            box-shadow: none;
+        }
+
+        .progress-bar-fill.error {
+            background: var(--alert);
+            box-shadow: 0 0 8px var(--alert-glow);
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: var(--steel);
+            margin-top: 4px;
+        }
+
+        .screenshot-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            color: var(--phosphor);
+            text-decoration: none;
+            margin-top: 8px;
+            padding: 2px 6px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 1px;
+            transition: all 0.2s;
+        }
+
+        .screenshot-link:hover {
+            background: var(--phosphor-glow);
+            border-color: var(--phosphor);
+        }
+
         /* ─────────────────────────────────────────
            TERMINAL / LOG PANEL
            ───────────────────────────────────────── */
@@ -1061,19 +1117,50 @@
                 return;
             }
             
-            grid.innerHTML = agents.map((agent, i) => `
+            grid.innerHTML = agents.map((agent, i) => {
+                const progress = agent.progress_percent || 0;
+                const progressClass = agent.status === 'failed' ? 'error' : progress >= 100 ? 'complete' : '';
+                const screenshots = agent.screenshots || [];
+                
+                return `
                 <div class="agent-card ${agent.status}" style="animation-delay: ${i * 0.05}s;">
                     <div class="agent-header">
                         <div class="agent-role">${agent.role.replace('_', ' ')}</div>
                         <div class="agent-status ${agent.status}">${agent.status}</div>
                     </div>
                     <div class="agent-objective">${agent.objective || 'No objective'}</div>
+                    
+                    <div class="agent-progress">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill ${progressClass}" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span>${agent.last_action || 'idle'}</span>
+                            <span>${progress}%</span>
+                        </div>
+                    </div>
+                    
+                    ${screenshots.length > 0 ? `
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+                        ${screenshots.map((ss, idx) => `
+                            <a href="/screenshots/${ss.split('/').pop()}" target="_blank" class="screenshot-link" title="Screenshot ${idx + 1}">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <path d="M21 15l-5-5L5 21"/>
+                                </svg>
+                                SS-${idx + 1}
+                            </a>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+                    
                     <div class="agent-meta">
                         <span><code>${agent.agent_id.split('-').pop()}</code></span>
-                        <span>${agent.last_action || 'idle'}</span>
+                        <span>${agent.timestamp ? new Date(agent.timestamp).toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit'}) : '--:--'}</span>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // ═══════════════════════════════════════

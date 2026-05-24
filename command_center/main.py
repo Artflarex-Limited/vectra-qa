@@ -39,6 +39,7 @@ app.add_middleware(
 
 # Static files
 app.mount("/static", StaticFiles(directory="command_center/static"), name="static")
+app.mount("/screenshots", StaticFiles(directory="obsidian_vault/Screenshots"), name="screenshots")
 
 
 @app.get("/", response_class=HTMLResponse)
