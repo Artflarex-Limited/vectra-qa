@@ -159,6 +159,67 @@ open http://localhost:3000
 
 That's it! The dashboard will be available at **`http://localhost:3000`** and the MCP Server at **`http://localhost:8080`**.
 
+### 🧪 Testing Your Own Project
+
+Now that Vectra QA is running, test your web application:
+
+#### 1. Configure Your Target
+
+Edit `.env`:
+
+```bash
+# Your application's URL (required)
+TARGET_URL=http://localhost:3001  # Your dev server
+# Or: TARGET_URL=https://staging.myapp.com
+
+# Test credentials (if your app requires login)
+TEST_USERNAME=test@example.com
+TEST_PASSWORD=your-test-password
+```
+
+#### 2. Create a Test Scenario
+
+Create `examples/my_app_test.py`:
+
+```python
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from mcp_server.tools import execute_tool
+
+# Test your login page
+result = execute_tool("spawn_agent", {
+    "role": "ui_explorer",
+    "objective": (
+        "Test the login page at http://localhost:3001/login. "
+        "1. Verify email and password fields. "
+        "2. Test form validation. "
+        "3. Submit test credentials. "
+        "4. Verify redirect to dashboard."
+    ),
+    "memory_node": "Runs/MyApp_Login_Test.md"
+})
+
+print(f"Agent spawned: {result['result']['agent_id']}")
+print("Check http://localhost:3000 for live results")
+```
+
+#### 3. Run the Test
+
+```bash
+# In a new terminal
+python examples/my_app_test.py
+```
+
+#### 4. View Results
+
+- **Live Dashboard**: http://localhost:3000
+- **Detailed Reports**: `obsidian_vault/Runs/MyApp_Login_Test.md`
+
+For a complete guide, see [USER_GUIDE.md](USER_GUIDE.md).
+For a full example, see [examples/test_real_app.py](examples/test_real_app.py).
+
 #### Docker Services
 
 | Service | Port | Description |
