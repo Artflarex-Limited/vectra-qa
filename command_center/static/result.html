@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Result — Vectra QA</title>
+    
+    <!-- Typography: Space Grotesk + JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ─────────────────────────────────────────
+           DESIGN TOKENS — Mission Control Noir
+           ───────────────────────────────────────── */
+        :root {
+            --void: #030305;
+            --surface: #0a0a0f;
+            --surface-raised: #111118;
+            --surface-hover: #1a1a24;
+            --phosphor: #00ff88;
+            --phosphor-dim: #00cc6a;
+            --phosphor-glow: rgba(0, 255, 136, 0.15);
+            --alert: #ff3366;
+            --alert-glow: rgba(255, 51, 102, 0.15);
+            --caution: #ffaa00;
+            --caution-glow: rgba(255, 170, 0, 0.15);
+            --ice: #e0e6ed;
+            --steel: #6b7280;
+            --grid: #1a1a2e;
+            --grid-bright: #252540;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius: 2px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { 
+            background: var(--void); 
+            color: var(--ice);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Scanline Overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.03) 2px,
+                rgba(0, 0, 0, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.4;
+        }
+
+        /* ─────────────────────────────────────────
+           HEADER
+           ───────────────────────────────────────── */
+        .result-header {
+            position: relative;
+            border-bottom: 1px solid var(--grid);
+            background: linear-gradient(180deg, var(--surface) 0%, var(--void) 100%);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--steel);
+            text-decoration: none;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--phosphor);
+        }
+
+        .brand-text {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--ice);
+        }
+
+        .brand-text span {
+            color: var(--phosphor);
+            font-weight: 400;
+            letter-spacing: 0.15em;
+        }
+
+        /* ─────────────────────────────────────────
+           MAIN LAYOUT
+           ───────────────────────────────────────── */
+        .result-body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .result-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ─────────────────────────────────────────
+           PANELS
+           ───────────────────────────────────────── */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--grid-bright), transparent);
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--grid);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-title {
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--steel);
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* ─────────────────────────────────────────
+           STATUS BADGE
+           ───────────────────────────────────────── */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 4px 10px;
+            border-radius: 1px;
+            font-weight: 500;
+        }
+
+        .status-badge.active {
+            background: var(--phosphor-glow);
+            color: var(--phosphor);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .status-badge.completed {
+            background: rgba(0, 204, 106, 0.1);
+            color: var(--phosphor-dim);
+            border: 1px solid rgba(0, 204, 106, 0.2);
+        }
+
+        .status-badge.failed {
+            background: var(--alert-glow);
+            color: var(--alert);
+            border: 1px solid rgba(255, 51, 102, 0.2);
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ─────────────────────────────────────────
+           PROGRESS BAR
+           ───────────────────────────────────────── */
+        .progress-section {
+            margin: 16px 0;
+        }
+
+        .progress-bar-bg {
+            background: var(--void);
+            border-radius: 1px;
+            height: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--phosphor);
+            border-radius: 1px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 8px var(--phosphor-glow);
+        }
+
+        .progress-bar-fill.complete {
+            background: var(--phosphor-dim);
+            box-shadow: none;
+        }
+
+        .progress-bar-fill.error {
+            background: var(--alert);
+            box-shadow: 0 0 8px var(--alert-glow);
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--steel);
+            margin-top: 6px;
+        }
+
+        /* ─────────────────────────────────────────
+           METADATA GRID
+           ───────────────────────────────────────── */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .meta-item {
+            padding: 10px 12px;
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+        }
+
+        .meta-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--steel);
+            margin-bottom: 2px;
+        }
+
+        .meta-value {
+            font-size: 11px;
+            color: var(--ice);
+            word-break: break-all;
+        }
+
+        .meta-value.url {
+            color: var(--phosphor);
+        }
+
+        /* ─────────────────────────────────────────
+           FINDINGS
+           ───────────────────────────────────────── */
+        .finding-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--grid);
+        }
+
+        .finding-item:last-child {
+            border-bottom: none;
+        }
+
+        .finding-time {
+            font-size: 9px;
+            color: var(--steel);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .finding-title {
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ice);
+            margin-bottom: 6px;
+        }
+
+        .finding-content {
+            font-size: 11px;
+            color: var(--steel);
+            line-height: 1.7;
+        }
+
+        .finding-content code {
+            font-family: var(--font-mono);
+            color: var(--phosphor);
+            background: var(--void);
+            padding: 1px 4px;
+            border-radius: 1px;
+            font-size: 10px;
+        }
+
+        /* ─────────────────────────────────────────
+           SCREENSHOTS
+           ───────────────────────────────────────── */
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .screenshot-item {
+            position: relative;
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .screenshot-item:hover {
+            border-color: var(--grid-bright);
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .screenshot-label {
+            padding: 8px 10px;
+            font-size: 10px;
+            color: var(--steel);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-top: 1px solid var(--grid);
+        }
+
+        /* ─────────────────────────────────────────
+           SIDEBAR
+           ───────────────────────────────────────── */
+        .sidebar-panel {
+            position: sticky;
+            top: 32px;
+        }
+
+        .recent-tests {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .recent-test-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .recent-test-item:hover {
+            border-color: var(--grid-bright);
+            background: var(--surface-hover);
+        }
+
+        .recent-test-item.active {
+            border-left: 2px solid var(--phosphor);
+        }
+
+        .recent-test-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .recent-test-url {
+            font-size: 11px;
+            color: var(--ice);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .recent-test-meta {
+            font-size: 9px;
+            color: var(--steel);
+            margin-top: 2px;
+        }
+
+        .recent-test-status {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 2px 6px;
+            border-radius: 1px;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        .recent-test-status.active {
+            background: var(--phosphor-glow);
+            color: var(--phosphor);
+        }
+
+        .recent-test-status.completed {
+            background: rgba(0, 204, 106, 0.1);
+            color: var(--phosphor-dim);
+        }
+
+        .recent-test-status.failed {
+            background: var(--alert-glow);
+            color: var(--alert);
+        }
+
+        /* ─────────────────────────────────────────
+           RAW LOG
+           ───────────────────────────────────────── */
+        .raw-log {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            line-height: 1.8;
+            color: var(--steel);
+            background: var(--void);
+            padding: 12px;
+            border-radius: var(--radius);
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .raw-log::-webkit-scrollbar { width: 4px; }
+        .raw-log::-webkit-scrollbar-track { background: var(--void); }
+        .raw-log::-webkit-scrollbar-thumb { background: var(--grid); border-radius: 2px; }
+
+        /* ─────────────────────────────────────────
+           EMPTY STATE
+           ───────────────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--steel);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* ─────────────────────────────────────────
+           SCROLLBAR
+           ───────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: var(--void); }
+        ::-webkit-scrollbar-thumb { background: var(--grid); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--grid-bright); }
+
+        /* ─────────────────────────────────────────
+           SELECTION
+           ───────────────────────────────────────── */
+        ::selection {
+            background: var(--phosphor);
+            color: var(--void);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════
+         HEADER
+         ═══════════════════════════════════════ -->
+    <header class="result-header">
+        <div class="header-inner">
+            <a href="/" class="back-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Dashboard
+            </a>
+            <div class="brand-text">Vectra<span>QA</span></div>
+            <div style="font-size: 10px; color: var(--steel); font-family: var(--font-mono);" id="header-time">
+                --:--:--
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════
+         MAIN BODY
+         ═══════════════════════════════════════ -->
+    <main class="result-body">
+        
+        <!-- LEFT COLUMN — Test Details -->
+        <div class="main-column">
+            
+            <!-- Status Panel -->
+            <div class="panel" style="margin-bottom: 24px;">
+                <div class="panel-header">
+                    <div class="panel-title">Test Status</div>
+                    <div id="status-badge">
+                        <span class="status-badge active">
+                            <span class="pulse-dot"></span>
+                            Loading...
+                        </span>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <div class="meta-label">Target URL</div>
+                            <div class="meta-value url" id="meta-url">--</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Test Type</div>
+                            <div class="meta-value" id="meta-type">--</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Agent ID</div>
+                            <div class="meta-value" id="meta-agent">--</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Started</div>
+                            <div class="meta-value" id="meta-started">--</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Duration</div>
+                            <div class="meta-value" id="meta-duration">--</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Result</div>
+                            <div class="meta-value" id="meta-result">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-section">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="progress-action">Initializing...</span>
+                            <span id="progress-percent">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Findings Panel -->
+            <div class="panel" style="margin-bottom: 24px;">
+                <div class="panel-header">
+                    <div class="panel-title">Findings</div>
+                    <div style="font-size: 10px; color: var(--steel);" id="findings-count">0 findings</div>
+                </div>
+                <div class="panel-body">
+                    <div id="findings-container">
+                        <div class="empty-state">Waiting for findings...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screenshots Panel -->
+            <div class="panel" style="margin-bottom: 24px;">
+                <div class="panel-header">
+                    <div class="panel-title">Screenshots</div>
+                    <div style="font-size: 10px; color: var(--steel);" id="screenshots-count">0 screenshots</div>
+                </div>
+                <div class="panel-body">
+                    <div id="screenshots-container">
+                        <div class="empty-state">No screenshots yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Raw Log Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Raw Log</div>
+                    <div style="font-size: 10px; color: var(--steel); cursor: pointer;" onclick="toggleLog()">
+                        [Toggle]
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="raw-log" id="raw-log" style="display: none;">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN — Sidebar -->
+        <aside class="sidebar-column">
+            
+            <!-- Recent Tests -->
+            <div class="panel sidebar-panel">
+                <div class="panel-header">
+                    <div class="panel-title">Recent Tests</div>
+                    <div style="font-size: 10px; color: var(--steel);">Last 10</div>
+                </div>
+                <div class="panel-body">
+                    <div id="recent-tests" class="recent-tests">
+                        <div class="empty-state">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <script>
+        // ═══════════════════════════════════════
+        // CONFIG
+        // ═══════════════════════════════════════
+        const agentId = window.location.pathname.split('/').pop();
+        let startTime = null;
+        let isComplete = false;
+
+        // ═══════════════════════════════════════
+        // CLOCK
+        // ═══════════════════════════════════════
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('header-time').textContent = 
+                now.toLocaleTimeString('en-US', { hour12: false });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ═══════════════════════════════════════
+        // LOAD INITIAL DATA
+        // ═══════════════════════════════════════
+        async function loadResult() {
+            try {
+                const response = await fetch(`/api/results/${agentId}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                updateResultPage(data);
+                startTime = data.spawned_at ? new Date(data.spawned_at) : null;
+                
+                // If already complete, mark it
+                if (data.status === 'completed' || data.status === 'failed') {
+                    isComplete = true;
+                }
+            } catch (e) {
+                showError('Failed to load test result');
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // SSE CONNECTION
+        // ═══════════════════════════════════════
+        function connectSSE() {
+            const eventSource = new EventSource(`/api/sse/results/${agentId}`);
+            
+            eventSource.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.error) {
+                        console.error('SSE error:', data.error);
+                        return;
+                    }
+                    updateResultPage(data);
+                    
+                    // Check if complete
+                    if (data.status === 'completed' || data.status === 'failed') {
+                        isComplete = true;
+                    }
+                } catch (e) {
+                    console.error('SSE parse error:', e);
+                }
+            };
+            
+            eventSource.onerror = function() {
+                console.log('SSE connection lost, reconnecting...');
+                // Auto-reconnect after 3 seconds
+                setTimeout(connectSSE, 3000);
+            };
+        }
+
+        // ═══════════════════════════════════════
+        // UPDATE PAGE
+        // ═══════════════════════════════════════
+        function updateResultPage(data) {
+            // Status badge
+            const statusBadge = document.getElementById('status-badge');
+            const statusClass = data.status === 'active' || data.status === 'spawned' || data.status === 'running' ? 'active' : 
+                               data.status === 'completed' ? 'completed' : 'failed';
+            const pulseDot = statusClass === 'active' ? '<span class="pulse-dot"></span>' : '';
+            statusBadge.innerHTML = `
+                <span class="status-badge ${statusClass}">
+                    ${pulseDot}
+                    ${data.status}
+                </span>
+            `;
+            
+            // Progress bar
+            const progress = data.progress_percent || 0;
+            const progressClass = data.status === 'failed' ? 'error' : progress >= 100 ? 'complete' : '';
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-fill').className = 'progress-bar-fill ' + progressClass;
+            document.getElementById('progress-action').textContent = data.last_action || 'idle';
+            document.getElementById('progress-percent').textContent = progress + '%';
+            
+            // Findings
+            if (data.findings && data.findings.length > 0) {
+                updateFindings(data.findings);
+            }
+            
+            // Screenshots
+            if (data.screenshots && data.screenshots.length > 0) {
+                updateScreenshots(data.screenshots);
+            }
+            
+            // Duration
+            if (startTime) {
+                const now = data.end_time ? new Date(data.end_time) : new Date();
+                const duration = Math.round((now - startTime) / 1000);
+                document.getElementById('meta-duration').textContent = duration + 's';
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // UPDATE FINDINGS
+        // ═══════════════════════════════════════
+        function updateFindings(findings) {
+            const container = document.getElementById('findings-container');
+            document.getElementById('findings-count').textContent = findings.length + ' findings';
+            
+            if (findings.length === 0) {
+                container.innerHTML = '<div class="empty-state">No findings recorded yet</div>';
+                return;
+            }
+            
+            container.innerHTML = findings.map(f => `
+                <div class="finding-item">
+                    <div class="finding-time">${f.timestamp || ''}</div>
+                    <div class="finding-title">${f.title || ''}</div>
+                    <div class="finding-content">
+                        ${f.items.map(item => `<div>${item}</div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ═══════════════════════════════════════
+        // UPDATE SCREENSHOTS
+        // ═══════════════════════════════════════
+        function updateScreenshots(screenshots) {
+            const container = document.getElementById('screenshots-container');
+            document.getElementById('screenshots-count').textContent = screenshots.length + ' screenshots';
+            
+            if (screenshots.length === 0) {
+                container.innerHTML = '<div class="empty-state">No screenshots yet</div>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="screenshot-grid">
+                    ${screenshots.map((ss, idx) => `
+                        <div class="screenshot-item" onclick="window.open('/screenshots/${ss.split('/').pop()}', '_blank')">
+                            <img src="/screenshots/${ss.split('/').pop()}" alt="Screenshot ${idx + 1}" loading="lazy">
+                            <div class="screenshot-label">Screenshot ${idx + 1}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // ═══════════════════════════════════════
+        // LOAD RECENT TESTS
+        // ═══════════════════════════════════════
+        async function loadRecentTests() {
+            try {
+                const response = await fetch('/api/results');
+                const data = await response.json();
+                
+                const container = document.getElementById('recent-tests');
+                
+                if (!data.results || data.results.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No recent tests</div>';
+                    return;
+                }
+                
+                container.innerHTML = data.results.slice(0, 10).map(test => {
+                    const isActive = test.agent_id === agentId;
+                    const url = test.objective ? test.objective.match(/https?:\/\/[^\s]+/) : null;
+                    const displayUrl = url ? url[0].replace(/https?:\/\//, '') : 'Unknown';
+                    const statusClass = test.status === 'active' || test.status === 'running' ? 'active' : 
+                                       test.status === 'completed' ? 'completed' : 'failed';
+                    
+                    return `
+                        <a href="/results/${test.agent_id}" class="recent-test-item ${isActive ? 'active' : ''}">
+                            <div class="recent-test-info">
+                                <div class="recent-test-url">${displayUrl}</div>
+                                <div class="recent-test-meta">${test.role || 'unknown'} • ${test.status}</div>
+                            </div>
+                            <div class="recent-test-status ${statusClass}">${test.status}</div>
+                        </a>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                console.error('Failed to load recent tests:', e);
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // TOGGLE RAW LOG
+        // ═══════════════════════════════════════
+        function toggleLog() {
+            const log = document.getElementById('raw-log');
+            log.style.display = log.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // ═══════════════════════════════════════
+        // SHOW ERROR
+        // ═══════════════════════════════════════
+        function showError(message) {
+            document.querySelector('.main-column').innerHTML = `
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="empty-state" style="color: var(--alert);">
+                            Error: ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ═══════════════════════════════════════
+        // INITIALIZE
+        // ═══════════════════════════════════════
+        loadResult();
+        loadRecentTests();
+        connectSSE();
+        
+        // Refresh recent tests every 10 seconds
+        setInterval(loadRecentTests, 10000);
+    </script>
+
+</body>
+</html>

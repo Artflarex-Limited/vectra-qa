@@ -223,6 +223,100 @@ async def get_test_types():
     }
 
 
+@app.get("/api/results")
+async def list_results():
+    """List all test runs (active + completed), sorted by date desc."""
+    runs = []
+    for node in reader.get_run_nodes():
+        if node and node.frontmatter:
+            fm = node.frontmatter
+            runs.append({
+                "agent_id": fm.get("agent_id", "unknown"),
+                "role": fm.get("agent_role", "unknown"),
+                "status": fm.get("status", "unknown"),
+                "result": fm.get("result", "pending"),
+                "objective": fm.get("objective", ""),
+                "node_path": node.path,
+                "progress_percent": fm.get("progress_percent", 0),
+                "screenshots": fm.get("screenshots", []),
+                "spawned_at": fm.get("spawned_at", ""),
+                "end_time": fm.get("end_time", ""),
+                "timestamp": fm.get("timestamp", "")
+            })
+    
+    # Sort by spawned_at desc (newest first)
+    runs.sort(key=lambda x: x.get("spawned_at", ""), reverse=True)
+    return {"results": runs, "count": len(runs)}
+
+
+@app.get("/api/results/{agent_id}")
+async def get_result(agent_id: str):
+    """Get full test result data for a specific agent."""
+    # Find the node by agent_id
+    for node in reader.get_run_nodes():
+        if node and node.frontmatter and node.frontmatter.get("agent_id") == agent_id:
+            fm = node.frontmatter
+            return {
+                "agent_id": fm.get("agent_id", "unknown"),
+                "role": fm.get("agent_role", "unknown"),
+                "status": fm.get("status", "unknown"),
+                "result": fm.get("result", "pending"),
+                "objective": fm.get("objective", ""),
+                "node_path": node.path,
+                "progress_percent": fm.get("progress_percent", 0),
+                "screenshots": fm.get("screenshots", []),
+                "spawned_at": fm.get("spawned_at", ""),
+                "end_time": fm.get("end_time", ""),
+                "timestamp": fm.get("timestamp", ""),
+                "last_action": fm.get("last_action", ""),
+                "content": node.content,
+                "findings": _extract_findings(node.content)
+            }
+    
+    return JSONResponse(status_code=404, content={"error": "Test result not found"})
+
+
+def _extract_findings(content: str) -> list:
+    """Parse findings from markdown content."""
+    findings = []
+    lines = content.split('\n')
+    current_finding = None
+    
+    for line in lines:
+        line = line.strip()
+        if line.startswith('## ['):
+            # New timestamped section
+            if current_finding:
+                findings.append(current_finding)
+            current_finding = {
+                "timestamp": line.split(']')[0].replace('## [', ''),
+                "title": line.split(']')[1].strip() if ']' in line else "",
+                "items": []
+            }
+        elif line.startswith('- **') and current_finding:
+            current_finding["items"].append(line)
+        elif line.startswith('## ') and not line.startswith('## ['):
+            # Section headers
+            if current_finding:
+                findings.append(current_finding)
+                current_finding = None
+    
+    if current_finding:
+        findings.append(current_finding)
+    
+    return findings
+
+
+@app.get("/results/{agent_id}", response_class=HTMLResponse)
+async def result_page(agent_id: str):
+    """Serve the test result page HTML."""
+    try:
+        with open("command_center/static/result.html", "r") as f:
+            return f.read()
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Result page not found</h1>", status_code=404)
+
+
 @app.get("/api/sse/stream")
 async def sse_stream(request: Request):
     """Server-Sent Events endpoint for live dashboard updates."""
@@ -275,6 +369,62 @@ async def orchestrator_sse(request: Request):
     
     return StreamingResponse(
         orchestrator_events(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
+    )
+
+
+@app.get("/api/sse/results/{agent_id}")
+async def result_sse(request: Request, agent_id: str):
+    """SSE endpoint for live updates on a specific test result."""
+    async def result_events():
+        last_content = ""
+        while True:
+            # Find the node by agent_id
+            node = None
+            for n in reader.get_run_nodes():
+                if n and n.frontmatter and n.frontmatter.get("agent_id") == agent_id:
+                    node = n
+                    break
+            
+            if node:
+                fm = node.frontmatter
+                current_content = node.content
+                
+                data = {
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "agent_id": agent_id,
+                    "status": fm.get("status", "unknown"),
+                    "result": fm.get("result", "pending"),
+                    "progress_percent": fm.get("progress_percent", 0),
+                    "last_action": fm.get("last_action", ""),
+                    "screenshots": fm.get("screenshots", []),
+                    "end_time": fm.get("end_time", ""),
+                    "findings": _extract_findings(current_content),
+                    "content_changed": current_content != last_content
+                }
+                
+                last_content = current_content
+                yield f"data: {json.dumps(data, default=json_serialize)}\n\n"
+                
+                # If completed or failed, keep streaming for a bit then stop
+                if fm.get("status") in ["completed", "failed"]:
+                    # Send one final update, then continue with heartbeat
+                    await asyncio.sleep(2)
+                    yield f"data: {json.dumps(data, default=json_serialize)}\n\n"
+                    # After final update, send less frequently
+                    await asyncio.sleep(5)
+                    continue
+            else:
+                yield f"data: {json.dumps({'error': 'Test not found', 'agent_id': agent_id})}\n\n"
+            
+            await asyncio.sleep(2)
+    
+    return StreamingResponse(
+        result_events(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

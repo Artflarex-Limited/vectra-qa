@@ -72,7 +72,7 @@ services:
       - COMMAND_CENTER_SECRET_KEY=${COMMAND_CENTER_SECRET_KEY:-dev-secret-key-change-in-production}
     volumes:
       - obsidian-vault:/app/obsidian_vault
-      - ./command_center/static:/app/command_center/static:ro
+      - ./command_center/static:/app/command_center/static
     networks:
       - vectra-network
     depends_on:

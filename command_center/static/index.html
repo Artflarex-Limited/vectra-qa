@@ -992,8 +992,21 @@
                 </div>
             </div>
 
+            <!-- Recent Tests -->
+            <div class="panel" style="margin-bottom: 24px; animation-delay: 0.25s;">
+                <div class="panel-header">
+                    <div class="panel-title">Recent Tests</div>
+                    <div style="font-size: 10px; color: var(--steel);">Last 10</div>
+                </div>
+                <div class="panel-body">
+                    <div id="recent-tests-grid" class="node-list">
+                        <div class="empty-state">No tests yet</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Obsidian Nodes -->
-            <div class="panel" style="animation-delay: 0.25s;">
+            <div class="panel" style="animation-delay: 0.3s;">
                 <div class="panel-header">
                     <div class="panel-title">Memory Nodes</div>
                     <div style="font-size: 10px; color: var(--steel);">Obsidian Vault</div>
@@ -1261,10 +1274,20 @@
                                     <div><span style="color: var(--steel)">Target:</span> ${data.message}</div>
                                     <div><span style="color: var(--steel)">Agent:</span> <code style="background: var(--void); padding: 1px 4px; border-radius: 1px;">${data.agent_id}</code></div>
                                     <div><span style="color: var(--steel)">Node:</span> <code style="background: var(--void); padding: 1px 4px; border-radius: 1px;">${data.memory_node}</code></div>
+                                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--grid);">
+                                        <a href="/results/${data.agent_id}" style="color: var(--phosphor); text-decoration: none; font-weight: 600;">
+                                            → View Live Results
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         `;
                         logEvent('LAUNCHER', `Agent ${data.agent_id.split('-').pop()} deployed`, 'normal');
+                        
+                        // Auto-redirect to result page after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = `/results/${data.agent_id}`;
+                        }, 2000);
                     } else {
                         resultDiv.innerHTML = `
                             <div class="test-result error">
@@ -1281,6 +1304,45 @@
         });
 
         // ═══════════════════════════════════════
+        // RECENT TESTS
+        // ═══════════════════════════════════════
+        async function loadRecentTests() {
+            try {
+                const response = await fetch('/api/results');
+                const data = await response.json();
+                
+                const grid = document.getElementById('recent-tests-grid');
+                
+                if (!data.results || data.results.length === 0) {
+                    grid.innerHTML = '<div class="empty-state">No tests yet</div>';
+                    return;
+                }
+                
+                grid.innerHTML = data.results.slice(0, 10).map(test => {
+                    const url = test.objective ? test.objective.match(/https?:\/\/[^\s]+/) : null;
+                    const displayUrl = url ? url[0].replace(/https?:\/\//, '') : 'Unknown';
+                    const statusClass = test.status === 'active' || test.status === 'running' ? 'active' : 
+                                       test.status === 'completed' ? 'completed' : 'failed';
+                    
+                    return `
+                        <a href="/results/${test.agent_id}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--surface-raised); border: 1px solid var(--grid); border-radius: var(--radius); margin-bottom: 6px; text-decoration: none; transition: all 0.2s; cursor: pointer;"
+                           onmouseover="this.style.borderColor='var(--grid-bright)'" 
+                           onmouseout="this.style.borderColor='var(--grid)'">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 11px; color: var(--ice); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayUrl}</div>
+                                <div style="font-size: 9px; color: var(--steel); margin-top: 2px;">${test.role || 'unknown'} • ${test.status}</div>
+                            </div>
+                            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 1px; margin-left: 8px; flex-shrink: 0; ${statusClass === 'active' ? 'background: var(--phosphor-glow); color: var(--phosphor);' : statusClass === 'completed' ? 'background: rgba(0, 204, 106, 0.1); color: var(--phosphor-dim);' : 'background: var(--alert-glow); color: var(--alert);'}">${test.status}</div>
+                        </a>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                console.error('Failed to load recent tests:', e);
+            }
+        }
+
+        // ═══════════════════════════════════════
         // INITIAL LOAD
         // ═══════════════════════════════════════
         fetch('/api/orchestrator/status')
@@ -1294,8 +1356,13 @@
         fetch('/api/nodes/global')
             .then(r => r.json())
             .then(data => updateDashboard({ orchestrator: {}, agents: [], nodes: data }));
+        
+        loadRecentTests();
 
         logEvent('SYSTEM', 'Mission Control online. Ready for test deployment.', 'normal');
+        
+        // Refresh recent tests every 10 seconds
+        setInterval(loadRecentTests, 10000);
     </script>
 
 </body>
