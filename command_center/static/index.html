@@ -3,440 +3,1160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vectra QA - Command Center</title>
+    <title>VECTRA QA — Mission Control</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            850: '#1e293b',
-                            900: '#0f172a',
-                            950: '#020617',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Typography: Space Grotesk + JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     
-    <!-- SSE Extension for HTMX -->
-    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
-    
     <style>
+        /* ─────────────────────────────────────────
+           DESIGN TOKENS — Mission Control Noir
+           ───────────────────────────────────────── */
+        :root {
+            --void: #030305;
+            --surface: #0a0a0f;
+            --surface-raised: #111118;
+            --surface-hover: #1a1a24;
+            --phosphor: #00ff88;
+            --phosphor-dim: #00cc6a;
+            --phosphor-glow: rgba(0, 255, 136, 0.15);
+            --alert: #ff3366;
+            --alert-glow: rgba(255, 51, 102, 0.15);
+            --caution: #ffaa00;
+            --caution-glow: rgba(255, 170, 0, 0.15);
+            --ice: #e0e6ed;
+            --steel: #6b7280;
+            --grid: #1a1a2e;
+            --grid-bright: #252540;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius: 2px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { 
+            background: var(--void); 
+            color: var(--ice);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
         body {
-            background-color: #0f172a;
-            color: #f1f5f9;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
         }
-        .card {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 0.5rem;
+
+        /* ─────────────────────────────────────────
+           SCANLINE OVERLAY
+           ───────────────────────────────────────── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.03) 2px,
+                rgba(0, 0, 0, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.4;
         }
-        .card-header {
-            border-bottom: 1px solid #334155;
-            padding: 1rem;
-            font-weight: 600;
-            color: #e2e8f0;
+
+        /* ─────────────────────────────────────────
+           PHOSPHOR GLOW UTILITIES
+           ───────────────────────────────────────── */
+        .glow-phosphor { text-shadow: 0 0 10px var(--phosphor-glow), 0 0 20px var(--phosphor-glow); }
+        .glow-alert { text-shadow: 0 0 10px var(--alert-glow), 0 0 20px var(--alert-glow); }
+        .glow-caution { text-shadow: 0 0 10px var(--caution-glow), 0 0 20px var(--caution-glow); }
+
+        /* ─────────────────────────────────────────
+           HEADER & ORBITAL VISUALIZATION
+           ───────────────────────────────────────── */
+        .mission-header {
+            position: relative;
+            border-bottom: 1px solid var(--grid);
+            background: linear-gradient(180deg, var(--surface) 0%, var(--void) 100%);
+            overflow: hidden;
         }
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
         }
-        .status-active {
-            background-color: #065f46;
-            color: #6ee7b7;
+
+        /* Orbital Core */
+        .orbital-core {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            margin-right: 16px;
         }
-        .status-completed {
-            background-color: #1e40af;
-            color: #93c5fd;
+
+        .core-center {
+            position: absolute;
+            inset: 12px;
+            border-radius: 50%;
+            background: var(--phosphor);
+            box-shadow: 
+                0 0 20px var(--phosphor-glow),
+                0 0 40px var(--phosphor-glow),
+                inset 0 0 10px rgba(255,255,255,0.3);
+            animation: core-pulse 3s ease-in-out infinite;
         }
-        .status-failed {
-            background-color: #991b1b;
-            color: #fca5a5;
+
+        .core-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 1px solid var(--phosphor);
+            opacity: 0.3;
+            animation: ring-expand 3s ease-out infinite;
         }
-        .status-pending {
-            background-color: #713f12;
-            color: #fde047;
+
+        .core-ring:nth-child(2) { animation-delay: 1s; }
+        .core-ring:nth-child(3) { animation-delay: 2s; }
+
+        @keyframes core-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.95); opacity: 0.8; }
         }
-        .thought-item {
-            border-left: 3px solid #3b82f6;
-            padding-left: 0.75rem;
-            margin-bottom: 0.5rem;
-            color: #cbd5e1;
-            font-size: 0.875rem;
+
+        @keyframes ring-expand {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.4); opacity: 0; }
         }
-        .agent-card {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            transition: all 0.2s;
+
+        /* Orbiting Satellites */
+        .orbit-container {
+            position: absolute;
+            inset: -16px;
         }
-        .agent-card:hover {
-            border-color: #475569;
+
+        .satellite {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--phosphor);
+            box-shadow: 0 0 6px var(--phosphor);
         }
-        .metric-value {
-            font-size: 2rem;
+
+        .satellite-1 { animation: orbit-1 8s linear infinite; }
+        .satellite-2 { animation: orbit-2 12s linear infinite; }
+        .satellite-3 { animation: orbit-3 6s linear infinite; }
+
+        @keyframes orbit-1 {
+            0% { top: 0; left: 50%; transform: translate(-50%, 0); }
+            25% { top: 50%; left: 100%; transform: translate(-100%, -50%); }
+            50% { top: 100%; left: 50%; transform: translate(-50%, -100%); }
+            75% { top: 50%; left: 0; transform: translate(0, -50%); }
+            100% { top: 0; left: 50%; transform: translate(-50%, 0); }
+        }
+
+        @keyframes orbit-2 {
+            0% { top: 50%; left: 0; transform: translate(0, -50%); }
+            25% { top: 0; left: 50%; transform: translate(-50%, 0); }
+            50% { top: 50%; left: 100%; transform: translate(-100%, -50%); }
+            75% { top: 100%; left: 50%; transform: translate(-50%, -100%); }
+            100% { top: 50%; left: 0; transform: translate(0, -50%); }
+        }
+
+        @keyframes orbit-3 {
+            0% { top: 100%; left: 50%; transform: translate(-50%, -100%); }
+            25% { top: 50%; left: 0; transform: translate(0, -50%); }
+            50% { top: 0; left: 50%; transform: translate(-50%, 0); }
+            75% { top: 50%; left: 100%; transform: translate(-100%, -50%); }
+            100% { top: 100%; left: 50%; transform: translate(-50%, -100%); }
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+        }
+
+        .brand-text {
+            font-family: var(--font-display);
+            font-size: 22px;
             font-weight: 700;
-            color: #f8fafc;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--ice);
         }
-        .metric-label {
-            font-size: 0.75rem;
-            color: #94a3b8;
+
+        .brand-text span {
+            color: var(--phosphor);
+            font-weight: 400;
+            letter-spacing: 0.15em;
+        }
+
+        .mission-status {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .status-beacon {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--steel);
+        }
+
+        .status-beacon.active {
+            color: var(--phosphor);
+        }
+
+        .status-beacon.active .beacon-dot {
+            background: var(--phosphor);
+            box-shadow: 0 0 8px var(--phosphor), 0 0 16px var(--phosphor-glow);
+            animation: beacon-blink 2s ease-in-out infinite;
+        }
+
+        .beacon-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--steel);
+        }
+
+        @keyframes beacon-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .agent-count {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--steel);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
-        .log-entry {
-            font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
-            padding: 0.5rem;
-            background-color: #0f172a;
-            border-radius: 0.25rem;
-            margin-bottom: 0.25rem;
-            color: #94a3b8;
+
+        .agent-count strong {
+            color: var(--phosphor);
+            font-size: 14px;
+            font-weight: 600;
         }
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #10b981;
-            animation: pulse 2s infinite;
+
+        /* ─────────────────────────────────────────
+           MAIN LAYOUT
+           ───────────────────────────────────────── */
+        .mission-body {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+        @media (max-width: 1024px) {
+            .mission-body {
+                grid-template-columns: 1fr;
+            }
         }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+
+        /* ─────────────────────────────────────────
+           PANELS
+           ───────────────────────────────────────── */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            position: relative;
+            overflow: hidden;
+            animation: panel-rise 0.6s ease-out backwards;
         }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
+
+        @keyframes panel-rise {
+            0% { opacity: 0; transform: translateY(16px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--grid-bright), transparent);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--grid);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-title {
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--steel);
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* ─────────────────────────────────────────
+           TEST LAUNCHER
+           ───────────────────────────────────────── */
+        .launcher-panel { animation-delay: 0.1s; }
+
+        .launcher-form {
+            display: grid;
+            grid-template-columns: 1fr 200px 140px;
+            gap: 12px;
+            align-items: end;
+        }
+
+        @media (max-width: 768px) {
+            .launcher-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .field-label {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--steel);
+            margin-bottom: 6px;
+        }
+
+        .field-input {
+            width: 100%;
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            padding: 10px 14px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--ice);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .field-input:focus {
+            border-color: var(--phosphor);
+            box-shadow: 0 0 0 2px var(--phosphor-glow);
+        }
+
+        .field-input::placeholder {
+            color: var(--steel);
+            opacity: 0.5;
+        }
+
+        select.field-input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236b7280' stroke-width='1.5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        .btn-launch {
+            background: transparent;
+            border: 1px solid var(--phosphor);
+            color: var(--phosphor);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-launch:hover {
+            background: var(--phosphor);
+            color: var(--void);
+            box-shadow: 0 0 20px var(--phosphor-glow);
+        }
+
+        .btn-launch:active {
+            transform: scale(0.97);
+        }
+
+        .test-result {
+            margin-top: 16px;
+            padding: 14px;
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            background: var(--surface-raised);
+            font-size: 12px;
+        }
+
+        .test-result.success {
+            border-color: var(--phosphor);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .test-result.error {
+            border-color: var(--alert);
+            background: rgba(255, 51, 102, 0.05);
+        }
+
+        /* ─────────────────────────────────────────
+           METRICS STRIP
+           ───────────────────────────────────────── */
+        .metrics-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .metric-cell {
+            background: var(--surface);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            position: relative;
+            animation: panel-rise 0.6s ease-out backwards;
+        }
+
+        .metric-cell:nth-child(1) { animation-delay: 0.15s; }
+        .metric-cell:nth-child(2) { animation-delay: 0.2s; }
+        .metric-cell:nth-child(3) { animation-delay: 0.25s; }
+        .metric-cell:nth-child(4) { animation-delay: 0.3s; }
+
+        .metric-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--steel);
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--ice);
+            line-height: 1.2;
+        }
+
+        .metric-value.phosphor { color: var(--phosphor); }
+        .metric-value.alert { color: var(--alert); }
+        .metric-value.caution { color: var(--caution); }
+
+        .metric-delta {
+            font-size: 10px;
+            color: var(--steel);
+            margin-top: 4px;
+        }
+
+        /* ─────────────────────────────────────────
+           AGENT GRID
+           ───────────────────────────────────────── */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .agent-card {
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            padding: 16px;
+            position: relative;
+            transition: all 0.3s ease;
+            animation: panel-rise 0.5s ease-out backwards;
+        }
+
+        .agent-card:hover {
+            border-color: var(--grid-bright);
+            background: var(--surface-hover);
+        }
+
+        .agent-card.spawned { border-left: 2px solid var(--caution); }
+        .agent-card.active { border-left: 2px solid var(--phosphor); }
+        .agent-card.completed { border-left: 2px solid var(--phosphor-dim); }
+        .agent-card.failed { border-left: 2px solid var(--alert); }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .agent-role {
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ice);
+        }
+
+        .agent-status {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 2px 8px;
+            border-radius: 1px;
+            font-weight: 500;
+        }
+
+        .agent-status.spawned { 
+            background: var(--caution-glow); 
+            color: var(--caution); 
+            border: 1px solid rgba(255, 170, 0, 0.3);
+        }
+        .agent-status.active { 
+            background: var(--phosphor-glow); 
+            color: var(--phosphor); 
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        .agent-status.completed { 
+            background: rgba(0, 204, 106, 0.1); 
+            color: var(--phosphor-dim); 
+            border: 1px solid rgba(0, 204, 106, 0.3);
+        }
+        .agent-status.failed { 
+            background: var(--alert-glow); 
+            color: var(--alert); 
+            border: 1px solid rgba(255, 51, 102, 0.3);
+        }
+
+        .agent-objective {
+            font-size: 11px;
+            color: var(--steel);
+            line-height: 1.5;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .agent-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--steel);
+            border-top: 1px solid var(--grid);
+            padding-top: 10px;
+        }
+
+        .agent-meta code {
+            font-family: var(--font-mono);
+            color: var(--ice);
+            background: var(--void);
+            padding: 1px 4px;
+            border-radius: 1px;
+            font-size: 9px;
+        }
+
+        /* ─────────────────────────────────────────
+           TERMINAL / LOG PANEL
+           ───────────────────────────────────────── */
+        .terminal-panel {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .terminal-line {
+            display: flex;
+            gap: 12px;
+            padding: 2px 0;
+            border-left: 2px solid transparent;
+            padding-left: 8px;
+            margin-left: -8px;
+            transition: background 0.2s;
+        }
+
+        .terminal-line:hover {
+            background: var(--surface-raised);
+            border-left-color: var(--grid-bright);
+        }
+
+        .terminal-timestamp {
+            color: var(--steel);
+            flex-shrink: 0;
+            min-width: 60px;
+            font-size: 10px;
+        }
+
+        .terminal-source {
+            color: var(--phosphor);
+            flex-shrink: 0;
+            min-width: 80px;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .terminal-source.alert { color: var(--alert); }
+        .terminal-source.caution { color: var(--caution); }
+
+        .terminal-message {
+            color: var(--ice);
+        }
+
+        .terminal-message.muted {
+            color: var(--steel);
+        }
+
+        /* ─────────────────────────────────────────
+           NODE LIST
+           ───────────────────────────────────────── */
+        .node-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .node-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .node-item:hover {
+            border-color: var(--grid-bright);
+            background: var(--surface-hover);
+        }
+
+        .node-name {
+            font-size: 11px;
+            color: var(--ice);
+            font-weight: 500;
+        }
+
+        .node-path {
+            font-size: 9px;
+            color: var(--steel);
+            font-family: var(--font-mono);
+        }
+
+        /* ─────────────────────────────────────────
+           STATUS BADGES
+           ───────────────────────────────────────── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 4px 10px;
+            border-radius: 1px;
+            font-weight: 500;
+        }
+
+        .badge-initialized { 
+            background: var(--phosphor-glow); 
+            color: var(--phosphor); 
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        .badge-planning { 
+            background: var(--caution-glow); 
+            color: var(--caution); 
+            border: 1px solid rgba(255, 170, 0, 0.2);
+        }
+        .badge-running { 
+            background: var(--phosphor-glow); 
+            color: var(--phosphor); 
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        .badge-completed { 
+            background: rgba(0, 204, 106, 0.1); 
+            color: var(--phosphor-dim); 
+            border: 1px solid rgba(0, 204, 106, 0.2);
+        }
+        .badge-failed { 
+            background: var(--alert-glow); 
+            color: var(--alert); 
+            border: 1px solid rgba(255, 51, 102, 0.2);
+        }
+
+        /* ─────────────────────────────────────────
+           EMPTY STATES
+           ───────────────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--steel);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .empty-state::before {
+            content: '—';
+            display: block;
+            margin-bottom: 8px;
+            color: var(--grid-bright);
+            font-size: 20px;
+        }
+
+        /* ─────────────────────────────────────────
+           RESPONSIVE
+           ───────────────────────────────────────── */
+        @media (max-width: 1024px) {
+            .header-inner { padding: 0 20px; height: 64px; }
+            .brand-text { font-size: 16px; }
+            .mission-body { padding: 20px; }
+            .orbital-core { width: 36px; height: 36px; }
+            .core-center { inset: 8px; }
+        }
+
+        /* ─────────────────────────────────────────
+           SCROLLBAR
+           ───────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: var(--void); }
+        ::-webkit-scrollbar-thumb { background: var(--grid); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--grid-bright); }
+
+        /* ─────────────────────────────────────────
+           SELECTION
+           ───────────────────────────────────────── */
+        ::selection {
+            background: var(--phosphor);
+            color: var(--void);
         }
     </style>
 </head>
-<body class="min-h-screen bg-slate-900 text-slate-100">
-    
-    <!-- Header -->
-    <header class="border-b border-slate-700 bg-slate-850">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="pulse-dot"></div>
-                    <h1 class="text-xl font-bold text-white tracking-tight">
-                        Vectra QA <span class="text-blue-400">Command Center</span>
-                    </h1>
+<body>
+
+    <!-- ═══════════════════════════════════════
+         HEADER — Orbital Visualization
+         ═══════════════════════════════════════ -->
+    <header class="mission-header">
+        <div class="header-inner">
+            <div class="brand">
+                <div class="orbital-core">
+                    <div class="core-center"></div>
+                    <div class="core-ring"></div>
+                    <div class="core-ring"></div>
+                    <div class="orbit-container">
+                        <div class="satellite satellite-1"></div>
+                        <div class="satellite satellite-2"></div>
+                        <div class="satellite satellite-3"></div>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div class="text-sm text-slate-400">
-                        <span id="connection-status" class="flex items-center">
-                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                            Live
-                        </span>
-                    </div>
-                    <div class="text-xs text-slate-500" id="last-update">
-                        Updated: --
-                    </div>
+                <div class="brand-text">Vectra<span>QA</span></div>
+            </div>
+            
+            <div class="mission-status">
+                <div class="status-beacon active" id="connection-beacon">
+                    <div class="beacon-dot"></div>
+                    <span>Live</span>
+                </div>
+                <div class="agent-count">
+                    <strong id="header-agent-count">0</strong> Agents
+                </div>
+                <div style="font-size: 10px; color: var(--steel); font-family: var(--font-mono);" id="header-time">
+                    --:--:--
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- ═══════════════════════════════════════
+         MAIN BODY
+         ═══════════════════════════════════════ -->
+    <main class="mission-body">
         
-        <!-- Test Runner -->
-        <div class="mb-6">
-            <div class="card">
-                <div class="card-header">
-                    🚀 Run Test
+        <!-- LEFT COLUMN — Primary Content -->
+        <div class="main-column">
+            
+            <!-- Test Launcher -->
+            <div class="panel launcher-panel" style="margin-bottom: 24px;">
+                <div class="panel-header">
+                    <div class="panel-title">Launch Test</div>
+                    <div style="font-size: 10px; color: var(--steel); font-family: var(--font-mono);">
+                        POST /api/tests/run
+                    </div>
                 </div>
-                <div class="p-4">
-                    <form hx-post="/api/tests/run" hx-target="#test-result" hx-swap="innerHTML" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-400 mb-1">Target URL</label>
-                                <input type="url" name="url" placeholder="https://example.com" required
-                                    class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-400 mb-1">Test Type</label>
-                                <select name="test_type" required
-                                    class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                                    <option value="homepage">Homepage</option>
-                                    <option value="navigation">Navigation</option>
-                                    <option value="contact">Contact Form</option>
-                                    <option value="api">API Monitoring</option>
-                                    <option value="accessibility">Accessibility</option>
-                                    <option value="responsive">Responsive Design</option>
-                                    <option value="full">Full Suite</option>
-                                </select>
-                            </div>
-                            <div class="flex items-end">
-                                <button type="submit" 
-                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors flex items-center justify-center space-x-2">
-                                    <span>▶ Run Test</span>
-                                </button>
-                            </div>
+                <div class="panel-body">
+                    <form hx-post="/api/tests/run" hx-target="#test-result" hx-swap="innerHTML" class="launcher-form">
+                        <div>
+                            <label class="field-label">Target URL</label>
+                            <input type="url" name="url" placeholder="https://example.com" required
+                                class="field-input">
+                        </div>
+                        <div>
+                            <label class="field-label">Test Type</label>
+                            <select name="test_type" required class="field-input">
+                                <option value="homepage">Homepage</option>
+                                <option value="navigation">Navigation</option>
+                                <option value="contact">Contact Form</option>
+                                <option value="api">API Monitoring</option>
+                                <option value="accessibility">Accessibility</option>
+                                <option value="responsive">Responsive Design</option>
+                                <option value="full">Full Suite</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label">&nbsp;</label>
+                            <button type="submit" class="btn-launch">
+                                ▶ Initiate
+                            </button>
                         </div>
                     </form>
-                    
-                    <!-- Test Result Display -->
-                    <div id="test-result" class="mt-4 hidden">
-                        <!-- Results will be displayed here -->
+                    <div id="test-result" class="hidden"></div>
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="metrics-strip">
+                <div class="metric-cell">
+                    <div class="metric-label">Total Tests</div>
+                    <div class="metric-value" id="metric-total">0</div>
+                    <div class="metric-delta">All time</div>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-label">Passed</div>
+                    <div class="metric-value phosphor" id="metric-pass">0</div>
+                    <div class="metric-delta">Successful</div>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-label">Failed</div>
+                    <div class="metric-value alert" id="metric-fail">0</div>
+                    <div class="metric-delta">Requires attention</div>
+                </div>
+                <div class="metric-cell">
+                    <div class="metric-label">Active</div>
+                    <div class="metric-value caution" id="metric-active">0</div>
+                    <div class="metric-delta">Currently running</div>
+                </div>
+            </div>
+
+            <!-- Active Agents -->
+            <div class="panel" style="margin-bottom: 24px; animation-delay: 0.35s;">
+                <div class="panel-header">
+                    <div class="panel-title">Active Agents</div>
+                    <div style="font-size: 10px; color: var(--steel);" id="agent-count-badge">
+                        0 agents
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="agents-grid" class="agent-grid">
+                        <div class="empty-state">No active agents</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Log -->
+            <div class="panel" style="animation-delay: 0.4s;">
+                <div class="panel-header">
+                    <div class="panel-title">Data Stream</div>
+                    <div style="font-size: 10px; color: var(--steel);">SSE /api/sse/stream</div>
+                </div>
+                <div class="panel-body">
+                    <div id="event-log" class="terminal-panel" style="max-height: 280px; overflow-y: auto;">
+                        <div class="terminal-line">
+                            <span class="terminal-timestamp">--:--</span>
+                            <span class="terminal-source">SYSTEM</span>
+                            <span class="terminal-message muted">Command Center initialized. Awaiting test initiation.</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Metrics Row -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="card p-4">
-                <div class="metric-label">Total Tests</div>
-                <div class="metric-value" id="metric-total">0</div>
-            </div>
-            <div class="card p-4">
-                <div class="metric-label text-green-400">Passed</div>
-                <div class="metric-value text-green-400" id="metric-pass">0</div>
-            </div>
-            <div class="card p-4">
-                <div class="metric-label text-red-400">Failed</div>
-                <div class="metric-value text-red-400" id="metric-fail">0</div>
-            </div>
-            <div class="card p-4">
-                <div class="metric-label text-yellow-400">Skipped</div>
-                <div class="metric-value text-yellow-400" id="metric-skip">0</div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- RIGHT COLUMN — Sidebar -->
+        <aside class="sidebar-column">
             
-            <!-- Orchestrator Feed -->
-            <div class="lg:col-span-1">
-                <div class="card">
-                    <div class="card-header flex items-center justify-between">
-                        <span>🧠 Orchestrator Feed</span>
-                        <span id="orchestrator-status" class="status-badge status-pending">
-                            Pending
-                        </span>
+            <!-- Mission Status -->
+            <div class="panel" style="margin-bottom: 24px; animation-delay: 0.2s;">
+                <div class="panel-header">
+                    <div class="panel-title">Mission Status</div>
+                    <div id="orchestrator-status-badge">
+                        <span class="badge badge-initialized">Initialized</span>
                     </div>
-                    <div class="p-4">
-                        <div id="orchestrator-thoughts" class="space-y-2 max-h-96 overflow-y-auto">
-                            <div class="text-slate-500 text-sm italic">
-                                Waiting for orchestrator initialization...
-                            </div>
+                </div>
+                <div class="panel-body">
+                    <div style="margin-bottom: 16px;">
+                        <div class="field-label">Phase</div>
+                        <div id="orchestrator-phase" style="font-family: var(--font-display); font-size: 14px; color: var(--ice); text-transform: uppercase; letter-spacing: 0.05em;">
+                            Awaiting Commands
                         </div>
-                        
-                        <div class="mt-4 pt-4 border-t border-slate-700">
-                            <div class="text-xs text-slate-500 mb-2">Phase</div>
-                            <div id="orchestrator-phase" class="text-sm font-medium text-blue-400">
-                                --
+                    </div>
+                    <div>
+                        <div class="field-label">Activity Log</div>
+                        <div id="orchestrator-thoughts" style="font-size: 11px; color: var(--steel); line-height: 1.8;">
+                            <div style="padding: 4px 0; border-left: 2px solid var(--grid); padding-left: 10px; margin: 4px 0;">
+                                System ready. Deploy agents to begin testing.
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Active Spawns Panel -->
-            <div class="lg:col-span-2">
-                <div class="card">
-                    <div class="card-header flex items-center justify-between">
-                        <span>🤖 Active Spawns</span>
-                        <span id="active-count" class="text-xs text-slate-400">0 active</span>
-                    </div>
-                    <div class="p-4">
-                        <div id="agents-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="col-span-full text-center py-8 text-slate-500">
-                                No active agents
-                            </div>
-                        </div>
+            <!-- Obsidian Nodes -->
+            <div class="panel" style="animation-delay: 0.25s;">
+                <div class="panel-header">
+                    <div class="panel-title">Memory Nodes</div>
+                    <div style="font-size: 10px; color: var(--steel);">Obsidian Vault</div>
+                </div>
+                <div class="panel-body">
+                    <div id="nodes-grid" class="node-list">
+                        <div class="empty-state">No nodes</div>
                     </div>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <!-- Memory Nodes Inspector -->
-        <div class="mt-6">
-            <div class="card">
-                <div class="card-header">
-                    📚 Obsidian Vault Nodes
-                </div>
-                <div class="p-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="nodes-grid">
-                        <div class="col-span-full text-center py-8 text-slate-500">
-                            Loading nodes...
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Live Logs -->
-        <div class="mt-6">
-            <div class="card">
-                <div class="card-header">
-                    📋 Live Event Log
-                </div>
-                <div class="p-4">
-                    <div id="event-log" class="max-h-64 overflow-y-auto space-y-1">
-                        <div class="log-entry">
-                            [SYSTEM] Command Center initialized
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </main>
 
     <script>
-        // SSE Connection for live updates
+        // ═══════════════════════════════════════
+        // LIVE CLOCK
+        // ═══════════════════════════════════════
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('header-time').textContent = 
+                now.toLocaleTimeString('en-US', { hour12: false });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ═══════════════════════════════════════
+        // SSE CONNECTION
+        // ═══════════════════════════════════════
         const eventSource = new EventSource('/api/sse/stream');
         
         eventSource.onmessage = function(event) {
             try {
                 const data = JSON.parse(event.data);
                 updateDashboard(data);
-                document.getElementById('last-update').textContent = 
-                    'Updated: ' + new Date().toLocaleTimeString();
             } catch (e) {
-                console.error('Error parsing SSE data:', e);
+                console.error('SSE parse error:', e);
             }
-        };
-        
-        eventSource.onerror = function() {
-            document.getElementById('connection-status').innerHTML = 
-                '<span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>Disconnected';
-        };
-        
-        eventSource.onopen = function() {
-            document.getElementById('connection-status').innerHTML = 
-                '<span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Live';
         };
 
+        eventSource.onerror = function() {
+            document.getElementById('connection-beacon').classList.remove('active');
+            logEvent('SYSTEM', 'Connection lost', 'alert');
+        };
+
+        eventSource.onopen = function() {
+            document.getElementById('connection-beacon').classList.add('active');
+        };
+
+        // ═══════════════════════════════════════
+        // DASHBOARD UPDATE
+        // ═══════════════════════════════════════
         function updateDashboard(data) {
-            // Update metrics
+            // Metrics
             if (data.orchestrator && data.orchestrator.metrics) {
                 const m = data.orchestrator.metrics;
-                document.getElementById('metric-total').textContent = m.pass + m.fail + m.skip;
-                document.getElementById('metric-pass').textContent = m.pass;
-                document.getElementById('metric-fail').textContent = m.fail;
-                document.getElementById('metric-skip').textContent = m.skip;
+                animateNumber('metric-total', m.pass + m.fail + m.skip);
+                animateNumber('metric-pass', m.pass);
+                animateNumber('metric-fail', m.fail);
             }
-            
-            // Update orchestrator status
+
+            // Active agent count
+            const activeCount = data.agents ? data.agents.length : 0;
+            document.getElementById('metric-active').textContent = activeCount;
+            document.getElementById('header-agent-count').textContent = activeCount;
+            document.getElementById('agent-count-badge').textContent = 
+                activeCount + ' agent' + (activeCount !== 1 ? 's' : '');
+
+            // Orchestrator status
             if (data.orchestrator) {
                 const status = data.orchestrator.status || 'unknown';
-                const statusEl = document.getElementById('orchestrator-status');
-                statusEl.textContent = status;
-                statusEl.className = 'status-badge status-' + status;
+                const phase = data.orchestrator.phase || 'unknown';
                 
-                document.getElementById('orchestrator-phase').textContent = 
-                    data.orchestrator.phase || '--';
+                const badgeClass = {
+                    'initialized': 'badge-initialized',
+                    'planning': 'badge-planning',
+                    'running': 'badge-running',
+                    'completed': 'badge-completed',
+                    'failed': 'badge-failed'
+                }[status] || 'badge-initialized';
                 
-                // Update thoughts
+                document.getElementById('orchestrator-status-badge').innerHTML = 
+                    `<span class="badge ${badgeClass}">${status}</span>`;
+                
+                document.getElementById('orchestrator-phase').textContent = phase;
+                
+                // Thoughts
                 if (data.orchestrator.thoughts && data.orchestrator.thoughts.length > 0) {
                     const thoughtsContainer = document.getElementById('orchestrator-thoughts');
-                    thoughtsContainer.innerHTML = data.orchestrator.thoughts.map(t => 
-                        `<div class="thought-item">${t}</div>`
+                    thoughtsContainer.innerHTML = data.orchestrator.thoughts.slice(-5).map(t => 
+                        `<div style="padding: 4px 0; border-left: 2px solid var(--phosphor); padding-left: 10px; margin: 4px 0; color: var(--ice);">${t}</div>`
                     ).join('');
                 }
             }
-            
-            // Update active agents grid
+
+            // Agent grid
             if (data.agents) {
-                const grid = document.getElementById('agents-grid');
-                const countEl = document.getElementById('active-count');
-                
-                if (data.agents.length === 0) {
-                    grid.innerHTML = `
-                        <div class="col-span-full text-center py-8 text-slate-500">
-                            No active agents
-                        </div>`;
-                    countEl.textContent = '0 active';
-                } else {
-                    countEl.textContent = `${data.agents.length} active`;
-                    grid.innerHTML = data.agents.map(agent => `
-                        <div class="agent-card">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-semibold text-white">${agent.role}</span>
-                                <span class="status-badge status-${agent.status}">${agent.status}</span>
-                            </div>
-                            <div class="text-sm text-slate-400 mb-2">${agent.objective || 'No objective'}</div>
-                            <div class="flex items-center text-xs text-slate-500 space-x-3">
-                                <span>ID: ${agent.agent_id}</span>
-                                <span>${agent.last_action || ''}</span>
-                            </div>
-                            <div class="mt-2 text-xs text-slate-600">
-                                Started: ${agent.start_time ? new Date(agent.start_time).toLocaleTimeString() : '--'}
-                            </div>
-                        </div>
-                    `).join('');
-                }
+                updateAgentGrid(data.agents);
             }
-            
-            // Update nodes grid
+
+            // Nodes
             if (data.nodes) {
-                const nodesGrid = document.getElementById('nodes-grid');
-                const nodeEntries = Object.entries(data.nodes).filter(([_, node]) => node !== null);
-                
-                if (nodeEntries.length === 0) {
-                    nodesGrid.innerHTML = `
-                        <div class="col-span-full text-center py-8 text-slate-500">
-                            No nodes found
-                        </div>`;
-                } else {
-                    nodesGrid.innerHTML = nodeEntries.map(([name, node]) => {
-                        const fm = node.frontmatter || {};
-                        const status = fm.status || 'unknown';
-                        return `
-                            <div class="agent-card">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="font-semibold text-white">${name}</span>
-                                    <span class="status-badge status-${status}">${status}</span>
-                                </div>
-                                <div class="text-xs text-slate-500 mb-2">${node.path}</div>
-                                <div class="text-xs text-slate-400">
-                                    ${fm.agent_role ? `Role: ${fm.agent_role}<br>` : ''}
-                                    ${fm.result ? `Result: ${fm.result}<br>` : ''}
-                                    Modified: ${new Date(node.last_modified * 1000).toLocaleTimeString()}
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
+                updateNodeGrid(data.nodes);
+            }
+
+            // Log
+            logEvent('ORCHESTRATOR', 
+                `Status: ${data.orchestrator?.status || 'unknown'} | Agents: ${data.agents?.length || 0}`, 
+                'normal'
+            );
+        }
+
+        // ═══════════════════════════════════════
+        // AGENT GRID UPDATE
+        // ═══════════════════════════════════════
+        function updateAgentGrid(agents) {
+            const grid = document.getElementById('agents-grid');
+            
+            if (agents.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No active agents</div>';
+                return;
             }
             
-            // Add to event log
-            const logContainer = document.getElementById('event-log');
-            const timestamp = new Date().toLocaleTimeString();
-            const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
-            logEntry.textContent = `[${timestamp}] Orchestrator: ${data.orchestrator?.status || 'unknown'} | Agents: ${data.agents?.length || 0}`;
-            logContainer.insertBefore(logEntry, logContainer.firstChild);
+            grid.innerHTML = agents.map((agent, i) => `
+                <div class="agent-card ${agent.status}" style="animation-delay: ${i * 0.05}s;">
+                    <div class="agent-header">
+                        <div class="agent-role">${agent.role.replace('_', ' ')}</div>
+                        <div class="agent-status ${agent.status}">${agent.status}</div>
+                    </div>
+                    <div class="agent-objective">${agent.objective || 'No objective'}</div>
+                    <div class="agent-meta">
+                        <span><code>${agent.agent_id.split('-').pop()}</code></span>
+                        <span>${agent.last_action || 'idle'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ═══════════════════════════════════════
+        // NODE GRID UPDATE
+        // ═══════════════════════════════════════
+        function updateNodeGrid(nodes) {
+            const grid = document.getElementById('nodes-grid');
+            const entries = Object.entries(nodes).filter(([_, node]) => node !== null);
             
-            // Keep only last 50 log entries
-            while (logContainer.children.length > 50) {
-                logContainer.removeChild(logContainer.lastChild);
+            if (entries.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No nodes</div>';
+                return;
+            }
+            
+            grid.innerHTML = entries.map(([name, node]) => {
+                const fm = node.frontmatter || {};
+                return `
+                    <div class="node-item">
+                        <div>
+                            <div class="node-name">${name}</div>
+                            <div class="node-path">${node.path}</div>
+                        </div>
+                        <div style="font-size: 10px; color: var(--${fm.status === 'completed' ? 'phosphor' : fm.status === 'failed' ? 'alert' : 'steel'}); text-transform: uppercase;">
+                            ${fm.status || 'unknown'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ═══════════════════════════════════════
+        // TERMINAL LOG
+        // ═══════════════════════════════════════
+        function logEvent(source, message, type = 'normal') {
+            const log = document.getElementById('event-log');
+            const time = new Date().toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const sourceClass = type === 'alert' ? 'alert' : type === 'caution' ? 'caution' : '';
+            
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.innerHTML = `
+                <span class="terminal-timestamp">${time}</span>
+                <span class="terminal-source ${sourceClass}">${source}</span>
+                <span class="terminal-message">${message}</span>
+            `;
+            
+            log.insertBefore(line, log.firstChild);
+            
+            while (log.children.length > 100) {
+                log.removeChild(log.lastChild);
             }
         }
 
-        // Handle test form submission
+        // ═══════════════════════════════════════
+        // NUMBER ANIMATION
+        // ═══════════════════════════════════════
+        function animateNumber(id, target) {
+            const el = document.getElementById(id);
+            const current = parseInt(el.textContent) || 0;
+            if (current === target) return;
+            
+            const step = target > current ? 1 : -1;
+            const duration = 300;
+            const steps = Math.abs(target - current);
+            const interval = duration / steps;
+            
+            let val = current;
+            const timer = setInterval(() => {
+                val += step;
+                el.textContent = val;
+                if (val === target) clearInterval(timer);
+            }, interval);
+        }
+
+        // ═══════════════════════════════════════
+        // TEST FORM HANDLING
+        // ═══════════════════════════════════════
         document.body.addEventListener('htmx:afterSwap', function(event) {
             if (event.detail.target.id === 'test-result') {
                 const resultDiv = document.getElementById('test-result');
@@ -446,79 +1166,50 @@
                     const data = JSON.parse(event.detail.xhr.response);
                     if (data.status === 'success') {
                         resultDiv.innerHTML = `
-                            <div class="bg-green-900/30 border border-green-700 rounded p-4">
-                                <div class="flex items-center space-x-2 mb-2">
-                                    <span class="text-green-400 font-semibold">✓ Test Initiated</span>
+                            <div class="test-result success">
+                                <div style="color: var(--phosphor); font-weight: 600; margin-bottom: 8px; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px;">
+                                    ✓ Test Initiated
                                 </div>
-                                <div class="text-sm text-slate-300 space-y-1">
-                                    <div><span class="text-slate-400">Message:</span> ${data.message}</div>
-                                    <div><span class="text-slate-400">Agent ID:</span> <code class="bg-slate-800 px-1 rounded">${data.agent_id}</code></div>
-                                    <div><span class="text-slate-400">Memory Node:</span> <code class="bg-slate-800 px-1 rounded">${data.memory_node}</code></div>
-                                    <div><span class="text-slate-400">Timestamp:</span> ${data.timestamp}</div>
-                                </div>
-                                <div class="mt-3 text-xs text-slate-500">
-                                    Monitor progress in the Active Spawns panel above
+                                <div style="font-size: 11px; color: var(--ice); line-height: 1.8;">
+                                    <div><span style="color: var(--steel)">Target:</span> ${data.message}</div>
+                                    <div><span style="color: var(--steel)">Agent:</span> <code style="background: var(--void); padding: 1px 4px; border-radius: 1px;">${data.agent_id}</code></div>
+                                    <div><span style="color: var(--steel)">Node:</span> <code style="background: var(--void); padding: 1px 4px; border-radius: 1px;">${data.memory_node}</code></div>
                                 </div>
                             </div>
                         `;
+                        logEvent('LAUNCHER', `Agent ${data.agent_id.split('-').pop()} deployed`, 'normal');
                     } else {
                         resultDiv.innerHTML = `
-                            <div class="bg-red-900/30 border border-red-700 rounded p-4">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-red-400 font-semibold">✗ Error</span>
-                                </div>
-                                <div class="text-sm text-slate-300 mt-2">${data.error || 'Unknown error'}</div>
+                            <div class="test-result error">
+                                <div style="color: var(--alert); font-weight: 600;">✗ Error</div>
+                                <div style="font-size: 11px; color: var(--ice); margin-top: 4px;">${data.error || 'Unknown'}</div>
                             </div>
                         `;
+                        logEvent('LAUNCHER', data.error || 'Launch failed', 'alert');
                     }
                 } catch (e) {
-                    resultDiv.innerHTML = `
-                        <div class="bg-yellow-900/30 border border-yellow-700 rounded p-4">
-                            <div class="text-sm text-slate-300">${event.detail.xhr.response}</div>
-                        </div>
-                    `;
+                    resultDiv.innerHTML = `<div class="test-result">${event.detail.xhr.response}</div>`;
                 }
-                
-                // Add to event log
-                const logContainer = document.getElementById('event-log');
-                const timestamp = new Date().toLocaleTimeString();
-                const logEntry = document.createElement('div');
-                logEntry.className = 'log-entry';
-                logEntry.innerHTML = `[${timestamp}] <span class="text-blue-400">Test initiated</span> - Check Active Spawns panel`;
-                logContainer.insertBefore(logEntry, logContainer.firstChild);
             }
         });
 
-        // Initial load
+        // ═══════════════════════════════════════
+        // INITIAL LOAD
+        // ═══════════════════════════════════════
         fetch('/api/orchestrator/status')
             .then(r => r.json())
-            .then(data => {
-                updateDashboard({
-                    orchestrator: data,
-                    agents: [],
-                    nodes: {}
-                });
-            });
+            .then(data => updateDashboard({ orchestrator: data, agents: [], nodes: {} }));
         
         fetch('/api/agents/active')
             .then(r => r.json())
-            .then(data => {
-                updateDashboard({
-                    orchestrator: {},
-                    agents: data.agents,
-                    nodes: {}
-                });
-            });
+            .then(data => updateDashboard({ orchestrator: {}, agents: data.agents, nodes: {} }));
         
         fetch('/api/nodes/global')
             .then(r => r.json())
-            .then(data => {
-                updateDashboard({
-                    orchestrator: {},
-                    agents: [],
-                    nodes: data
-                });
-            });
+            .then(data => updateDashboard({ orchestrator: {}, agents: [], nodes: data }));
+
+        logEvent('SYSTEM', 'Mission Control online. Ready for test deployment.', 'normal');
     </script>
+
 </body>
 </html>
