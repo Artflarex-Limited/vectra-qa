@@ -197,23 +197,13 @@ class AgentSpawner:
                         "checked_paths": alt_paths
                     }
             
-            # Debug: verify subprocess can see the file
-            import tempfile
-            debug_log = f"/app/obsidian_vault/Runs/{agent_id}_debug.log"
-            with open(debug_log, 'w') as df:
-                df.write(f"Worker path: {worker_path}\n")
-                df.write(f"CWD: /app\n")
-                df.write(f"File exists check: {os_module.path.exists(worker_path)}\n")
-                df.write(f"PYTHONPATH: {env.get('PYTHONPATH')}\n")
-                df.flush()
-                
-                process = subprocess.Popen(
-                    ['/opt/venv/bin/python3', worker_path, agent_id, memory_node],
-                    env=env,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    cwd='/app'
-                )
+            process = subprocess.Popen(
+                ['/opt/venv/bin/python3', worker_path, agent_id, memory_node],
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                cwd='/app'
+            )
             
             # Start a thread to capture output to log file
             def capture_output(proc, log_path):

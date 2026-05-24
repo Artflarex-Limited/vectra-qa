@@ -148,27 +148,6 @@ class MCPServer:
                 ]
             }
         
-        @app.get("/debug/file-check")
-        async def debug_file_check():
-            import os
-            import subprocess
-            path = "/app/agents/ui_explorer/worker.py"
-            result = {
-                "path": path,
-                "exists": os.path.exists(path),
-                "isfile": os.path.isfile(path),
-                "readable": os.access(path, os.R_OK),
-                "cwd": os.getcwd(),
-                "ls": subprocess.run(["ls", "-la", path], capture_output=True, text=True).stdout.strip().split("\n") if os.path.exists(path) else []
-            }
-            if os.path.exists(path):
-                try:
-                    with open(path, 'r') as f:
-                        result["first_line"] = f.readline().strip()
-                except Exception as e:
-                    result["read_error"] = str(e)
-            return result
-        
         uvicorn.run(app, host=host, port=port)
 
 

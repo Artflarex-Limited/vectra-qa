@@ -161,7 +161,10 @@ class ObsidianReader:
                         "objective": node.frontmatter.get("objective", ""),
                         "node_path": node.path,
                         "last_action": node.frontmatter.get("last_action", ""),
-                        "start_time": node.frontmatter.get("start_time", "")
+                        "start_time": node.frontmatter.get("start_time", ""),
+                        "progress_percent": node.frontmatter.get("progress_percent", 0),
+                        "screenshots": node.frontmatter.get("screenshots", []),
+                        "timestamp": node.frontmatter.get("timestamp", "")
                     })
         
         # Check run nodes
@@ -178,7 +181,10 @@ class ObsidianReader:
                         "objective": node.frontmatter.get("objective", ""),
                         "node_path": node.path,
                         "last_action": node.frontmatter.get("last_action", ""),
-                        "start_time": node.frontmatter.get("start_time", "")
+                        "start_time": node.frontmatter.get("start_time", ""),
+                        "progress_percent": node.frontmatter.get("progress_percent", 0),
+                        "screenshots": node.frontmatter.get("screenshots", []),
+                        "timestamp": node.frontmatter.get("timestamp", "")
                     })
         
         return agents
