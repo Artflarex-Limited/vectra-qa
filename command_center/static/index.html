@@ -824,11 +824,95 @@
         }
 
         /* ─────────────────────────────────────────
-           CHAT PANEL
+           FLOATING CHAT WIDGET
            ───────────────────────────────────────── */
-        .chat-panel {
-            position: sticky;
-            top: 32px;
+        .chat-panel-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 380px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-panel-container.collapsed {
+            height: 44px;
+        }
+
+        .chat-panel-container.expanded {
+            height: 500px;
+        }
+
+        .chat-panel-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            transition: border-radius 0.3s ease;
+            height: 44px;
+        }
+
+        .chat-panel-container.expanded .chat-panel-header {
+            border-bottom: 1px solid var(--grid);
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .chat-panel-body {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--grid);
+            border-top: none;
+            border-radius: 0 0 var(--radius) var(--radius);
+            overflow: hidden;
+            height: calc(100% - 44px);
+            flex-direction: column;
+        }
+
+        .chat-panel-container.expanded .chat-panel-body {
+            display: flex;
+        }
+
+        .collapse-btn {
+            background: none;
+            border: none;
+            color: var(--steel);
+            cursor: pointer;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+            padding: 4px;
+        }
+
+        .chat-panel-container.collapsed .collapse-btn {
+            transform: rotate(180deg);
+        }
+
+        .unread-badge {
+            background: var(--alert);
+            color: var(--void);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            display: none;
+        }
+
+        .unread-badge.visible {
+            display: inline-block;
+        }
+
+        @keyframes attentionGlow {
+            0%, 100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5); }
+            50% { box-shadow: 0 4px 32px var(--phosphor-glow); }
+        }
+
+        .chat-panel-container.attention {
+            animation: attentionGlow 1s ease-in-out 3;
         }
 
         .chat-message {
@@ -1181,57 +1265,6 @@
                 </div>
             </div>
 
-            <!-- Vectra Chat Panel -->
-            <div class="panel chat-panel" style="animation-delay: 0.35s;">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        <span style="margin-right: 6px;">🤖</span> Vectra
-                    </div>
-                    <div style="font-size: 10px; color: var(--steel);" id="chat-status">Online</div>
-                </div>
-                <div class="panel-body" style="padding: 0;">
-                    <!-- Chat Messages -->
-                    <div id="chat-messages" style="height: 300px; overflow-y: auto; padding: 16px;">
-                        <div class="chat-message assistant-message">
-                            <div class="chat-avatar">🤖</div>
-                            <div class="chat-bubble assistant">
-                                Hello! I'm Vectra. I can help you configure and run tests. 
-                                Try: "Test the contact form on https://example.com"
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Test Plan Confirmation (hidden by default) -->
-                    <div id="chat-plan-confirm" style="display: none; padding: 12px 16px; border-top: 1px solid var(--grid); background: var(--surface-raised);">
-                        <div style="font-size: 10px; color: var(--steel); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.1em;">Planned Tests</div>
-                        <div id="chat-plan-details" style="font-size: 11px; color: var(--ice);"></div>
-                        <div style="display: flex; gap: 8px; margin-top: 12px;">
-                            <button onclick="confirmChatPlan()" class="btn-confirm">✓ Run</button>
-                            <button onclick="cancelChatPlan()" class="btn-cancel">✕ Cancel</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Typing Indicator (hidden by default) -->
-                    <div id="chat-typing" style="display: none; padding: 8px 16px; border-top: 1px solid var(--grid);">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="chat-avatar" style="width: 20px; height: 20px; font-size: 10px;">🤖</div>
-                            <div style="font-size: 10px; color: var(--steel);">
-                                <span class="typing-dot">●</span><span class="typing-dot">●</span><span class="typing-dot">●</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Input -->
-                    <div style="padding: 12px 16px; border-top: 1px solid var(--grid); display: flex; gap: 8px;">
-                        <input type="text" id="chat-input" placeholder="Ask Vectra..." 
-                               style="flex: 1; background: var(--void); border: 1px solid var(--grid); color: var(--ice); padding: 8px 12px; font-family: var(--font-mono); font-size: 12px; border-radius: var(--radius); outline: none; transition: border-color 0.2s;"
-                               onkeydown="if(event.key==='Enter') sendChatMessage()"
-                               onfocus="this.style.borderColor='var(--phosphor-dim)'" 
-                               onblur="this.style.borderColor='var(--grid)'">
-                        <button onclick="sendChatMessage()" class="btn-chat-send">➤</button>
-                    </div>
-                </div>
-            </div>
         </aside>
 
     </main>
@@ -1577,6 +1610,61 @@
         // ═══════════════════════════════════════
         let currentPlan = null;
         let isChatLoading = false;
+        let unreadCount = 0;
+
+        function toggleChatPanel() {
+            const panel = document.getElementById('chat-panel-container');
+            const isCollapsed = panel.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                // Expand
+                panel.classList.remove('collapsed');
+                panel.classList.add('expanded');
+                panel.classList.remove('attention');
+                
+                // Clear unread badge
+                unreadCount = 0;
+                updateUnreadBadge(0);
+                
+                // Focus input
+                setTimeout(() => {
+                    const input = document.getElementById('chat-input');
+                    if (input) input.focus();
+                }, 300);
+                
+                scrollChatToBottom();
+            } else {
+                // Collapse
+                panel.classList.remove('expanded');
+                panel.classList.add('collapsed');
+            }
+            
+            // Save state
+            localStorage.setItem('chatPanelCollapsed', panel.classList.contains('collapsed'));
+        }
+
+        function updateUnreadBadge(count) {
+            const badge = document.getElementById('chat-unread-badge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.add('visible');
+            } else {
+                badge.classList.remove('visible');
+            }
+        }
+
+        function loadChatPanelState() {
+            const isCollapsed = localStorage.getItem('chatPanelCollapsed') !== 'false';
+            const panel = document.getElementById('chat-panel-container');
+            
+            if (isCollapsed) {
+                panel.classList.add('collapsed');
+                panel.classList.remove('expanded');
+            } else {
+                panel.classList.remove('collapsed');
+                panel.classList.add('expanded');
+            }
+        }
 
         async function loadChatHistory() {
             try {
@@ -1600,6 +1688,7 @@
 
         function displayChatMessage(role, content, scroll = true) {
             const container = document.getElementById('chat-messages');
+            const panel = document.getElementById('chat-panel-container');
             
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message ${role}-message`;
@@ -1630,6 +1719,25 @@
             `;
             
             container.appendChild(messageDiv);
+            
+            // Handle collapsed panel
+            if (panel.classList.contains('collapsed') && role === 'assistant') {
+                // Increment unread count
+                unreadCount++;
+                updateUnreadBadge(unreadCount);
+                
+                // Auto-expand with attention animation
+                panel.classList.remove('collapsed');
+                panel.classList.add('expanded');
+                panel.classList.add('attention');
+                
+                setTimeout(() => {
+                    panel.classList.remove('attention');
+                }, 3000);
+                
+                // Save state
+                localStorage.setItem('chatPanelCollapsed', 'false');
+            }
             
             if (scroll) {
                 scrollChatToBottom();
@@ -1696,7 +1804,6 @@
             // Show loading state
             isChatLoading = true;
             showTypingIndicator();
-            document.getElementById('chat-status').textContent = 'Thinking...';
             
             try {
                 const response = await fetch('/api/chat/message', {
@@ -1727,7 +1834,6 @@
             }
             
             isChatLoading = false;
-            document.getElementById('chat-status').textContent = 'Online';
         }
 
         async function confirmChatPlan() {
@@ -1737,7 +1843,6 @@
             displayChatMessage('system', `Executing: ${currentPlan.tests.join(', ')} on ${currentPlan.url}`);
             
             showTypingIndicator();
-            document.getElementById('chat-status').textContent = 'Running...';
             
             try {
                 const response = await fetch('/api/chat/execute', {
@@ -1773,7 +1878,6 @@
             }
             
             currentPlan = null;
-            document.getElementById('chat-status').textContent = 'Online';
         }
 
         function cancelChatPlan() {
@@ -1781,7 +1885,8 @@
             displayChatMessage('assistant', 'Test plan cancelled. Let me know if you want to run different tests.');
         }
 
-        // Load chat history on page load
+        // Load chat panel state and history on page load
+        loadChatPanelState();
         loadChatHistory();
 
         loadRecentTests();
@@ -1791,6 +1896,64 @@
         // Refresh recent tests every 10 seconds
         setInterval(loadRecentTests, 10000);
     </script>
+
+    <!-- ═══════════════════════════════════════
+         FLOATING CHAT WIDGET
+         ═══════════════════════════════════════ -->
+    <div id="chat-panel-container" class="chat-panel-container collapsed">
+        <div class="chat-panel-header" onclick="toggleChatPanel()">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>🤖</span>
+                <span style="font-family: var(--font-display); font-size: 12px; font-weight: 600;">Vectra</span>
+                <span id="chat-unread-badge" class="unread-badge">0</span>
+            </div>
+            <button class="collapse-btn" onclick="event.stopPropagation(); toggleChatPanel()">
+                ▼
+            </button>
+        </div>
+        <div class="chat-panel-body">
+            <!-- Chat Messages -->
+            <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 16px;">
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">🤖</div>
+                    <div class="chat-bubble assistant">
+                        Hello! I'm Vectra. I can help you configure and run tests. 
+                        Try: "Test the contact form on https://example.com"
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Plan Confirmation (hidden by default) -->
+            <div id="chat-plan-confirm" style="display: none; padding: 12px 16px; border-top: 1px solid var(--grid); background: var(--surface-raised);">
+                <div style="font-size: 10px; color: var(--steel); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.1em;">Planned Tests</div>
+                <div id="chat-plan-details" style="font-size: 11px; color: var(--ice);"></div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button onclick="confirmChatPlan()" class="btn-confirm">✓ Run</button>
+                    <button onclick="cancelChatPlan()" class="btn-cancel">✕ Cancel</button>
+                </div>
+            </div>
+            
+            <!-- Typing Indicator (hidden by default) -->
+            <div id="chat-typing" style="display: none; padding: 8px 16px; border-top: 1px solid var(--grid);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="chat-avatar" style="width: 20px; height: 20px; font-size: 10px;">🤖</div>
+                    <div style="font-size: 10px; color: var(--steel);">
+                        <span class="typing-dot">●</span><span class="typing-dot">●</span><span class="typing-dot">●</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input -->
+            <div style="padding: 12px 16px; border-top: 1px solid var(--grid); display: flex; gap: 8px;">
+                <input type="text" id="chat-input" placeholder="Ask Vectra..." 
+                       style="flex: 1; background: var(--void); border: 1px solid var(--grid); color: var(--ice); padding: 8px 12px; font-family: var(--font-mono); font-size: 12px; border-radius: var(--radius); outline: none; transition: border-color 0.2s;"
+                       onkeydown="if(event.key==='Enter') sendChatMessage()"
+                       onfocus="this.style.borderColor='var(--phosphor-dim)'" 
+                       onblur="this.style.borderColor='var(--grid)'">
+                <button onclick="sendChatMessage()" class="btn-chat-send">➤</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
