@@ -1,0 +1,48 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'wiki/**'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare wiki content
+        run: |
+          mkdir -p wiki_output
+          
+          # Copy main docs
+          if [ -d docs ]; then
+            for file in docs/*.md docs/**/*.md; do
+              if [ -f "$file" ]; then
+                # Convert path to wiki format
+                basename=$(basename "$file" .md)
+                cp "$file" "wiki_output/${basename}.md"
+              fi
+            done
+          fi
+          
+          # Copy wiki folder contents
+          if [ -d wiki ]; then
+            cp wiki/*.md wiki_output/ 2>/dev/null || true
+          fi
+          
+          # Create Home.md if it doesn't exist
+          if [ ! -f "wiki_output/Home.md" ] && [ -f "README.md" ]; then
+            cp README.md wiki_output/Home.md
+          fi
+
+      - name: Push to Wiki
+        uses: Andrew-Chen-Wang/github-wiki-action@v4
+        with:
+          path: wiki_output
+          token: ${{ secrets.GITHUB_TOKEN }}
+          strategy: clone

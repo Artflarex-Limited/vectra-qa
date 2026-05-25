@@ -1,0 +1,126 @@
+site_name: Vectra QA
+site_url: https://vectra-qa.artflarex.com
+site_description: Multi-agent autonomous testing framework
+site_author: Artflarex Limited
+copyright: Copyright &copy; 2026 Artflarex Limited
+
+docs_dir: docs
+site_dir: site
+
+# Repository
+repo_name: Artflarex-Limited/vectra-qa
+repo_url: https://github.com/Artflarex-Limited/vectra-qa
+edit_uri: edit/main/docs/
+
+# Theme
+theme:
+  name: material
+  logo: assets/logo.svg
+  favicon: assets/favicon.ico
+  custom_dir: overrides
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+
+# Plugins
+plugins:
+  - search
+  - mike:
+      version_selector: true
+      css_dir: css
+      javascript_dir: js
+      canonical_version: latest
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [".", "agents", "command_center", "mcp_server"]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_if_no_docstring: false
+
+# Extra CSS
+extra_css:
+  - assets/custom.css
+
+# Extra JavaScript
+extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+
+# Extra options
+extra:
+  version:
+    provider: mike
+    default: latest
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Artflarex-Limited/vectra-qa
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/artflarex/vectra-qa
+
+# Markdown extensions
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+# Navigation
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quickstart: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Components: architecture/components.md
+    - Memory Layer: architecture/memory-layer.md
+    - Agent Communication: architecture/agent-communication.md
+  - API:
+    - Endpoints: api/endpoints.md
+    - Chatbot: api/chatbot.md
+    - Agents: api/agents.md
+  - User Guide:
+    - Writing Tests: user-guide/writing-tests.md
+    - Understanding Results: user-guide/understanding-results.md
+    - Advanced Usage: user-guide/advanced-usage.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Custom Agents: development/custom-agents.md
+    - Local Setup: development/local-setup.md
+  - Reference:
+    - Environment Variables: reference/environment-variables.md
+    - Quick Reference: reference/quick-reference.md
+    - Troubleshooting: reference/troubleshooting.md

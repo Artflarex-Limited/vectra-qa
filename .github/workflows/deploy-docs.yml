@@ -1,0 +1,59 @@
+name: Deploy Versioned Docs to GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., 0.1.0)'
+        required: true
+        default: '0.1.0'
+      set_default:
+        description: 'Set as default version'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for mike
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs-material mkdocstrings[python] mike
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy version
+        run: |
+          mike deploy ${{ github.event.inputs.version }} --push
+
+      - name: Set default version
+        if: github.event.inputs.set_default == 'true'
+        run: |
+          mike set-default ${{ github.event.inputs.version }} --push
+
+      - name: List deployed versions
+        run: |
+          mike list

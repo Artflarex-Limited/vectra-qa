@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vectra-qa"
+version = "0.1.0"
+description = "Multi-agent autonomous testing framework with Obsidian-backed memory"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Artflarex Limited", email = "hello@artflarex.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "httpx>=0.27.0",
+    "playwright>=1.40.0",
+    "pyyaml>=6.0",
+    "watchdog>=3.0",
+    "openai>=1.0.0",
+    "anthropic>=0.21.0",
+    "google-generativeai>=0.3.0",
+]
+
+[project.urls]
+Homepage = "https://vectra-qa.artflarex.com"
+Documentation = "https://vectra-qa.artflarex.com"
+Repository = "https://github.com/Artflarex-Limited/vectra-qa"
+Issues = "https://github.com/Artflarex-Limited/vectra-qa/issues"
+Changelog = "https://github.com/Artflarex-Limited/vectra-qa/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+docs = [
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24.0",
+    "mike>=2.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mcp_server*", "command_center*", "agents*"]
+exclude = ["tests*", "docs*", "examples*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
