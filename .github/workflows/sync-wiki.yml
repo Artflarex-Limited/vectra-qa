@@ -8,6 +8,9 @@ on:
       - 'wiki/**'
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -19,18 +22,15 @@ jobs:
         run: |
           mkdir -p wiki_output
           
-          # Copy main docs
+          # Copy main docs (flatten structure)
           if [ -d docs ]; then
-            for file in docs/*.md docs/**/*.md; do
-              if [ -f "$file" ]; then
-                # Convert path to wiki format
-                basename=$(basename "$file" .md)
-                cp "$file" "wiki_output/${basename}.md"
-              fi
+            for file in $(find docs -name '*.md' -type f); do
+              basename=$(basename "$file" .md)
+              cp "$file" "wiki_output/${basename}.md"
             done
           fi
           
-          # Copy wiki folder contents
+          # Copy wiki folder contents (take precedence)
           if [ -d wiki ]; then
             cp wiki/*.md wiki_output/ 2>/dev/null || true
           fi
@@ -39,10 +39,40 @@ jobs:
           if [ ! -f "wiki_output/Home.md" ] && [ -f "README.md" ]; then
             cp README.md wiki_output/Home.md
           fi
+          
+          # List prepared files
+          echo "Prepared wiki files:"
+          ls -la wiki_output/
 
       - name: Push to Wiki
-        uses: Andrew-Chen-Wang/github-wiki-action@v4
-        with:
-          path: wiki_output
-          token: ${{ secrets.GITHUB_TOKEN }}
-          strategy: clone
+        run: |
+          # Clone wiki repository
+          git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki_repo || {
+            echo "Wiki repository doesn't exist yet. Creating initial wiki..."
+            mkdir wiki_repo
+            cd wiki_repo
+            git init
+            git remote add origin https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git
+            cd ..
+          }
+          
+          # Copy prepared content to wiki repo
+          cp wiki_output/*.md wiki_repo/ 2>/dev/null || true
+          
+          cd wiki_repo
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are changes
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "docs(wiki): sync from main repo ($(date -u '+%Y-%m-%d %H:%M:%S UTC'))"
+            git push origin master || git push origin main
+            echo "✅ Wiki synced successfully"
+          else
+            echo "ℹ️ No changes to sync"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
