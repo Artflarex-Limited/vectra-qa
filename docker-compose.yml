@@ -36,6 +36,9 @@ services:
       - KIMI_BASE_URL=${KIMI_BASE_URL:-https://api.moonshot.cn/v1}
       - LOCAL_LLM_BASE_URL=${LOCAL_LLM_BASE_URL:-}
       - LOCAL_LLM_MODEL=${LOCAL_LLM_MODEL:-llama3.1:70b}
+      - CHATBOT_MODEL=${CHATBOT_MODEL:-anthropic/claude-3-5-sonnet-20241022}
+      - CHATBOT_MAX_HISTORY=${CHATBOT_MAX_HISTORY:-50}
+      - CHATBOT_ENABLE_STREAMING=${CHATBOT_ENABLE_STREAMING:-true}
       - MCP_TRANSPORT=${MCP_TRANSPORT:-sse}
       - MCP_SERVER_PORT=${MCP_SERVER_PORT:-8080}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -70,6 +73,9 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - COMMAND_CENTER_SECRET_KEY=${COMMAND_CENTER_SECRET_KEY:-dev-secret-key-change-in-production}
+      - CHATBOT_MODEL=${CHATBOT_MODEL:-anthropic/claude-3-5-sonnet-20241022}
+      - CHATBOT_MAX_HISTORY=${CHATBOT_MAX_HISTORY:-50}
+      - CHATBOT_ENABLE_STREAMING=${CHATBOT_ENABLE_STREAMING:-true}
     volumes:
       - obsidian-vault:/app/obsidian_vault
       - ./command_center/static:/app/command_center/static
