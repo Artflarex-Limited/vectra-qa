@@ -194,22 +194,28 @@
             font-weight: 500;
         }
 
-        .status-badge.active {
-            background: var(--phosphor-glow);
-            color: var(--phosphor);
-            border: 1px solid rgba(0, 255, 136, 0.2);
-        }
-
-        .status-badge.completed {
+        .status-badge.pass {
             background: rgba(0, 204, 106, 0.1);
             color: var(--phosphor-dim);
             border: 1px solid rgba(0, 204, 106, 0.2);
         }
 
-        .status-badge.failed {
+        .status-badge.fail {
             background: var(--alert-glow);
             color: var(--alert);
             border: 1px solid rgba(255, 51, 102, 0.2);
+        }
+
+        .status-badge.warning {
+            background: var(--caution-glow);
+            color: var(--caution);
+            border: 1px solid rgba(255, 170, 0, 0.2);
+        }
+
+        .status-badge.active {
+            background: var(--phosphor-glow);
+            color: var(--phosphor);
+            border: 1px solid rgba(0, 255, 136, 0.2);
         }
 
         .pulse-dot {
@@ -301,46 +307,208 @@
         }
 
         /* ─────────────────────────────────────────
-           FINDINGS
+           REPORT SECTIONS
            ───────────────────────────────────────── */
-        .finding-item {
-            padding: 12px 0;
+        .report-section {
+            margin-bottom: 16px;
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .report-section-header {
+            padding: 12px 16px;
+            background: var(--surface-raised);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .report-section-header:hover {
+            background: var(--surface-hover);
+        }
+
+        .report-section-title {
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .report-section-status {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 2px 8px;
+            border-radius: 1px;
+            font-weight: 500;
+        }
+
+        .report-section-status.pass {
+            background: rgba(0, 204, 106, 0.1);
+            color: var(--phosphor-dim);
+        }
+
+        .report-section-status.fail {
+            background: var(--alert-glow);
+            color: var(--alert);
+        }
+
+        .report-section-status.warning {
+            background: var(--caution-glow);
+            color: var(--caution);
+        }
+
+        .report-section-body {
+            padding: 16px;
+            border-top: 1px solid var(--grid);
+        }
+
+        .report-section-body.collapsed {
+            display: none;
+        }
+
+        /* ─────────────────────────────────────────
+           METRICS TABLE
+           ───────────────────────────────────────── */
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            font-size: 11px;
+        }
+
+        .metrics-table th,
+        .metrics-table td {
+            padding: 6px 10px;
+            text-align: left;
             border-bottom: 1px solid var(--grid);
         }
 
-        .finding-item:last-child {
-            border-bottom: none;
+        .metrics-table th {
+            color: var(--steel);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 0.08em;
         }
 
-        .finding-time {
-            font-size: 9px;
-            color: var(--steel);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 4px;
+        .metrics-table td {
+            color: var(--ice);
+        }
+
+        /* ─────────────────────────────────────────
+           FINDINGS
+           ───────────────────────────────────────── */
+        .finding-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .finding-item {
+            padding: 10px 12px;
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .finding-severity {
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .finding-content {
+            flex: 1;
         }
 
         .finding-title {
             font-family: var(--font-display);
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--ice);
-            margin-bottom: 6px;
+            margin-bottom: 2px;
         }
 
-        .finding-content {
-            font-size: 11px;
-            color: var(--steel);
-            line-height: 1.7;
-        }
-
-        .finding-content code {
-            font-family: var(--font-mono);
-            color: var(--phosphor);
-            background: var(--void);
-            padding: 1px 4px;
-            border-radius: 1px;
+        .finding-description {
             font-size: 10px;
+            color: var(--steel);
+            line-height: 1.5;
+        }
+
+        /* ─────────────────────────────────────────
+           RECOMMENDATIONS
+           ───────────────────────────────────────── */
+        .recommendations-list {
+            list-style: none;
+            counter-reset: rec;
+        }
+
+        .recommendations-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--grid);
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .recommendations-list li:last-child {
+            border-bottom: none;
+        }
+
+        .recommendations-list li::before {
+            counter-increment: rec;
+            content: counter(rec) ".";
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--phosphor);
+            font-weight: 600;
+            flex-shrink: 0;
+            min-width: 20px;
+        }
+
+        /* ─────────────────────────────────────────
+           SUMMARY STATS
+           ───────────────────────────────────────── */
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            padding: 12px;
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-value.pass { color: var(--phosphor-dim); }
+        .stat-value.fail { color: var(--alert); }
+        .stat-value.warning { color: var(--caution); }
+
+        .stat-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--steel);
         }
 
         /* ─────────────────────────────────────────
@@ -589,15 +757,55 @@
                 </div>
             </div>
 
-            <!-- Findings Panel -->
-            <div class="panel" style="margin-bottom: 24px;">
+            <!-- Summary Stats -->
+            <div class="panel" id="summary-panel" style="margin-bottom: 24px; display: none;">
                 <div class="panel-header">
-                    <div class="panel-title">Findings</div>
-                    <div style="font-size: 10px; color: var(--steel);" id="findings-count">0 findings</div>
+                    <div class="panel-title">Summary</div>
                 </div>
                 <div class="panel-body">
-                    <div id="findings-container">
-                        <div class="empty-state">Waiting for findings...</div>
+                    <div class="summary-stats" id="summary-stats">
+                        <div class="stat-card">
+                            <div class="stat-value pass" id="stat-pass">0</div>
+                            <div class="stat-label">Passed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value fail" id="stat-fail">0</div>
+                            <div class="stat-label">Failed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value warning" id="stat-warn">0</div>
+                            <div class="stat-label">Warnings</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-total" style="color: var(--ice);">0</div>
+                            <div class="stat-label">Total Checks</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Sections -->
+            <div class="panel" style="margin-bottom: 24px;">
+                <div class="panel-header">
+                    <div class="panel-title">Detailed Report</div>
+                    <div style="font-size: 10px; color: var(--steel);" id="sections-count">0 sections</div>
+                </div>
+                <div class="panel-body">
+                    <div id="report-sections">
+                        <div class="empty-state">Waiting for report data...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="panel" style="margin-bottom: 24px;">
+                <div class="panel-header">
+                    <div class="panel-title">Recommendations</div>
+                    <div style="font-size: 10px; color: var(--steel);" id="recommendations-count">0 items</div>
+                </div>
+                <div class="panel-body">
+                    <div id="recommendations-container">
+                        <div class="empty-state">No recommendations yet</div>
                     </div>
                 </div>
             </div>
@@ -718,7 +926,6 @@
             
             eventSource.onerror = function() {
                 console.log('SSE connection lost, reconnecting...');
-                // Auto-reconnect after 3 seconds
                 setTimeout(connectSSE, 3000);
             };
         }
@@ -729,13 +936,25 @@
         function updateResultPage(data) {
             // Status badge
             const statusBadge = document.getElementById('status-badge');
-            const statusClass = data.status === 'active' || data.status === 'spawned' || data.status === 'running' ? 'active' : 
-                               data.status === 'completed' ? 'completed' : 'failed';
+            let statusClass, statusText;
+            if (data.result === 'pass' || data.result === 'completed') {
+                statusClass = 'pass';
+                statusText = 'PASSED';
+            } else if (data.result === 'warning') {
+                statusClass = 'warning';
+                statusText = 'WARNING';
+            } else if (data.status === 'failed') {
+                statusClass = 'fail';
+                statusText = 'FAILED';
+            } else {
+                statusClass = 'active';
+                statusText = data.status || 'RUNNING';
+            }
             const pulseDot = statusClass === 'active' ? '<span class="pulse-dot"></span>' : '';
             statusBadge.innerHTML = `
                 <span class="status-badge ${statusClass}">
                     ${pulseDot}
-                    ${data.status}
+                    ${statusText}
                 </span>
             `;
             
@@ -747,15 +966,19 @@
             document.getElementById('progress-action').textContent = data.last_action || 'idle';
             document.getElementById('progress-percent').textContent = progress + '%';
             
-            // Findings
-            if (data.findings && data.findings.length > 0) {
-                updateFindings(data.findings);
+            // Metadata
+            if (data.objective) {
+                const urlMatch = data.objective.match(/https?:\/\/[^\s]+/);
+                if (urlMatch) {
+                    document.getElementById('meta-url').textContent = urlMatch[0];
+                }
+                document.getElementById('meta-type').textContent = data.role || 'Unknown';
             }
-            
-            // Screenshots
-            if (data.screenshots && data.screenshots.length > 0) {
-                updateScreenshots(data.screenshots);
+            document.getElementById('meta-agent').textContent = data.agent_id || agentId;
+            if (data.spawned_at) {
+                document.getElementById('meta-started').textContent = new Date(data.spawned_at).toLocaleString();
             }
+            document.getElementById('meta-result').textContent = data.result || data.status || 'Unknown';
             
             // Duration
             if (startTime) {
@@ -763,26 +986,147 @@
                 const duration = Math.round((now - startTime) / 1000);
                 document.getElementById('meta-duration').textContent = duration + 's';
             }
+            
+            // Update structured report sections if available
+            if (data.sections && data.sections.length > 0) {
+                updateReportSections(data.sections);
+            }
+            
+            // Update summary stats
+            if (data.summary) {
+                updateSummary(data.summary);
+            }
+            
+            // Update recommendations
+            if (data.recommendations && data.recommendations.length > 0) {
+                updateRecommendations(data.recommendations);
+            }
+            
+            // Screenshots
+            if (data.screenshots && data.screenshots.length > 0) {
+                updateScreenshots(data.screenshots);
+            }
+            
+            // Findings (legacy)
+            if (data.findings && data.findings.length > 0) {
+                // Only show if we don't have structured sections
+                if (!data.sections || data.sections.length === 0) {
+                    updateFindings(data.findings);
+                }
+            }
         }
 
         // ═══════════════════════════════════════
-        // UPDATE FINDINGS
+        // UPDATE SUMMARY
+        // ═══════════════════════════════════════
+        function updateSummary(summary) {
+            document.getElementById('summary-panel').style.display = 'block';
+            document.getElementById('stat-pass').textContent = summary.pass || 0;
+            document.getElementById('stat-fail').textContent = summary.fail || 0;
+            document.getElementById('stat-warn').textContent = summary.warning || 0;
+            document.getElementById('stat-total').textContent = summary.total || 0;
+        }
+
+        // ═══════════════════════════════════════
+        // UPDATE REPORT SECTIONS
+        // ═══════════════════════════════════════
+        function updateReportSections(sections) {
+            const container = document.getElementById('report-sections');
+            document.getElementById('sections-count').textContent = sections.length + ' sections';
+            
+            container.innerHTML = sections.map((section, idx) => {
+                const statusIcon = section.status === 'pass' ? '✓' : section.status === 'fail' ? '✗' : '⚠';
+                
+                // Build metrics table
+                let metricsHtml = '';
+                if (section.metrics && Object.keys(section.metrics).length > 0) {
+                    metricsHtml = `
+                        <table class="metrics-table">
+                            ${Object.entries(section.metrics).map(([key, value]) => `
+                                <tr><th>${key}</th><td>${value}</td></tr>
+                            `).join('')}
+                        </table>
+                    `;
+                }
+                
+                // Build findings
+                let findingsHtml = '';
+                if (section.findings && section.findings.length > 0) {
+                    findingsHtml = `
+                        <div class="finding-list" style="margin-top: 12px;">
+                            ${section.findings.map(finding => {
+                                const severityIcon = {
+                                    'critical': '🔴', 'high': '🟠', 'medium': '🟡', 
+                                    'low': '🔵', 'info': '⚪'
+                                }[finding.severity] || '⚪';
+                                return `
+                                    <div class="finding-item">
+                                        <div class="finding-severity">${severityIcon}</div>
+                                        <div class="finding-content">
+                                            <div class="finding-title">${finding.title}</div>
+                                            <div class="finding-description">${finding.description}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="report-section">
+                        <div class="report-section-header" onclick="toggleSection(${idx})">
+                            <div class="report-section-title">
+                                ${statusIcon} ${section.title}
+                            </div>
+                            <span class="report-section-status ${section.status}">${section.status}</span>
+                        </div>
+                        <div class="report-section-body" id="section-${idx}">
+                            ${metricsHtml}
+                            ${findingsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ═══════════════════════════════════════
+        // TOGGLE SECTION
+        // ═══════════════════════════════════════
+        function toggleSection(idx) {
+            const el = document.getElementById(`section-${idx}`);
+            el.classList.toggle('collapsed');
+        }
+
+        // ═══════════════════════════════════════
+        // UPDATE RECOMMENDATIONS
+        // ═══════════════════════════════════════
+        function updateRecommendations(recommendations) {
+            const container = document.getElementById('recommendations-container');
+            document.getElementById('recommendations-count').textContent = recommendations.length + ' items';
+            
+            container.innerHTML = `
+                <ol class="recommendations-list">
+                    ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ol>
+            `;
+        }
+
+        // ═══════════════════════════════════════
+        // UPDATE FINDINGS (LEGACY)
         // ═══════════════════════════════════════
         function updateFindings(findings) {
-            const container = document.getElementById('findings-container');
-            document.getElementById('findings-count').textContent = findings.length + ' findings';
-            
-            if (findings.length === 0) {
-                container.innerHTML = '<div class="empty-state">No findings recorded yet</div>';
-                return;
-            }
+            // Only used for legacy format without structured sections
+            const container = document.getElementById('report-sections');
+            document.getElementById('sections-count').textContent = findings.length + ' findings';
             
             container.innerHTML = findings.map(f => `
-                <div class="finding-item">
-                    <div class="finding-time">${f.timestamp || ''}</div>
-                    <div class="finding-title">${f.title || ''}</div>
-                    <div class="finding-content">
-                        ${f.items.map(item => `<div>${item}</div>`).join('')}
+                <div class="report-section">
+                    <div class="report-section-header">
+                        <div class="report-section-title">${f.timestamp || ''} — ${f.title || ''}</div>
+                    </div>
+                    <div class="report-section-body">
+                        ${f.items.map(item => `<div style="color: var(--steel); font-size: 11px; padding: 4px 0;">${item}</div>`).join('')}
                     </div>
                 </div>
             `).join('');

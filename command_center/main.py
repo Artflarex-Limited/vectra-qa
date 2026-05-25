@@ -256,6 +256,13 @@ async def get_result(agent_id: str):
     for node in reader.get_run_nodes():
         if node and node.frontmatter and node.frontmatter.get("agent_id") == agent_id:
             fm = node.frontmatter
+            content = node.content
+            
+            # Extract structured report data
+            sections = _extract_sections(content)
+            recommendations = _extract_recommendations(content)
+            summary = _extract_summary(content)
+            
             return {
                 "agent_id": fm.get("agent_id", "unknown"),
                 "role": fm.get("agent_role", "unknown"),
@@ -269,8 +276,11 @@ async def get_result(agent_id: str):
                 "end_time": fm.get("end_time", ""),
                 "timestamp": fm.get("timestamp", ""),
                 "last_action": fm.get("last_action", ""),
-                "content": node.content,
-                "findings": _extract_findings(node.content)
+                "content": content,
+                "findings": _extract_findings(content),
+                "sections": sections,
+                "recommendations": recommendations,
+                "summary": summary
             }
     
     return JSONResponse(status_code=404, content={"error": "Test result not found"})
@@ -305,6 +315,173 @@ def _extract_findings(content: str) -> list:
         findings.append(current_finding)
     
     return findings
+
+
+def _extract_sections(content: str) -> list:
+    """Parse structured report sections from markdown content."""
+    sections = []
+    lines = content.split('\n')
+    current_section = None
+    current_findings = []
+    current_metrics = {}
+    in_metrics = False
+    
+    for line in lines:
+        line_stripped = line.strip()
+        
+        # Detect section headers (## ✅ Title or ## ❌ Title, etc.)
+        if line_stripped.startswith('## ') and not line_stripped.startswith('## [') and not line_stripped.startswith('## Test Report'):
+            # Save previous section
+            if current_section:
+                current_section["findings"] = current_findings
+                current_section["metrics"] = current_metrics
+                sections.append(current_section)
+            
+            # Parse status from emoji
+            status = "info"
+            title = line_stripped[3:]
+            if title.startswith('✅ '):
+                status = "pass"
+                title = title[2:].strip()
+            elif title.startswith('❌ '):
+                status = "fail"
+                title = title[2:].strip()
+            elif title.startswith('⚠️ '):
+                status = "warning"
+                title = title[2:].strip()
+            elif title.startswith('ℹ️ '):
+                status = "info"
+                title = title[2:].strip()
+            
+            current_section = {
+                "title": title,
+                "status": status,
+                "findings": [],
+                "metrics": {}
+            }
+            current_findings = []
+            current_metrics = {}
+            in_metrics = False
+            
+        elif line_stripped.startswith('### Metrics'):
+            in_metrics = True
+        elif line_stripped.startswith('### Findings'):
+            in_metrics = False
+        elif line_stripped.startswith('- ') and current_section and not in_metrics:
+            # Parse finding with severity
+            finding_text = line_stripped[2:]
+            severity = "info"
+            title = finding_text
+            description = ""
+            
+            # Check for severity emoji
+            if finding_text.startswith('🔴 '):
+                severity = "critical"
+                finding_text = finding_text[2:]
+            elif finding_text.startswith('🟠 '):
+                severity = "high"
+                finding_text = finding_text[2:]
+            elif finding_text.startswith('🟡 '):
+                severity = "medium"
+                finding_text = finding_text[2:]
+            elif finding_text.startswith('🔵 '):
+                severity = "low"
+                finding_text = finding_text[2:]
+            elif finding_text.startswith('⚪ '):
+                severity = "info"
+                finding_text = finding_text[2:]
+            
+            # Split title and description
+            if ': ' in finding_text:
+                parts = finding_text.split(': ', 1)
+                title = parts[0].strip()
+                description = parts[1].strip()
+            elif '**' in finding_text:
+                # Handle bold format
+                import re
+                match = re.search(r'\*\*(.+?)\*\*:\s*(.+)', finding_text)
+                if match:
+                    title = match.group(1).strip()
+                    description = match.group(2).strip()
+                else:
+                    title = finding_text
+            
+            current_findings.append({
+                "title": title,
+                "description": description,
+                "severity": severity
+            })
+        elif line_stripped.startswith('- **') and current_section and in_metrics:
+            # Parse metric
+            metric_text = line_stripped[2:]
+            if '**: ' in metric_text or '**:' in metric_text:
+                parts = metric_text.split('**:', 1)
+                key = parts[0].replace('**', '').strip()
+                value = parts[1].strip() if len(parts) > 1 else ''
+                current_metrics[key] = value
+    
+    # Save last section
+    if current_section:
+        current_section["findings"] = current_findings
+        current_section["metrics"] = current_metrics
+        sections.append(current_section)
+    
+    return sections
+
+
+def _extract_recommendations(content: str) -> list:
+    """Parse recommendations from markdown content."""
+    recommendations = []
+    lines = content.split('\n')
+    in_recommendations = False
+    
+    for line in lines:
+        line_stripped = line.strip()
+        if '## 📝 Recommendations' in line_stripped or '## Recommendations' in line_stripped:
+            in_recommendations = True
+            continue
+        elif line_stripped.startswith('## ') and in_recommendations:
+            break
+        
+        if in_recommendations and (line_stripped.startswith('1. ') or line_stripped.startswith('2. ') or 
+                                   line_stripped.startswith('3. ') or line_stripped.startswith('4. ') or
+                                   line_stripped.startswith('5. ') or line_stripped.startswith('6. ') or
+                                   line_stripped.startswith('7. ') or line_stripped.startswith('8. ') or
+                                   line_stripped.startswith('9. ') or line_stripped.startswith('10. ')):
+            recommendations.append(line_stripped[3:].strip())
+    
+    return recommendations
+
+
+def _extract_summary(content: str) -> dict:
+    """Parse summary stats from report content."""
+    summary = {"pass": 0, "fail": 0, "warning": 0, "total": 0}
+    lines = content.split('\n')
+    
+    for line in lines:
+        line_stripped = line.strip()
+        if '| Sections Passed |' in line_stripped:
+            try:
+                summary["pass"] = int(line_stripped.split('|')[2].strip())
+            except:
+                pass
+        elif '| Sections Failed |' in line_stripped:
+            try:
+                summary["fail"] = int(line_stripped.split('|')[2].strip())
+            except:
+                pass
+        elif '| Warnings |' in line_stripped:
+            try:
+                summary["warning"] = int(line_stripped.split('|')[2].strip())
+            except:
+                pass
+        elif '| Total Checks |' in line_stripped:
+            try:
+                summary["total"] = int(line_stripped.split('|')[2].strip())
+            except:
+                pass
+    
+    return summary
 
 
 @app.get("/results/{agent_id}", response_class=HTMLResponse)
@@ -394,6 +571,11 @@ async def result_sse(request: Request, agent_id: str):
                 fm = node.frontmatter
                 current_content = node.content
                 
+                # Extract structured data
+                sections = _extract_sections(current_content)
+                recommendations = _extract_recommendations(current_content)
+                summary = _extract_summary(current_content)
+                
                 data = {
                     "timestamp": datetime.utcnow().isoformat() + "Z",
                     "agent_id": agent_id,
@@ -404,6 +586,9 @@ async def result_sse(request: Request, agent_id: str):
                     "screenshots": fm.get("screenshots", []),
                     "end_time": fm.get("end_time", ""),
                     "findings": _extract_findings(current_content),
+                    "sections": sections,
+                    "recommendations": recommendations,
+                    "summary": summary,
                     "content_changed": current_content != last_content
                 }
                 
