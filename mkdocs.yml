@@ -16,8 +16,7 @@ edit_uri: edit/main/docs/
 theme:
   name: material
   logo: assets/logo.svg
-  favicon: assets/favicon.ico
-  custom_dir: overrides
+  favicon: assets/logo.svg
   palette:
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
