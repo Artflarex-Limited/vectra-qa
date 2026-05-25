@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" width="200" height="40">
+  <style>
+    .brand { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; }
+    .primary { fill: #e0e6ed; }
+    .accent { fill: #00ff88; font-weight: 400; }
+  </style>
+  <text x="0" y="28" class="brand primary">Vectra</text>
+  <text x="95" y="28" class="brand accent">QA</text>
+</svg>
