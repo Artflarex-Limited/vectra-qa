@@ -1,8 +1,9 @@
 # Vectra QA
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg)](https://fastapi.tiangolo.com)
+[![Tests](https://img.shields.io/badge/tests-79%20passing-brightgreen.svg)](tests/)
 
 ## The Death of Static E2E Testing
 
@@ -10,7 +11,7 @@ Traditional E2E testing is **dead**. Static scripts, brittle selectors, and mono
 
 **Vectra QA** is a paradigm shift. We don't write tests. We **deploy agents**.
 
-Our framework treats testing as an autonomous, multi-agent exploration problem. A Test Manager agent dynamically spawns specialized sub-agents—UI Explorers that hunt for broken flows, Data Validators that intercept network traffic and verify payloads—each operating with its own behavioral DNA, memory, and objectives. When their mission is complete, they gracefully terminate, freeing compute resources.
+Our framework treats testing as an autonomous, multi-agent exploration problem. A Test Manager agent dynamically spawns specialized sub-agents—UI Explorers that hunt for broken flows, Data Validators that intercept network traffic and verify payloads, Auth Testers that probe login flows for security flaws—each operating with its own behavioral DNA, memory, and objectives. When their mission is complete, they gracefully terminate, freeing compute resources.
 
 ## Why Obsidian-Backed Memory?
 
@@ -20,23 +21,32 @@ Agents don't use JSON blobs. They read and write **Markdown files** in a local [
 - **Wiki-links** (`[[ ]]`) create semantic connections between test findings
 - **Native LLM compatibility**: Markdown is the lingua franca of large language models
 - **Human-readable**: Your test history is a browsable knowledge graph, not a database dump
+- **File locking + atomic writes**: Safe concurrent access without database complexity
 
 ## Key Features
 
-- **🤖 Dynamic Agent Spawning**: The Orchestrator instantiates UI Explorers and Data Validators on-demand, not as pre-running daemons
-- **🧠 MCP Skill System**: Extensible Model Context Protocol tools for DOM manipulation, network interception, and database validation
-- **📡 RAG Integration**: Agents retrieve user stories and requirements from vector stores to inform test strategies
-- **🎛️ Live Command Center**: Dark-mode HTMX dashboard with Server-Sent Events for real-time test monitoring
-- **📊 Obsidian Memory Layer**: YAML frontmatter + wiki-links for structured, relational test logging
-- **⚡ Resource Efficient**: Agents auto-terminate after completion, freeing compute for the next test wave
+- **🤖 Dynamic Agent Spawning**: The Orchestrator instantiates specialized agents on-demand, not as pre-running daemons
+- **🧠 LLM-Driven Agents**: Full LLM reasoning for every decision—no brittle keyword matching
+- **🔐 Security Testing**: Auth flow validation, session cookie security, HTTPS enforcement
+- **📊 Performance Monitoring**: Core Web Vitals (LCP, FID, CLS, TTFB, FCP), Lighthouse CI integration
+- **🎨 Visual Regression**: Screenshot comparison with baseline management
+- **🔌 API Contract Validation**: OpenAPI schema verification for REST endpoints
+- **♿ Accessibility Testing**: axe-core integration with WCAG compliance checks
+- **🌐 Cross-Browser Testing**: Chromium, Firefox, WebKit smoke tests
+- **⚡ LLM Response Caching**: SHA256-based cache with TTL, reducing API costs by 60-80%
+- **📡 Distributed Workers**: Redis-backed task queue for horizontal scaling
+- **🎛️ Live Command Center**: Dark-mode HTMX dashboard with Server-Sent Events
+- **📡 MCP Skill System**: Extensible Model Context Protocol tools
+- **⚡ Resource Efficient**: Agents auto-terminate after completion, BrowserPool limits concurrent instances
 
 ## Quickstart
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - [Obsidian](https://obsidian.md/) (optional, for visual graph browsing)
-- Chrome/Chromium (for Playwright browser automation)
+- Chrome/Chromium, Firefox, WebKit (for Playwright browser automation)
+- Redis (optional, for distributed workers)
 
 ### Installation
 
@@ -48,8 +58,11 @@ cd vectra-qa
 # Install dependencies
 pip install -r requirements.txt
 
-# Install Playwright browsers (for UI automation)
-playwright install chromium
+# Install Playwright browsers
+playwright install chromium firefox webkit
+
+# Validate environment
+python scripts/validate_env.py
 ```
 
 ### Initialize the Obsidian Vault
@@ -94,13 +107,36 @@ COMMAND_CENTER_PORT=3000
 - **Kimi** — kimi-k2 (ultra-long context up to 2M tokens)
 - **Local** — Ollama, LM Studio (privacy, cost control)
 
+#### Advanced Configuration
+
+```bash
+# Orchestrator model (test planner)
+ORCHESTRATOR_MODEL=openai/gpt-4o
+
+# UI Explorer model (browser automation)
+UI_EXPLORER_MODEL=anthropic/claude-3-5-sonnet-20241022
+
+# LLM Worker toggle (true=LLM-driven, false=legacy keyword matching)
+VECTRA_LLM_WORKERS=true
+
+# LLM Response Cache (reduces API costs)
+VECTRA_LLM_CACHE=true
+VECTRA_LLM_CACHE_TTL=3600
+
+# Redis for distributed workers (optional)
+REDIS_URL=redis://localhost:6379/0
+
+# Browser settings
+HEADLESS=true
+```
+
 #### Setting Up Your Obsidian Vault
 
 The vault is just a directory of Markdown files. Create it anywhere safe:
 
 ```bash
 # Create vault directory
-mkdir -p ~/Documents/vectra-qa-vault/{Global,Runs,Templates}
+mkdir -p ~/Documents/vectra-qa-vault/{Global,Runs,Templates,Baselines}
 
 # The framework will create memory nodes here automatically
 # Open this folder in Obsidian for the visual graph experience
@@ -115,13 +151,16 @@ mkdir -p ~/Documents/vectra-qa-vault/{Global,Runs,Templates}
 
 ```bash
 # Test LLM connectivity (OpenAI example)
-python -c "import openai; print('OpenAI OK')" 
+python -c "import openai; print('OpenAI OK')"
 
 # For MiniMax/Kimi, the framework uses the OpenAI SDK with custom base URLs
 # Just ensure your API keys are set in .env
 
 # Test vault path
 ls $OBSIDIAN_VAULT_PATH
+
+# Validate full environment
+python scripts/validate_env.py
 
 # Start services
 python mcp_server/server.py &
@@ -132,7 +171,7 @@ Open `http://localhost:3000` — you should see the dark-mode Command Center.
 
 ### 🐳 Docker Quickstart (Recommended)
 
-The fastest way to get started is with Docker Compose. This spins up the entire stack—MCP Server, Command Center Dashboard, and Obsidian Vault—with a single command.
+The fastest way to get started is with Docker Compose. This spins up the entire stack—MCP Server, Command Center Dashboard, Redis, and Obsidian Vault—with a single command.
 
 #### Prerequisites
 
@@ -188,7 +227,30 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from mcp_server.tools import execute_tool
 
-# Test your login page
+# Test authentication flow
+result = execute_tool("test_auth_flow", {
+    "login_url": "http://localhost:3001/login",
+    "username": "test@example.com",
+    "password": "password123",
+    "logout_url": "http://localhost:3001/logout"
+})
+print(f"Auth test: {result['status']}")
+
+# Test performance
+result = execute_tool("test_performance", {
+    "url": "http://localhost:3001",
+    "thresholds": {"lcp_ms": 2500, "ttfb_ms": 600}
+})
+print(f"Performance: {result['metrics']}")
+
+# Test accessibility
+result = execute_tool("test_accessibility", {
+    "url": "http://localhost:3001",
+    "standard": "wcag2aa"
+})
+print(f"Accessibility: {len(result['findings'])} findings")
+
+# Spawn an agent for comprehensive UI exploration
 result = execute_tool("spawn_agent", {
     "role": "ui_explorer",
     "objective": (
@@ -224,8 +286,10 @@ For a full example, see [examples/test_real_app.py](examples/test_real_app.py).
 
 | Service | Port | Description |
 |---------|------|-------------|
-| `mcp-server` | `8080` | MCP Tool Server (spawn_agent, Obsidian tools) |
+| `mcp-server` | `8080` | MCP Tool Server (spawn_agent, feature tests, Obsidian tools) |
 | `command-center` | `3000` | HTMX Dashboard with live SSE updates |
+| `redis` | `6379` | Task queue and LLM cache backend |
+| `worker-pool` | — | Distributed agent workers |
 | `vault-watcher` | — | File watcher for Obsidian vault changes |
 
 #### Useful Docker Commands
@@ -233,6 +297,9 @@ For a full example, see [examples/test_real_app.py](examples/test_real_app.py).
 ```bash
 # Start in detached mode (background)
 docker compose up -d
+
+# Scale worker pool
+docker compose up -d --scale worker-pool=3
 
 # View logs
 docker compose logs -f
@@ -292,14 +359,17 @@ DATA_VALIDATOR_MODEL=local/llama3.1:70b
 ### Start the System (Manual)
 
 ```bash
-# Terminal 1: Start the MCP Server
+# Terminal 1: Start Redis (if using distributed workers)
+redis-server
+
+# Terminal 2: Start the MCP Server
 python mcp_server/server.py --transport sse --port 8080
 
-# Terminal 2: Start the Command Center Dashboard
+# Terminal 3: Start the Command Center Dashboard
 cd command_center
 python main.py
 
-# Terminal 3: Run a test scenario
+# Terminal 4: Run a test scenario
 python examples/test_scenario.py
 ```
 
@@ -310,7 +380,14 @@ Open your browser to **`http://localhost:3000`** to watch the live Command Cente
 ```python
 from mcp_server.tools import execute_tool
 
-# The Orchestrator spawns a UI Explorer agent
+# Direct feature test - no agent needed
+result = execute_tool("test_performance", {
+    "url": "https://example.com",
+    "thresholds": {"lcp_ms": 2500}
+})
+print(f"Performance: {result['metrics']}")
+
+# Or spawn an agent for complex exploration
 result = execute_tool("spawn_agent", {
     "role": "ui_explorer",
     "objective": "Verify login form rendering and accessibility",
@@ -322,9 +399,92 @@ print(f"Agent spawned: {result['result']['agent_id']}")
 # Check the Command Center to see live updates!
 ```
 
+## Agent Roles
+
+Vectra QA supports multiple specialized agent roles:
+
+| Role | Description | Use Case |
+|------|-------------|----------|
+| `ui_explorer` | LLM-driven browser automation | Complex UI flows, exploration |
+| `data_validator` | Network traffic validation | API response verification |
+| `auth_tester` | Authentication flow testing | Login/logout security |
+| `visual_regression_tester` | Screenshot comparison | UI consistency checks |
+| `performance_tester` | Core Web Vitals measurement | Page speed monitoring |
+| `api_contract_tester` | OpenAPI schema validation | API contract compliance |
+| `accessibility_tester` | WCAG compliance checks | Accessibility auditing |
+| `multi_browser_tester` | Cross-browser smoke tests | Browser compatibility |
+
 ## Architecture
 
 For a deep dive into the system design, memory layer, and agent communication protocol, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+### System Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Vectra QA Framework                     │
+├─────────────────────────────────────────────────────────────┤
+│  Command Center (Port 3000)                                  │
+│  ├── HTMX Dashboard (SSE live updates)                      │
+│  ├── Chatbot (LLM-powered QA assistant)                     │
+│  └── Health/Metrics endpoints                               │
+├─────────────────────────────────────────────────────────────┤
+│  MCP Server (Port 8080)                                      │
+│  ├── Tools: read/write Obsidian nodes                       │
+│  ├── Tools: spawn/terminate agents                          │
+│  ├── Tools: browser automation (query, click, intercept)    │
+│  ├── Tools: feature tests (auth, perf, a11y, etc.)         │
+│  ├── Pydantic input validation                              │
+│  ├── Tenacity retry logic                                   │
+│  └── Structlog structured logging                           │
+├─────────────────────────────────────────────────────────────┤
+│  Orchestrator                                                │
+│  ├── LLM-driven test planning                               │
+│  ├── Parallel task execution                                │
+│  └── Report compilation                                     │
+├─────────────────────────────────────────────────────────────┤
+│  Agents                                                      │
+│  ├── UI Explorer (LLM observe-plan-act loop)               │
+│  ├── Data Validator                                         │
+│  └── Feature Testers (auth, visual, perf, API, a11y)      │
+├─────────────────────────────────────────────────────────────┤
+│  Infrastructure                                              │
+│  ├── BrowserPool (max 10 concurrent)                        │
+│  ├── AgentResourceTracker (steps/time/LLM limits)           │
+│  ├── StateManager (SIGTERM persistence)                     │
+│  ├── TaskQueue (Redis or in-memory)                         │
+│  └── LLMCache (SHA256-based, TTL expiration)                │
+├─────────────────────────────────────────────────────────────┤
+│  Memory Layer                                                │
+│  ├── Obsidian Vault (Markdown + YAML frontmatter)           │
+│  ├── File locking + atomic writes                           │
+│  └── Wiki-links for relational data                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Testing
+
+Vectra QA has **79 unit tests** covering:
+
+- **Vault Operations**: Read/write, concurrency, atomic writes, path security
+- **Agent Spawning**: Spawn, terminate, lifecycle management
+- **Browser Tools**: Navigation, interaction, screenshot, console capture
+- **MCP Tools**: Query selector, simulate interaction, network interception
+- **Feature Modules**: Auth, visual regression, performance, API contract, accessibility, multi-browser
+- **LLM Router**: Provider routing, response caching
+- **Orchestrator**: Planning, execution, reporting
+- **Models**: Pydantic validation, path traversal protection
+
+```bash
+# Run all tests
+python -m pytest tests/ -v
+
+# Run with coverage
+python -m pytest tests/ --cov=mcp_server --cov=agents
+
+# Run specific test file
+python -m pytest tests/unit/test_features.py -v
+```
 
 ## Contributing
 

@@ -5,7 +5,7 @@ Dark Mode Dashboard for Obsidian-backed Multi-Agent Testing
 
 import json
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import AsyncGenerator
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import StreamingResponse, HTMLResponse, JSONResponse
@@ -21,6 +21,16 @@ import os
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8080")
 
 app = FastAPI(title="Vectra QA Command Center")
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Docker."""
+    return {"status": "ok"}
+
+@app.get("/ready")
+async def readiness_check():
+    """Readiness check endpoint."""
+    return {"status": "ready"}
 
 async def call_mcp_tool(tool_name: str, params: dict) -> dict:
     """Call an MCP tool on the MCP server via HTTP."""
@@ -49,7 +59,7 @@ async def call_mcp_tool(tool_name: str, params: dict) -> dict:
 def json_serialize(obj):
     """Custom JSON serializer that handles datetime objects from YAML frontmatter."""
     if isinstance(obj, datetime):
-        return obj.isoformat() + "Z"
+        return obj.strftime("%Y-%m-%dT%H:%M:%S") + "Z"
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 # CORS for HTMX
@@ -116,7 +126,7 @@ async def event_generator() -> AsyncGenerator[str, None]:
         nodes = reader.get_global_nodes()
         
         data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             "orchestrator": orchestrator,
             "agents": agents,
             "nodes": {
@@ -132,7 +142,7 @@ async def event_generator() -> AsyncGenerator[str, None]:
 @app.post("/api/tests/run")
 async def run_test(url: str = Form(...), test_type: str = Form(...)):
     """Run a test against a target URL by spawning agents."""
-    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     
     test_configs = {
         "homepage": {
@@ -194,7 +204,7 @@ async def run_test(url: str = Form(...), test_type: str = Form(...)):
                 "message": f"Test '{test_type}' initiated for {url}",
                 "agent_id": spawn_result.get("agent_id"),
                 "memory_node": config["memory_node"],
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         else:
             return JSONResponse(
@@ -515,7 +525,7 @@ async def agents_sse(request: Request):
         while True:
             agents = reader.get_active_agents()
             data = {
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
                 "agents": agents,
                 "count": len(agents)
             }
@@ -539,7 +549,7 @@ async def orchestrator_sse(request: Request):
         while True:
             status = reader.get_orchestrator_status()
             data = {
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
                 "status": status
             }
             yield f"data: {json.dumps(data, default=json_serialize)}\n\n"
@@ -578,7 +588,7 @@ async def result_sse(request: Request, agent_id: str):
                 summary = _extract_summary(current_content)
                 
                 data = {
-                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
                     "agent_id": agent_id,
                     "status": fm.get("status", "unknown"),
                     "result": fm.get("result", "pending"),
@@ -687,7 +697,7 @@ async def execute_chat_plan(url: str = Form(...), tests: str = Form(...)):
         
         # Spawn agents for each test
         agent_ids = []
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
         
         for i, test_type in enumerate(valid_tests):
             config = TEST_TYPES[test_type]

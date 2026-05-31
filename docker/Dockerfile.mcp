@@ -1,11 +1,13 @@
 # Dockerfile for MCP Server
 # Provides the Model Context Protocol tool server with multi-LLM support
+# Includes all Phase 4 feature testers and Phase 5 scaling capabilities
 
-FROM python:3.11-slim as builder
+FROM python:3.12-slim as builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment
@@ -17,7 +19,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Production stage
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Install runtime dependencies + Playwright browser deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -50,7 +52,7 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install Playwright browsers
-RUN playwright install chromium
+RUN playwright install chromium firefox webkit
 
 # Set working directory and Python path
 WORKDIR /app
@@ -60,16 +62,23 @@ ENV PYTHONPATH=/app
 COPY mcp_server/ ./mcp_server/
 COPY agents/ ./agents/
 COPY obsidian_vault/ ./obsidian_vault/
+COPY scripts/ ./scripts/
 
 # Create directories for runtime
-RUN mkdir -p /app/obsidian_vault/Runs /app/obsidian_vault/Global /app/obsidian_vault/Templates /app/obsidian_vault/Screenshots
+RUN mkdir -p \
+    /app/obsidian_vault/Runs \
+    /app/obsidian_vault/Global \
+    /app/obsidian_vault/Templates \
+    /app/obsidian_vault/Screenshots \
+    /app/obsidian_vault/Baselines \
+    /app/logs
 
 # Expose MCP server port
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/mcp/tools')" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
 # Run MCP server with SSE transport
 CMD ["python", "-m", "mcp_server.server", "--transport", "sse", "--port", "8080", "--host", "0.0.0.0"]

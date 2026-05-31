@@ -19,6 +19,50 @@ Currently, the API is open (no authentication required for local development). F
 
 ---
 
+## Health Checks
+
+### Liveness Probe
+
+```http
+GET /health
+```
+
+Returns 200 if the server is running.
+
+**Response:**
+```json
+{
+  "status": "ok"
+}
+```
+
+### Readiness Probe
+
+```http
+GET /ready
+```
+
+Returns 200 if the server is ready to accept requests (vault accessible).
+
+**Response:**
+```json
+{
+  "status": "ready",
+  "vault_accessible": true,
+  "timestamp": "2026-06-01T12:00:00Z"
+}
+```
+
+### Metrics
+
+```http
+GET /metrics
+```
+
+Returns Prometheus-compatible metrics (if enabled).
+
+---
+
 ## Orchestrator
 
 ### Get Status
@@ -74,9 +118,257 @@ Returns all currently active agents.
 }
 ```
 
+### Spawn Agent
+
+```http
+POST /api/agents/spawn
+Content-Type: application/json
+```
+
+Spawn a new specialized agent.
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `role` | string | Yes | Agent role: `ui_explorer`, `data_validator`, `auth_tester`, `performance_tester`, `accessibility_tester`, `visual_regression_tester`, `api_contract_tester`, `multi_browser_tester` |
+| `objective` | string | Yes | Clear task description |
+| `memory_node` | string | Yes | Target vault path (e.g., `Runs/Login_Test.md`) |
+
+**Response:**
+```json
+{
+  "status": "active",
+  "agent_id": "auth_tester-20260115-120000-abc123",
+  "role": "auth_tester",
+  "memory_node": "Runs/Login_Test.md",
+  "timestamp": "2026-01-15T12:00:00Z"
+}
+```
+
 ---
 
-## Tests
+## Feature Tests
+
+Feature tests run directly without spawning agents — faster for specific checks.
+
+### Authentication Test
+
+```http
+POST /api/tests/auth
+Content-Type: application/json
+```
+
+Test login/logout flows with security validation.
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `login_url` | string | Yes | Login page URL |
+| `username` | string | No | Test username |
+| `password` | string | No | Test password |
+| `logout_url` | string | No | Logout page URL |
+
+**Response:**
+```json
+{
+  "status": "pass",
+  "findings": [
+    {
+      "title": "Secure Session Cookie",
+      "description": "Session cookie uses HttpOnly, Secure, SameSite=Strict",
+      "severity": "info"
+    }
+  ],
+  "metrics": {
+    "login_duration_ms": 1200,
+    "logout_duration_ms": 300
+  },
+  "duration_seconds": 5.2,
+  "timestamp": "2026-01-15T12:00:00Z"
+}
+```
+
+### Performance Test
+
+```http
+POST /api/tests/performance
+Content-Type: application/json
+```
+
+Measure Core Web Vitals and page performance.
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes | URL to test |
+| `thresholds` | object | No | Custom thresholds `{lcp_ms, fid_ms, cls, ttfb_ms, fcp_ms, tbt_ms}` |
+
+**Response:**
+```json
+{
+  "status": "pass",
+  "findings": [],
+  "metrics": {
+    "ttfb_ms": 120,
+    "fcp_ms": 850,
+    "lcp_ms": 1800,
+    "cls": 0.05,
+    "navigation_time_ms": 2300,
+    "total_transfer_size_bytes": 1240000,
+    "resource_count": 45
+  },
+  "duration_seconds": 8.5,
+  "timestamp": "2026-01-15T12:00:00Z"
+}
+```
+
+### Accessibility Test
+
+```http
+POST /api/tests/accessibility
+Content-Type: application/json
+```
+
+Run accessibility checks (axe-core + manual).
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes | URL to test |
+| `standard` | string | No | WCAG standard: `wcag2a`, `wcag2aa` (default), `wcag21aa` |
+
+**Response:**
+```json
+{
+  "status": "warning",
+  "findings": [
+    {
+      "title": "Missing Alt Text",
+      "description": "3 images without alt attributes",
+      "severity": "medium"
+    }
+  ],
+  "metrics": {
+    "axe_violations": 2,
+    "manual_issues": 1
+  },
+  "duration_seconds": 4.2,
+  "timestamp": "2026-01-15T12:00:00Z"
+}
+```
+
+### Visual Regression Test
+
+```http
+POST /api/tests/visual
+Content-Type: application/json
+```
+
+Compare page screenshot against baseline.
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes | URL to capture |
+| `name` | string | No | Baseline name identifier |
+
+**Response:**
+```json
+{
+  "status": "pass",
+  "findings": [
+    {
+      "title": "Baseline Created",
+      "description": "New baseline saved for 'homepage'",
+      "severity": "info"
+    }
+  ],
+  "metrics": {
+    "pixel_difference_percent": 0.0,
+    "baseline_path": "Baselines/homepage.png"
+  },
+  "duration_seconds": 3.1,
+  "timestamp": "2026-01-15T12:00:00Z"
+}
+```
+
+### API Contract Test
+
+```http
+POST /api/tests/api-contract
+Content-Type: application/json
+```
+
+Validate API response against OpenAPI schema.
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `base_url` | string | Yes | API base URL |
+| `endpoint` | string | Yes | Endpoint path (e.g., `/api/v1/users`) |
+| `method` | string | Yes | HTTP method: `GET`, `POST`, `PUT`, `DELETE`, `PATCH` |
+| `schema_path` | string | No | Path to OpenAPI schema file |
+| `body` | object | No | Request body for POST/PUT |
+
+**Response:**
+```json
+{
+  "status": "pass",
+  "findings": [],
+  "metrics": {
+    "http_status": 200,
+    "response_time_ms": 150,
+    "schema_valid": true
+  },
+  "duration_seconds": 2.5,
+  "timestamp": "2026-01-15T12:00:00Z"
+}
+```
+
+### Multi-Browser Test
+
+```http
+POST /api/tests/multi-browser
+Content-Type: application/json
+```
+
+Run smoke tests across Chromium, Firefox, and WebKit.
+
+**Parameters:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | Yes | URL to test |
+
+**Response:**
+```json
+{
+  "chromium": {
+    "status": "pass",
+    "metrics": {"http_status": 200, "load_time_ms": 1200}
+  },
+  "firefox": {
+    "status": "pass",
+    "metrics": {"http_status": 200, "load_time_ms": 1500}
+  },
+  "webkit": {
+    "status": "pass",
+    "metrics": {"http_status": 200, "load_time_ms": 1300}
+  },
+  "duration_seconds": 12.5,
+  "timestamp": "2026-01-15T12:00:00Z"
+}
+```
+
+---
+
+## Traditional Tests
 
 ### Run Test
 
@@ -85,7 +377,7 @@ POST /api/tests/run
 Content-Type: application/x-www-form-urlencoded
 ```
 
-Launch a new test.
+Launch a traditional agent-based test.
 
 **Parameters:**
 
@@ -388,3 +680,45 @@ No rate limiting is currently implemented. For production use, consider adding:
 - Per-IP rate limiting
 - Concurrent agent limits
 - LLM API quota management
+
+---
+
+## Response Format
+
+All feature test responses follow a standardized format:
+
+```json
+{
+  "status": "pass|warning|fail",
+  "findings": [
+    {
+      "title": "Human-readable title",
+      "description": "Detailed explanation",
+      "severity": "critical|high|medium|low|info"
+    }
+  ],
+  "metrics": {
+    "key": "value"
+  },
+  "duration_seconds": 5.2,
+  "timestamp": "2026-01-15T12:00:00Z"
+}
+```
+
+### Status Definitions
+
+| Status | Meaning |
+|--------|---------|
+| `pass` | All checks passed, no critical/high findings |
+| `warning` | Some checks exceeded thresholds (high findings) |
+| `fail` | Critical failures or test execution errors |
+
+### Severity Levels
+
+| Severity | Action Required |
+|----------|----------------|
+| `critical` | Immediate attention — security risk or broken functionality |
+| `high` | Should fix before release — performance or accessibility issue |
+| `medium` | Plan to fix — minor usability or standards compliance |
+| `low` | Nice to have — optimization opportunity |
+| `info` | No action — informational finding |

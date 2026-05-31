@@ -1,15 +1,23 @@
 # Vectra QA Documentation
 
-Welcome to the Vectra QA documentation. Vectra QA is a multi-agent autonomous testing framework that deploys specialized AI agents to explore, test, and validate web applications.
+Welcome to the Vectra QA documentation. Vectra QA is a production-ready, multi-agent autonomous testing framework that deploys specialized AI agents to explore, test, and validate web applications.
 
 ## What is Vectra QA?
 
 Traditional E2E testing relies on static scripts and brittle selectors. Vectra QA treats testing as an autonomous exploration problem:
 
-- **🤖 Dynamic Agent Spawning**: Orchestrator instantiates UI Explorers and Data Validators on-demand
-- **🧠 Obsidian Memory Layer**: Agents read/write Markdown files with YAML frontmatter for structured state tracking
-- **📡 Live Command Center**: Dark-mode dashboard with Server-Sent Events for real-time monitoring
-- **💬 Natural Language Interface**: Chat with Vectra to configure and run tests conversationally
+- **🤖 Dynamic Agent Spawning**: Orchestrator instantiates specialized agents on-demand
+- **🧠 LLM-Driven Agents**: Full LLM reasoning for every decision — no keyword matching
+- **🔐 Security Testing**: Auth flow validation, session cookie security, HTTPS enforcement
+- **📊 Performance Monitoring**: Core Web Vitals, Lighthouse CI integration
+- **🎨 Visual Regression**: Screenshot comparison with baseline management
+- **🔌 API Contract Validation**: OpenAPI schema verification
+- **♿ Accessibility Testing**: axe-core with WCAG compliance
+- **🌐 Cross-Browser Testing**: Chromium, Firefox, WebKit smoke tests
+- **⚡ LLM Response Caching**: SHA256-based cache reduces API costs by 60-80%
+- **📡 Distributed Workers**: Redis-backed task queue for horizontal scaling
+- **🎛️ Live Command Center**: Dark-mode dashboard with Server-Sent Events
+- **🧠 Obsidian Memory Layer**: Agents read/write Markdown with YAML frontmatter
 
 ## Quick Links
 
@@ -18,20 +26,22 @@ Traditional E2E testing relies on static scripts and brittle selectors. Vectra Q
 - **[Architecture](architecture/overview.md)** — Understand how agents communicate and share memory
 - **[API Reference](api/endpoints.md)** — REST API documentation for all endpoints
 - **[User Guide](user-guide/writing-tests.md)** — Learn to write effective test scenarios
+- **[Feature Testing](user-guide/feature-testing.md)** — Auth, performance, accessibility, and more
 
-## Test Types
+## Agent Roles
 
-Vectra QA supports multiple test types, each handled by specialized agents:
+Vectra QA supports 8 specialized agent roles:
 
-| Test Type | Agent | Description |
-|-----------|-------|-------------|
-| **Homepage** | UI Explorer | Page structure, navigation, CTAs, footer, console errors |
-| **Navigation** | UI Explorer | Link validation, page transitions, mobile menu |
-| **Contact Form** | UI Explorer | Form fields, validation, accessibility |
-| **API Monitoring** | Data Validator | Backend API calls, response validation |
-| **Accessibility** | UI Explorer | WCAG compliance, ARIA, keyboard navigation, alt text |
-| **Responsive Design** | UI Explorer | Multi-viewport testing (desktop, tablet, mobile) |
-| **Full Suite** | UI Explorer | Complete audit — all test types combined |
+| Role | Description | Use Case |
+|------|-------------|----------|
+| **UI Explorer** | LLM-driven browser automation | Complex UI flows, exploration |
+| **Data Validator** | Network traffic validation | API response verification |
+| **Auth Tester** | Authentication flow testing | Login/logout security |
+| **Visual Regression** | Screenshot comparison | UI consistency checks |
+| **Performance Tester** | Core Web Vitals measurement | Page speed monitoring |
+| **API Contract Tester** | OpenAPI schema validation | API contract compliance |
+| **Accessibility Tester** | WCAG compliance checks | Accessibility auditing |
+| **Multi-Browser Tester** | Cross-browser smoke tests | Browser compatibility |
 
 ## System Architecture
 
@@ -40,10 +50,35 @@ graph TD
     A[Command Center] -- HTTP/MCP --> B[MCP Server]
     B -- Spawn --> C[UI Explorer Agent]
     B -- Spawn --> D[Data Validator Agent]
-    C -- Read/Write --> E[Obsidian Vault]
-    D -- Read/Write --> E
-    A -- SSE --> F[Dashboard UI]
+    B -- Spawn --> E[Auth Tester Agent]
+    B -- Spawn --> F[Performance Tester Agent]
+    B -- Spawn --> G[Accessibility Tester Agent]
+    C -- Read/Write --> H[Obsidian Vault]
+    D -- Read/Write --> H
+    E -- Read/Write --> H
+    F -- Read/Write --> H
+    G -- Read/Write --> H
+    B -- Cache --> I[Redis]
+    A -- SSE --> J[Dashboard UI]
+    
+    style A fill:#2d2d2d,stroke:#666,color:#fff
+    style B fill:#1e3a5f,stroke:#666,color:#fff
+    style H fill:#3d3d3d,stroke:#666,color:#fff
+    style I fill:#5d4e37,stroke:#666,color:#fff
 ```
+
+## Test Coverage
+
+Vectra QA has **79 unit tests** covering all major components:
+
+- ✅ Vault operations (file I/O, concurrency, path security)
+- ✅ Agent spawning and lifecycle management
+- ✅ Browser automation (Playwright)
+- ✅ MCP tools (DOM query, interaction, network interception)
+- ✅ Feature modules (auth, visual regression, performance, API, accessibility, multi-browser)
+- ✅ LLM routing and caching
+- ✅ Orchestrator planning and execution
+- ✅ Pydantic input validation
 
 ## Getting Help
 
@@ -51,6 +86,7 @@ graph TD
 - 🐛 [Report Issues](https://github.com/Artflarex-Limited/vectra-qa/issues)
 - 💬 [GitHub Discussions](https://github.com/Artflarex-Limited/vectra-qa/discussions)
 - 📜 [Changelog](https://github.com/Artflarex-Limited/vectra-qa/blob/main/CHANGELOG.md)
+- 📊 [Test Report](https://github.com/Artflarex-Limited/vectra-qa/blob/main/TEST_REPORT.md)
 
 ## License
 

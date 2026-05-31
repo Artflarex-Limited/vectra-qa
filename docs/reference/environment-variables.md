@@ -4,7 +4,7 @@ Complete reference of all environment variables used by Vectra QA.
 
 ## Required Variables
 
-At least one LLM provider API key is required for chatbot features.
+At least one LLM provider API key is required for chatbot and orchestrator features.
 
 ### LLM Providers
 
@@ -28,13 +28,14 @@ At least one LLM provider API key is required for chatbot features.
 | `MCP_SERVER_PORT` | `8080` | MCP server HTTP port |
 | `COMMAND_CENTER_HOST` | `0.0.0.0` | Dashboard bind address |
 
-## Chatbot Configuration
+## Model Selection
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CHATBOT_MODEL` | `anthropic/claude-3-5-sonnet-20241022` | LLM model for chatbot |
-| `CHATBOT_MAX_HISTORY` | `50` | Max conversation history |
-| `CHATBOT_ENABLE_STREAMING` | `true` | Enable SSE streaming |
+| `ORCHESTRATOR_MODEL` | `openai/gpt-4o` | LLM for test planning |
+| `UI_EXPLORER_MODEL` | `anthropic/claude-3-5-sonnet-20241022` | LLM for UI exploration |
+| `CHATBOT_MODEL` | `anthropic/claude-3-5-sonnet-20241022` | LLM for chatbot |
+| `DATA_VALIDATOR_MODEL` | `openai/gpt-4o-mini` | LLM for data validation |
 
 ### Supported Models
 
@@ -50,13 +51,79 @@ Format: `provider/model-name`
 | `kimi` | `kimi-k2` | Chinese-optimized |
 | `local` | `llama3.1:70b` | Privacy-first |
 
+## Worker Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VECTRA_LLM_WORKERS` | `true` | Use LLM-driven workers (true) or legacy keyword matching (false) |
+| `UI_EXPLORER_MAX_STEPS` | `50` | Max steps per UI explorer agent |
+| `UI_EXPLORER_MAX_DURATION` | `600` | Max duration in seconds per agent |
+
+## LLM Cache (Phase 5)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VECTRA_LLM_CACHE` | `true` | Enable LLM response caching |
+| `VECTRA_LLM_CACHE_TTL` | `3600` | Cache TTL in seconds |
+| `VECTRA_LLM_CACHE_PATH` | `/app/obsidian_vault/.llm_cache.json` | Cache persistence path |
+
+**Cache Benefits:**
+- Reduces API costs by 60-80% for repeated queries
+- Faster response times for cached requests
+- Persistent across restarts
+
+## Task Queue (Phase 5)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REDIS_URL` | (none) | Redis connection URL for distributed workers |
+| `REDIS_HOST` | `localhost` | Redis host (fallback) |
+| `REDIS_PORT` | `6379` | Redis port (fallback) |
+| `REDIS_DB` | `0` | Redis database number |
+
+**Note**: If `REDIS_URL` is not set, uses in-memory queue (single-node only).
+
+## Chatbot Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CHATBOT_MAX_HISTORY` | `50` | Max conversation history |
+| `CHATBOT_ENABLE_STREAMING` | `true` | Enable SSE streaming |
+
 ## Browser Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `HEADLESS` | `true` | Run browsers headlessly |
-| `PLAYWRIGHT_BROWSER` | `chromium` | Browser engine |
+| `PLAYWRIGHT_BROWSER` | `chromium` | Default browser engine |
 | `PLAYWRIGHT_TIMEOUT` | `30000` | Page load timeout (ms) |
+| `BROWSER_POOL_MAX` | `10` | Max concurrent browser instances |
+
+## Feature Test Configuration
+
+### Performance Thresholds
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PERFORMANCE_LCP_MS` | `2500` | Largest Contentful Paint threshold |
+| `PERFORMANCE_FID_MS` | `100` | First Input Delay threshold |
+| `PERFORMANCE_CLS` | `0.1` | Cumulative Layout Shift threshold |
+| `PERFORMANCE_TTFB_MS` | `600` | Time to First Byte threshold |
+| `PERFORMANCE_FCP_MS` | `1800` | First Contentful Paint threshold |
+| `PERFORMANCE_TBT_MS` | `200` | Total Blocking Time threshold |
+
+### Accessibility
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ACCESSIBILITY_STANDARD` | `wcag2aa` | Default WCAG standard: `wcag2a`, `wcag2aa`, `wcag21aa` |
+
+### Visual Regression
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VISUAL_REGRESSION_THRESHOLD` | `0.1` | Pixel difference threshold (10%) |
+| `VISUAL_BASELINE_DIR` | `Baselines` | Baseline screenshot directory |
 
 ## Security
 
@@ -72,6 +139,7 @@ Format: `provider/model-name`
 |----------|---------|-------------|
 | `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARNING, ERROR) |
 | `PYTHONUNBUFFERED` | `1` | Unbuffered output |
+| `STRUCTLOG_FORMAT` | `json` | Log format: `json` or `console` |
 
 ## Docker-Specific
 
@@ -125,6 +193,8 @@ HEADLESS=false
 LOG_LEVEL=DEBUG
 CHATBOT_ENABLE_STREAMING=true
 CHATBOT_MAX_HISTORY=50
+VECTRA_LLM_CACHE=true
+VECTRA_LLM_CACHE_TTL=1800
 ```
 
 ### Production
@@ -136,6 +206,9 @@ COMMAND_CENTER_SECRET_KEY=your-strong-secret
 MCP_API_KEY=your-mcp-key
 CORS_ORIGINS=https://yourdomain.com
 CHATBOT_MODEL=openai/gpt-4o-mini
+VECTRA_LLM_CACHE=true
+VECTRA_LLM_CACHE_TTL=7200
+REDIS_URL=redis://redis:6379/0
 ```
 
 ### CI/CD
@@ -145,6 +218,7 @@ HEADLESS=true
 LOG_LEVEL=WARNING
 CHATBOT_MODEL=openai/gpt-4o-mini
 CHATBOT_MAX_HISTORY=20
+VECTRA_LLM_WORKERS=true
 ```
 
 ### Minimal (Local Testing)
@@ -152,6 +226,38 @@ CHATBOT_MAX_HISTORY=20
 # .env.minimal
 OPENAI_API_KEY=sk-...
 MCP_SERVER_URL=http://localhost:8080
+OBSIDIAN_VAULT_PATH=/home/$(whoami)/Documents/obsidian_vault
+```
+
+### Full Feature Testing
+```bash
+# .env.full-test
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+OBSIDIAN_VAULT_PATH=/app/obsidian_vault
+
+# LLM Configuration
+ORCHESTRATOR_MODEL=openai/gpt-4o
+UI_EXPLORER_MODEL=anthropic/claude-3-5-sonnet-20241022
+VECTRA_LLM_WORKERS=true
+
+# Performance Thresholds
+PERFORMANCE_LCP_MS=2000
+PERFORMANCE_TTFB_MS=400
+PERFORMANCE_FCP_MS=1500
+
+# Accessibility
+ACCESSIBILITY_STANDARD=wcag21aa
+
+# Visual Regression
+VISUAL_REGRESSION_THRESHOLD=0.05
+
+# Caching
+VECTRA_LLM_CACHE=true
+VECTRA_LLM_CACHE_TTL=3600
+
+# Distributed Workers
+REDIS_URL=redis://localhost:6379/0
 ```
 
 ## Docker Compose Environment
@@ -160,6 +266,13 @@ Override in `docker-compose.yml`:
 
 ```yaml
 services:
+  mcp-server:
+    environment:
+      - VECTRA_LLM_CACHE=true
+      - VECTRA_LLM_CACHE_TTL=7200
+      - REDIS_URL=redis://redis:6379/0
+      - PERFORMANCE_LCP_MS=2000
+  
   command-center:
     environment:
       - CHATBOT_MODEL=openai/gpt-4o
@@ -178,23 +291,19 @@ docker compose up
 
 Verify configuration:
 
-```python
-# config_check.py
-import os
+```bash
+# Using built-in validator
+python scripts/validate_env.py
+```
 
-required = ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GOOGLE_API_KEY']
-set_providers = [p for p in required if os.getenv(p)]
-
-if not set_providers:
-    print("❌ No LLM provider configured")
-else:
-    print(f"✅ Providers: {', '.join(set_providers)}")
-
-# Check core config
-if not os.getenv('MCP_SERVER_URL'):
-    print("❌ MCP_SERVER_URL not set")
-else:
-    print("✅ MCP_SERVER_URL configured")
+Expected output:
+```
+✅ Environment validation passed
+✅ Required packages installed
+✅ Playwright browsers installed
+✅ LLM connectivity verified
+✅ Vault path accessible
+✅ Redis available (optional)
 ```
 
 ## Security Best Practices
@@ -204,6 +313,7 @@ else:
 3. **Use secrets manager** — In production, use Docker secrets or cloud KMS
 4. **Limit CORS** — Set specific origins, not `*`
 5. **Strong secrets** — Use 32+ character random strings
+6. **Redis security** — Use Redis AUTH in production
 
 ```bash
 # Generate strong secret

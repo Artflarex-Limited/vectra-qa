@@ -8,7 +8,7 @@ Used by agent workers to perform real browser interactions.
 import os
 import asyncio
 from typing import Dict, List, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from playwright.async_api import async_playwright, Page, Browser, ConsoleMessage
 
 
@@ -65,7 +65,7 @@ class BrowserAutomation:
         self.console_logs.append({
             "type": msg.type,
             "text": msg.text,
-            "time": datetime.utcnow().isoformat() + "Z"
+            "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         })
         
     def _handle_page_error(self, error):
@@ -77,7 +77,7 @@ class BrowserAutomation:
         self.network_logs.append({
             "url": response.url,
             "status": response.status,
-            "time": datetime.utcnow().isoformat() + "Z"
+            "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         })
         
     async def visit(self, url: str, wait_until: str = "networkidle") -> Dict[str, Any]:
@@ -93,14 +93,14 @@ class BrowserAutomation:
                 "final_url": self.page.url,
                 "title": await self.page.title(),
                 "status": response.status if response else None,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         except Exception as e:
             return {
                 "success": False,
                 "url": url,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def click(self, selector: str, timeout: int = 5000) -> Dict[str, Any]:
@@ -112,14 +112,14 @@ class BrowserAutomation:
                 "success": True,
                 "selector": selector,
                 "url": self.page.url,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         except Exception as e:
             return {
                 "success": False,
                 "selector": selector,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def fill(self, selector: str, text: str) -> Dict[str, Any]:
@@ -130,14 +130,14 @@ class BrowserAutomation:
                 "success": True,
                 "selector": selector,
                 "text": text,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         except Exception as e:
             return {
                 "success": False,
                 "selector": selector,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def get_text(self, selector: str) -> Dict[str, Any]:
@@ -150,21 +150,21 @@ class BrowserAutomation:
                     "success": True,
                     "selector": selector,
                     "text": text.strip() if text else "",
-                    "timestamp": datetime.utcnow().isoformat() + "Z"
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
                 }
             else:
                 return {
                     "success": False,
                     "selector": selector,
                     "error": "Element not found",
-                    "timestamp": datetime.utcnow().isoformat() + "Z"
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
                 }
         except Exception as e:
             return {
                 "success": False,
                 "selector": selector,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def get_elements(self, selector: str) -> Dict[str, Any]:
@@ -175,14 +175,14 @@ class BrowserAutomation:
                 "success": True,
                 "selector": selector,
                 "count": len(elements),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         except Exception as e:
             return {
                 "success": False,
                 "selector": selector,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def screenshot(self, path: str, full_page: bool = True) -> Dict[str, Any]:
@@ -195,14 +195,14 @@ class BrowserAutomation:
                 "success": True,
                 "path": path,
                 "full_page": full_page,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         except Exception as e:
             return {
                 "success": False,
                 "path": path,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def scroll_to_bottom(self) -> Dict[str, Any]:
@@ -212,13 +212,13 @@ class BrowserAutomation:
             await asyncio.sleep(0.5)
             return {
                 "success": True,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def check_responsive(self, width: int, height: int) -> Dict[str, Any]:
@@ -229,13 +229,13 @@ class BrowserAutomation:
             return {
                 "success": True,
                 "viewport": f"{width}x{height}",
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def get_console_errors(self) -> List[str]:
@@ -261,13 +261,13 @@ class BrowserAutomation:
                 "success": True,
                 "count": len(results),
                 "links": results,
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def check_form(self, form_selector: str = "form") -> Dict[str, Any]:
@@ -278,7 +278,7 @@ class BrowserAutomation:
                 return {
                     "success": False,
                     "error": "Form not found",
-                    "timestamp": datetime.utcnow().isoformat() + "Z"
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
                 }
                 
             inputs = await form.query_selector_all("input, textarea, select")
@@ -300,13 +300,13 @@ class BrowserAutomation:
                 "success": True,
                 "fields": fields,
                 "count": len(fields),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             }
             
     async def close(self):

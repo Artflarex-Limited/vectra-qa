@@ -14,7 +14,7 @@ import os
 import asyncio
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -30,13 +30,13 @@ async def update_progress(agent_id: str, memory_node: str, step: str, progress: 
             "status": "active",
             "last_action": step,
             "progress_percent": progress,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         }
         
         if findings:
             node = vault.read_node(memory_node)
             current_content = node["content"]
-            new_content = current_content + f"\n\n## [{datetime.utcnow().strftime('%H:%M:%S')}] {step}\n{findings}"
+            new_content = current_content + f"\n\n## [{datetime.now(timezone.utc).strftime('%H:%M:%S')}] {step}\n{findings}"
             vault.write_node(memory_node, new_content, node["frontmatter"])
         
         vault.update_frontmatter(memory_node, updates)
@@ -57,7 +57,7 @@ async def monitor_api_calls(browser: BrowserAutomation, url: str, agent_id: str,
             "url": request.url,
             "method": request.method,
             "headers": dict(request.headers),
-            "time": datetime.utcnow().isoformat() + "Z"
+            "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         })
         await route.continue_()
     
@@ -239,14 +239,14 @@ async def run_agent(agent_id: str, memory_node: str):
                 "result": "pass",
                 "progress_percent": 100,
                 "requests_intercepted": len(browser.network_logs),
-                "end_time": datetime.utcnow().isoformat() + "Z"
+                "end_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             })
             print(f"[DATA VALIDATOR {agent_id}] Test completed successfully")
         else:
             vault.update_frontmatter(memory_node, {
                 "status": "failed",
                 "result": "fail",
-                "end_time": datetime.utcnow().isoformat() + "Z"
+                "end_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             })
             print(f"[DATA VALIDATOR {agent_id}] Test failed")
             
@@ -259,7 +259,7 @@ async def run_agent(agent_id: str, memory_node: str):
             "status": "failed",
             "result": "fail",
             "error": str(e),
-            "end_time": datetime.utcnow().isoformat() + "Z"
+            "end_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         })
     finally:
         await browser.close()

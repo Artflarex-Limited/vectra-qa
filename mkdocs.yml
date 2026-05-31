@@ -105,6 +105,7 @@ nav:
     - Agents: api/agents.md
   - User Guide:
     - Writing Tests: user-guide/writing-tests.md
+    - Feature Testing: user-guide/feature-testing.md
     - Understanding Results: user-guide/understanding-results.md
     - Advanced Usage: user-guide/advanced-usage.md
   - Development:

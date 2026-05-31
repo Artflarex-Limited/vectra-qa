@@ -16,7 +16,7 @@ Generates detailed, structured test reports with sections for:
 """
 
 from typing import Dict, List, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 
 
@@ -137,7 +137,7 @@ class ReportBuilder:
         self.report = TestReport(
             test_type=test_type,
             url=url,
-            start_time=datetime.utcnow().isoformat() + "Z"
+            start_time=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         )
     
     def add_section(self, title: str, status: str, findings: List[Dict] = None, 
@@ -165,7 +165,7 @@ class ReportBuilder:
     
     def finalize(self):
         """Finalize the report with end time."""
-        self.report.end_time = datetime.utcnow().isoformat() + "Z"
+        self.report.end_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         
         # Auto-determine overall status
         if any(s.status == 'fail' for s in self.report.sections):

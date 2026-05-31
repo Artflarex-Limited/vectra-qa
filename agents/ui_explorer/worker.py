@@ -14,7 +14,7 @@ import os
 import asyncio
 import time
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -32,7 +32,7 @@ async def update_progress(agent_id: str, memory_node: str, step: str, progress: 
             "status": "active",
             "last_action": step,
             "progress_percent": progress,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         }
         
         if screenshots:
@@ -42,7 +42,7 @@ async def update_progress(agent_id: str, memory_node: str, step: str, progress: 
             # Append findings to node content
             node = vault.read_node(memory_node)
             current_content = node["content"]
-            new_content = current_content + f"\n\n## [{datetime.utcnow().strftime('%H:%M:%S')}] {step}\n{findings}"
+            new_content = current_content + f"\n\n## [{datetime.now(timezone.utc).strftime('%H:%M:%S')}] {step}\n{findings}"
             vault.write_node(memory_node, new_content, node["frontmatter"])
         
         # If we have structured findings, append them too
@@ -668,7 +668,7 @@ async def run_agent(agent_id: str, memory_node: str):
                 "status": "completed",
                 "result": "pass",
                 "progress_percent": 100,
-                "end_time": datetime.utcnow().isoformat() + "Z"
+                "end_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             })
             print(f"[UI EXPLORER {agent_id}] Test completed successfully")
         elif report.report.overall_status == "warning":
@@ -678,7 +678,7 @@ async def run_agent(agent_id: str, memory_node: str):
                 "status": "completed",
                 "result": "warning",
                 "progress_percent": 100,
-                "end_time": datetime.utcnow().isoformat() + "Z"
+                "end_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             })
             print(f"[UI EXPLORER {agent_id}] Test completed with warnings")
         else:
@@ -686,7 +686,7 @@ async def run_agent(agent_id: str, memory_node: str):
                 "status": "completed",
                 "result": "fail",
                 "progress_percent": 100,
-                "end_time": datetime.utcnow().isoformat() + "Z"
+                "end_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
             })
             print(f"[UI EXPLORER {agent_id}] Test completed with failures")
             
@@ -699,7 +699,7 @@ async def run_agent(agent_id: str, memory_node: str):
             "status": "failed",
             "result": "fail",
             "error": str(e),
-            "end_time": datetime.utcnow().isoformat() + "Z"
+            "end_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         })
     finally:
         await browser.close()

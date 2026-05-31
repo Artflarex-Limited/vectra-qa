@@ -16,8 +16,11 @@ Usage:
 
 import os
 import json
+import hashlib
+import time
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from pathlib import Path
 
 
 @dataclass
@@ -28,6 +31,99 @@ class LLMResponse:
     provider: str
     usage: Dict[str, int]
     raw_response: Any
+
+
+class LLMCache:
+    """
+    Simple cache for LLM responses to reduce API costs and latency.
+    
+    Uses in-memory storage with optional disk persistence.
+    Cache key is a hash of (model, messages, temperature, max_tokens).
+    """
+
+    def __init__(self, ttl_seconds: int = 3600, persist_path: Optional[str] = None):
+        self.ttl_seconds = ttl_seconds
+        self.cache: Dict[str, Dict[str, Any]] = {}
+        self.persist_path = Path(persist_path) if persist_path else None
+        self._load_from_disk()
+
+    def _generate_key(self, model: str, messages: List[Dict], temperature: float, max_tokens: int) -> str:
+        """Generate cache key from request parameters."""
+        cache_data = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens
+        }
+        cache_json = json.dumps(cache_data, sort_keys=True)
+        return hashlib.sha256(cache_json.encode()).hexdigest()
+
+    def get(self, model: str, messages: List[Dict], temperature: float, max_tokens: int) -> Optional[LLMResponse]:
+        """Get cached response if available and not expired."""
+        key = self._generate_key(model, messages, temperature, max_tokens)
+        entry = self.cache.get(key)
+
+        if not entry:
+            return None
+
+        if time.time() - entry["timestamp"] > self.ttl_seconds:
+            del self.cache[key]
+            return None
+
+        return LLMResponse(
+            content=entry["content"],
+            model=entry["model"],
+            provider=entry["provider"],
+            usage=entry["usage"],
+            raw_response=None
+        )
+
+    def set(self, model: str, messages: List[Dict], temperature: float, max_tokens: int, response: LLMResponse) -> None:
+        """Cache a response."""
+        key = self._generate_key(model, messages, temperature, max_tokens)
+        self.cache[key] = {
+            "content": response.content,
+            "model": response.model,
+            "provider": response.provider,
+            "usage": response.usage,
+            "timestamp": time.time()
+        }
+        self._save_to_disk()
+
+    def clear(self) -> None:
+        """Clear all cached entries."""
+        self.cache.clear()
+        if self.persist_path and self.persist_path.exists():
+            self.persist_path.unlink()
+
+    def _save_to_disk(self) -> None:
+        """Persist cache to disk."""
+        if not self.persist_path:
+            return
+        try:
+            self.persist_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.persist_path, 'w') as f:
+                json.dump(self.cache, f)
+        except Exception:
+            pass
+
+    def _load_from_disk(self) -> None:
+        """Load cache from disk."""
+        if not self.persist_path or not self.persist_path.exists():
+            return
+        try:
+            with open(self.persist_path, 'r') as f:
+                self.cache = json.load(f)
+            # Clean expired entries on load
+            now = time.time()
+            expired_keys = [
+                k for k, v in self.cache.items()
+                if now - v["timestamp"] > self.ttl_seconds
+            ]
+            for k in expired_keys:
+                del self.cache[k]
+        except Exception:
+            pass
 
 
 class LLMRouter:
@@ -43,9 +139,17 @@ class LLMRouter:
         - local/llama3.1:70b
     """
     
-    def __init__(self):
+    def __init__(self, cache_enabled: bool = True):
         self.clients = {}
         self._init_clients()
+        
+        # Initialize cache if enabled
+        self.cache = None
+        if cache_enabled and os.getenv("VECTRA_LLM_CACHE", "true").lower() == "true":
+            cache_path = os.getenv("VECTRA_LLM_CACHE_PATH", "/app/obsidian_vault/.llm_cache.json")
+            ttl = int(os.getenv("VECTRA_LLM_CACHE_TTL", "3600"))
+            self.cache = LLMCache(ttl_seconds=ttl, persist_path=cache_path)
+            print(f"LLM cache enabled (TTL: {ttl}s, path: {cache_path})")
     
     def _init_clients(self):
         """Initialize provider clients lazily."""
@@ -128,6 +232,13 @@ class LLMRouter:
         Returns:
             LLMResponse with standardized fields
         """
+        # Check cache first
+        if hasattr(self, 'cache') and self.cache:
+            cached = self.cache.get(model, messages, temperature, max_tokens)
+            if cached:
+                print(f"LLM cache hit for {model}")
+                return cached
+        
         provider, model_name = self._parse_model(model)
         
         if provider not in self.clients:
@@ -135,13 +246,19 @@ class LLMRouter:
         
         # Route to appropriate provider
         if provider in ["openai", "minimax", "kimi", "local"]:
-            return self._openai_complete(provider, model_name, messages, temperature, max_tokens, **kwargs)
+            response = self._openai_complete(provider, model_name, messages, temperature, max_tokens, **kwargs)
         elif provider == "anthropic":
-            return self._anthropic_complete(model_name, messages, temperature, max_tokens, **kwargs)
+            response = self._anthropic_complete(model_name, messages, temperature, max_tokens, **kwargs)
         elif provider == "google":
-            return self._google_complete(model_name, messages, temperature, max_tokens, **kwargs)
+            response = self._google_complete(model_name, messages, temperature, max_tokens, **kwargs)
         else:
             raise ValueError(f"Unknown provider: {provider}")
+        
+        # Cache the response
+        if hasattr(self, 'cache') and self.cache:
+            self.cache.set(model, messages, temperature, max_tokens, response)
+        
+        return response
     
     def _openai_complete(self, provider: str, model: str, messages: List[Dict],
                         temperature: float, max_tokens: int, **kwargs) -> LLMResponse:

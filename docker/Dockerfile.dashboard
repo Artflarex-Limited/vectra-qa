@@ -1,11 +1,12 @@
 # Dockerfile for Command Center Dashboard
 # Provides the FastAPI backend and HTMX frontend
 
-FROM python:3.11-slim as builder
+FROM python:3.12-slim as builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment
@@ -17,7 +18,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Production stage
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -35,17 +36,25 @@ ENV PYTHONPATH=/app
 # Copy application code
 COPY command_center/ ./command_center/
 COPY mcp_server/ ./mcp_server/
+COPY agents/ ./agents/
 COPY obsidian_vault/ ./obsidian_vault/
+COPY scripts/ ./scripts/
 
 # Create directories for runtime
-RUN mkdir -p /app/obsidian_vault/Runs /app/obsidian_vault/Global /app/obsidian_vault/Templates /app/obsidian_vault/Screenshots
+RUN mkdir -p \
+    /app/obsidian_vault/Runs \
+    /app/obsidian_vault/Global \
+    /app/obsidian_vault/Templates \
+    /app/obsidian_vault/Screenshots \
+    /app/obsidian_vault/Baselines \
+    /app/logs
 
 # Expose dashboard port
 EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:3000/api/orchestrator/status || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
 
 # Run FastAPI server
 CMD ["uvicorn", "command_center.main:app", "--host", "0.0.0.0", "--port", "3000"]

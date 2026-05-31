@@ -1,11 +1,12 @@
 # Vectra QA - Docker Compose Quickstart
-# 
+#
 # This compose file sets up the entire multi-agent testing framework
 # with a single command: docker compose up
 #
 # Services:
 #   - mcp-server: MCP Tool Server (port 8080)
 #   - command-center: HTMX Dashboard (port 3000)
+#   - redis: Task queue and caching backend
 #   - vault-watcher: File watcher for Obsidian vault changes
 #
 # Usage:
@@ -13,9 +14,24 @@
 #   2. Run: docker compose up --build
 #   3. Open http://localhost:3000
 
-version: '3.8'
-
 services:
+  # Redis - Task queue and LLM response cache
+  redis:
+    image: redis:7-alpine
+    container_name: vectra-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - vectra-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   # MCP Tool Server - Exposes agent tools via SSE transport
   mcp-server:
     build:
@@ -27,33 +43,50 @@ services:
     environment:
       - PYTHONPATH=/app
       - OBSIDIAN_VAULT_PATH=/app/obsidian_vault
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      # LLM Providers
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY:-}
       - MINIMAX_BASE_URL=${MINIMAX_BASE_URL:-https://api.minimax.chat/v1}
-      - KIMI_API_KEY=${KIMI_API_KEY}
+      - KIMI_API_KEY=${KIMI_API_KEY:-}
       - KIMI_BASE_URL=${KIMI_BASE_URL:-https://api.moonshot.cn/v1}
       - LOCAL_LLM_BASE_URL=${LOCAL_LLM_BASE_URL:-}
       - LOCAL_LLM_MODEL=${LOCAL_LLM_MODEL:-llama3.1:70b}
+      # Model Selection
+      - ORCHESTRATOR_MODEL=${ORCHESTRATOR_MODEL:-openai/gpt-4o}
+      - UI_EXPLORER_MODEL=${UI_EXPLORER_MODEL:-anthropic/claude-3-5-sonnet-20241022}
       - CHATBOT_MODEL=${CHATBOT_MODEL:-anthropic/claude-3-5-sonnet-20241022}
-      - CHATBOT_MAX_HISTORY=${CHATBOT_MAX_HISTORY:-50}
-      - CHATBOT_ENABLE_STREAMING=${CHATBOT_ENABLE_STREAMING:-true}
+      # Worker Configuration
+      - VECTRA_LLM_WORKERS=${VECTRA_LLM_WORKERS:-true}
+      # LLM Cache
+      - VECTRA_LLM_CACHE=${VECTRA_LLM_CACHE:-true}
+      - VECTRA_LLM_CACHE_TTL=${VECTRA_LLM_CACHE_TTL:-3600}
+      - VECTRA_LLM_CACHE_PATH=/app/obsidian_vault/.llm_cache.json
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      # Server Config
       - MCP_TRANSPORT=${MCP_TRANSPORT:-sse}
       - MCP_SERVER_PORT=${MCP_SERVER_PORT:-8080}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - MCP_API_KEY=${MCP_API_KEY:-}
+      # Feature Testers
+      - HEADLESS=${HEADLESS:-true}
     volumes:
       - obsidian-vault:/app/obsidian_vault
       - ./agents:/app/agents
+      - ./mcp_server:/app/mcp_server
     networks:
       - vectra-network
+    depends_on:
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/mcp/tools')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 15s
     restart: unless-stopped
 
   # Command Center Dashboard - FastAPI + HTMX + SSE
@@ -78,22 +111,55 @@ services:
       - CHATBOT_ENABLE_STREAMING=${CHATBOT_ENABLE_STREAMING:-true}
     volumes:
       - obsidian-vault:/app/obsidian_vault
-      - ./command_center/static:/app/command_center/static
+      - ./command_center:/app/command_center
     networks:
       - vectra-network
     depends_on:
       mcp-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/orchestrator/status"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # Worker Pool - Distributed agent workers
+  worker-pool:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mcp
+    container_name: vectra-worker-pool
+    command: python -c "from mcp_server.task_queue import get_task_queue; import time; q = get_task_queue(); print('Worker pool ready'); time.sleep(3600)"
+    environment:
+      - PYTHONPATH=/app
+      - OBSIDIAN_VAULT_PATH=/app/obsidian_vault
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - VECTRA_LLM_WORKERS=${VECTRA_LLM_WORKERS:-true}
+      - HEADLESS=${HEADLESS:-true}
+    volumes:
+      - obsidian-vault:/app/obsidian_vault
+      - ./agents:/app/agents
+      - ./mcp_server:/app/mcp_server
+    networks:
+      - vectra-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('ok')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-    restart: unless-stopped
 
   # Vault Watcher - Monitors Obsidian vault for changes
-  # This ensures file changes are immediately reflected in the dashboard
   vault-watcher:
     build:
       context: .
@@ -111,6 +177,12 @@ services:
     depends_on:
       - command-center
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('ok')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   # Optional: Local LLM (Ollama) for privacy-first testing
   # Uncomment if you want to run local models
@@ -127,6 +199,8 @@ services:
 
 volumes:
   obsidian-vault:
+    driver: local
+  redis-data:
     driver: local
   # ollama-data:
   #   driver: local

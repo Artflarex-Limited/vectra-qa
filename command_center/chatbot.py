@@ -10,7 +10,7 @@ import re
 import json
 import yaml
 from typing import List, Dict, Any, Optional, AsyncGenerator
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Import existing LLM router
@@ -79,7 +79,7 @@ class ChatMessage:
     def __init__(self, role: str, content: str, timestamp: str = None, metadata: Dict = None):
         self.role = role
         self.content = content
-        self.timestamp = timestamp or datetime.utcnow().isoformat() + "Z"
+        self.timestamp = timestamp or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         self.metadata = metadata or {}
     
     def to_dict(self) -> Dict[str, Any]:
@@ -105,8 +105,8 @@ class ChatEngine:
             CHAT_LOG_PATH.write_text(
                 "---\n"
                 "chat_id: global\n"
-                f"created_at: {datetime.utcnow().isoformat()}Z\n"
-                f"modified_at: {datetime.utcnow().isoformat()}Z\n"
+                f"created_at: {datetime.now(timezone.utc).isoformat()}Z\n"
+                f"modified_at: {datetime.now(timezone.utc).isoformat()}Z\n"
                 "message_count: 0\n"
                 "---\n\n"
                 "# Vectra Chat Log\n\n"
@@ -136,7 +136,7 @@ class ChatEngine:
     
     def _write_chat_log(self, frontmatter: Dict, body: str):
         """Write chat log with updated frontmatter and body."""
-        frontmatter["modified_at"] = datetime.utcnow().isoformat() + "Z"
+        frontmatter["modified_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         yaml_content = yaml.dump(frontmatter, default_flow_style=False, allow_unicode=True)
         full_content = f"---\n{yaml_content}---\n\n{body}"
         CHAT_LOG_PATH.write_text(full_content, encoding='utf-8')
@@ -171,7 +171,7 @@ class ChatEngine:
                     current_timestamp = header[1:timestamp_end]
                     current_role = header[timestamp_end + 1:].strip().lower()
                 else:
-                    current_timestamp = datetime.utcnow().isoformat() + "Z"
+                    current_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
                     current_role = "unknown"
                 
                 current_content = []
@@ -220,7 +220,7 @@ class ChatEngine:
         """Add a message to the chat log."""
         log = self._read_chat_log()
         
-        timestamp = datetime.utcnow().isoformat() + "Z"
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
         
         # Build message entry
         entry = f"## [{timestamp}] {role}\n{content}\n"
