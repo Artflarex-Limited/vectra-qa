@@ -45,16 +45,14 @@ jobs:
           ls -la wiki_output/
 
       - name: Push to Wiki
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Auth with gh CLI
+          echo "${GH_TOKEN}" | gh auth login --with-token
+          
           # Clone wiki repository
-          git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki_repo || {
-            echo "Wiki repository doesn't exist yet. Creating initial wiki..."
-            mkdir wiki_repo
-            cd wiki_repo
-            git init
-            git remote add origin https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git
-            cd ..
-          }
+          gh repo clone ${{ github.repository }}.wiki wiki_repo
           
           # Copy prepared content to wiki repo
           cp wiki_output/*.md wiki_repo/ 2>/dev/null || true
@@ -69,10 +67,8 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git add .
             git commit -m "docs(wiki): sync from main repo ($(date -u '+%Y-%m-%d %H:%M:%S UTC'))"
-            git push origin master || git push origin main
+            git push origin master
             echo "✅ Wiki synced successfully"
           else
             echo "ℹ️ No changes to sync"
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
