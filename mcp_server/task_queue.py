@@ -7,7 +7,7 @@ Provides a unified task queue interface that supports:
 
 Usage:
     from mcp_server.task_queue import get_task_queue
-    
+
     queue = get_task_queue()
     queue.enqueue("test_auth_flow", {"login_url": "https://example.com/login"})
     task = queue.dequeue()
@@ -30,6 +30,7 @@ logger = structlog.get_logger()
 @dataclass
 class Task:
     """Represents a test task in the queue."""
+
     id: str
     type: str
     params: Dict[str, Any]
@@ -50,7 +51,9 @@ class Task:
 class TaskQueue:
     """Base task queue interface."""
 
-    def enqueue(self, role: str, objective: str, memory_node: str, params: Dict[str, Any], priority: int = 0) -> str:
+    def enqueue(
+        self, role: str, objective: str, memory_node: str, params: Dict[str, Any], priority: int = 0
+    ) -> str:
         """Add a task to the queue. Returns task ID."""
         raise NotImplementedError
 
@@ -83,7 +86,9 @@ class InMemoryTaskQueue(TaskQueue):
         self._completed: Dict[str, Task] = {}
         self._lock = False
 
-    def enqueue(self, role: str, objective: str, memory_node: str, params: Dict[str, Any], priority: int = 0) -> str:
+    def enqueue(
+        self, role: str, objective: str, memory_node: str, params: Dict[str, Any], priority: int = 0
+    ) -> str:
         task = Task(
             id=f"task-{uuid.uuid4().hex[:8]}",
             type=role,
@@ -91,7 +96,7 @@ class InMemoryTaskQueue(TaskQueue):
             role=role,
             objective=objective,
             memory_node=memory_node,
-            priority=priority
+            priority=priority,
         )
         # Insert sorted by priority (higher first)
         inserted = False
@@ -150,6 +155,7 @@ class RedisTaskQueue(TaskQueue):
     def __init__(self, redis_url: str = "redis://localhost:6379/0"):
         try:
             import redis
+
             self._redis = redis.from_url(redis_url, decode_responses=True)
             self._redis.ping()
             self._available = True
@@ -161,7 +167,9 @@ class RedisTaskQueue(TaskQueue):
     def _key(self, suffix: str) -> str:
         return f"vectra:queue:{suffix}"
 
-    def enqueue(self, role: str, objective: str, memory_node: str, params: Dict[str, Any], priority: int = 0) -> str:
+    def enqueue(
+        self, role: str, objective: str, memory_node: str, params: Dict[str, Any], priority: int = 0
+    ) -> str:
         if not self._available:
             return self._fallback.enqueue(role, objective, memory_node, params, priority)
 
@@ -172,21 +180,27 @@ class RedisTaskQueue(TaskQueue):
             role=role,
             objective=objective,
             memory_node=memory_node,
-            priority=priority
+            priority=priority,
         )
 
         # Store task data
-        self._redis.hset(self._key("tasks"), task.id, json.dumps({
-            "id": task.id,
-            "type": task.type,
-            "params": task.params,
-            "role": task.role,
-            "objective": task.objective,
-            "memory_node": task.memory_node,
-            "priority": task.priority,
-            "created_at": task.created_at,
-            "status": "pending"
-        }))
+        self._redis.hset(
+            self._key("tasks"),
+            task.id,
+            json.dumps(
+                {
+                    "id": task.id,
+                    "type": task.type,
+                    "params": task.params,
+                    "role": task.role,
+                    "objective": task.objective,
+                    "memory_node": task.memory_node,
+                    "priority": task.priority,
+                    "created_at": task.created_at,
+                    "status": "pending",
+                }
+            ),
+        )
 
         # Add to priority queue (score = -priority so higher priority comes first)
         self._redis.zadd(self._key("pending"), {task.id: -priority})

@@ -39,9 +39,9 @@ def sample_node_content():
         "frontmatter": {
             "title": "Test Node",
             "created": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
-            "tags": ["test", "sample"]
+            "tags": ["test", "sample"],
         },
-        "content": "# Test Content\n\nThis is a test node.\n\n## Section 1\n\nSome content here."
+        "content": "# Test Content\n\nThis is a test node.\n\n## Section 1\n\nSome content here.",
     }
 
 

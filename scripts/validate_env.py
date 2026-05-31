@@ -26,12 +26,12 @@ def check_env_var(name: str, required: bool = True, example: str = "") -> bool:
         else:
             print(f"  ⚠️  {name}: Not set (Optional)")
             return True
-    
+
     # Mask sensitive values
     display_value = value
     if any(keyword in name.lower() for keyword in ["key", "secret", "password", "token"]):
         display_value = value[:8] + "..." if len(value) > 8 else "***"
-    
+
     print(f"  ✅ {name}: {display_value}")
     return True
 
@@ -39,15 +39,15 @@ def check_env_var(name: str, required: bool = True, example: str = "") -> bool:
 def check_directory(path: str, writable: bool = True) -> bool:
     """Check if a directory exists and is writable."""
     p = Path(path)
-    
+
     if not p.exists():
         print(f"  ❌ Directory does not exist: {path}")
         return False
-    
+
     if not p.is_dir():
         print(f"  ❌ Not a directory: {path}")
         return False
-    
+
     if writable:
         try:
             test_file = p / ".write_test"
@@ -58,7 +58,7 @@ def check_directory(path: str, writable: bool = True) -> bool:
         except Exception as e:
             print(f"  ❌ Directory not writable: {path} ({e})")
             return False
-    
+
     print(f"  ✅ Directory exists: {path}")
     return True
 
@@ -78,6 +78,7 @@ def check_playwright_browsers() -> bool:
     """Check if Playwright browsers are installed."""
     try:
         from playwright.sync_api import sync_playwright
+
         with sync_playwright() as p:
             # Try to launch chromium
             browser = p.chromium.launch()
@@ -98,11 +99,11 @@ def check_llm_connectivity() -> bool:
         "GOOGLE_API_KEY",
         "MINIMAX_API_KEY",
         "KIMI_API_KEY",
-        "LOCAL_LLM_BASE_URL"
+        "LOCAL_LLM_BASE_URL",
     ]
-    
+
     configured = [p for p in providers if os.getenv(p)]
-    
+
     if configured:
         print(f"  ✅ LLM providers configured: {len(configured)}")
         for p in configured:
@@ -119,16 +120,16 @@ def main():
     print("=" * 60)
     print("VECTRA QA - Environment Validation")
     print("=" * 60)
-    
+
     all_passed = True
-    
+
     # Check required environment variables
     print("\n📋 Required Configuration:")
     all_passed &= check_env_var("OBSIDIAN_VAULT_PATH", required=True, example="/path/to/vault")
-    
+
     print("\n🔑 LLM Providers (at least one required):")
     all_passed &= check_llm_connectivity()
-    
+
     print("\n⚙️  Optional Configuration:")
     check_env_var("ORCHESTRATOR_MODEL", required=False, example="openai/gpt-4o")
     check_env_var("UI_EXPLORER_MODEL", required=False, example="anthropic/claude-3-5-sonnet")
@@ -137,13 +138,13 @@ def main():
     check_env_var("COMMAND_CENTER_PORT", required=False, example="3000")
     check_env_var("VECTRA_MAX_BROWSERS", required=False, example="10")
     check_env_var("VECTRA_MAX_AGENT_DURATION", required=False, example="600")
-    
+
     # Check directories
     print("\n📁 Directories:")
     vault_path = os.getenv("OBSIDIAN_VAULT_PATH")
     if vault_path:
         all_passed &= check_directory(vault_path)
-    
+
     # Check Python packages
     print("\n📦 Python Packages:")
     packages = [
@@ -157,16 +158,16 @@ def main():
         "tenacity",
         "filelock",
         "structlog",
-        "validators"
+        "validators",
     ]
-    
+
     for package in packages:
         all_passed &= check_python_package(package)
-    
+
     # Check Playwright browsers
     print("\n🌐 Playwright Browsers:")
     all_passed &= check_playwright_browsers()
-    
+
     # Summary
     print("\n" + "=" * 60)
     if all_passed:

@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 @dataclass
 class ReportSection:
     """A section in the test report."""
+
     title: str
     status: str  # pass, fail, warning, info
     findings: List[Dict[str, Any]] = field(default_factory=list)
@@ -33,6 +34,7 @@ class ReportSection:
 @dataclass
 class TestReport:
     """Complete test report."""
+
     test_type: str
     url: str
     start_time: str
@@ -41,7 +43,7 @@ class TestReport:
     sections: List[ReportSection] = field(default_factory=list)
     screenshots: List[str] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
-    
+
     def to_markdown(self) -> str:
         """Convert report to markdown for memory node."""
         md = f"""# 📊 Test Report: {self.test_type.title()}
@@ -53,12 +55,12 @@ class TestReport:
 **Started**: {self.start_time}
 **Completed**: {self.end_time or 'In progress...'}
 """
-        
+
         # Summary table
-        pass_count = sum(1 for s in self.sections if s.status == 'pass')
-        fail_count = sum(1 for s in self.sections if s.status == 'fail')
-        warn_count = sum(1 for s in self.sections if s.status == 'warning')
-        
+        pass_count = sum(1 for s in self.sections if s.status == "pass")
+        fail_count = sum(1 for s in self.sections if s.status == "fail")
+        warn_count = sum(1 for s in self.sections if s.status == "warning")
+
         md += f"""
 ### Summary
 | Metric | Value |
@@ -69,10 +71,12 @@ class TestReport:
 | Total Checks | {len(self.sections)} |
 
 """
-        
+
         # Sections
         for section in self.sections:
-            icon = {'pass': '✅', 'fail': '❌', 'warning': '⚠️', 'info': 'ℹ️'}.get(section.status, '➡️')
+            icon = {"pass": "✅", "fail": "❌", "warning": "⚠️", "info": "ℹ️"}.get(
+                section.status, "➡️"
+            )
             md += f"""## {icon} {section.title}
 
 """
@@ -81,27 +85,33 @@ class TestReport:
                 for key, value in section.metrics.items():
                     md += f"- **{key}**: {value}\n"
                 md += "\n"
-            
+
             if section.findings:
                 md += "### Findings\n"
                 for finding in section.findings:
-                    severity = finding.get('severity', 'info')
-                    icon = {'critical': '🔴', 'high': '🟠', 'medium': '🟡', 'low': '🔵', 'info': '⚪'}.get(severity, '⚪')
+                    severity = finding.get("severity", "info")
+                    icon = {
+                        "critical": "🔴",
+                        "high": "🟠",
+                        "medium": "🟡",
+                        "low": "🔵",
+                        "info": "⚪",
+                    }.get(severity, "⚪")
                     md += f"- {icon} **{finding.get('title', 'Finding')}**: {finding.get('description', '')}\n"
                 md += "\n"
-            
+
             if section.details:
                 md += f"### Details\n{section.details}\n\n"
-        
+
         # Recommendations
         if self.recommendations:
             md += "## 📝 Recommendations\n\n"
             for i, rec in enumerate(self.recommendations, 1):
                 md += f"{i}. {rec}\n"
             md += "\n"
-        
+
         return md
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert report to dictionary for JSON serialization."""
         return {
@@ -111,70 +121,73 @@ class TestReport:
             "end_time": self.end_time,
             "overall_status": self.overall_status,
             "sections": [
-                {
-                    "title": s.title,
-                    "status": s.status,
-                    "findings": s.findings,
-                    "metrics": s.metrics
-                }
+                {"title": s.title, "status": s.status, "findings": s.findings, "metrics": s.metrics}
                 for s in self.sections
             ],
             "screenshots": self.screenshots,
             "recommendations": self.recommendations,
             "summary": {
-                "pass": sum(1 for s in self.sections if s.status == 'pass'),
-                "fail": sum(1 for s in self.sections if s.status == 'fail'),
-                "warning": sum(1 for s in self.sections if s.status == 'warning'),
-                "total": len(self.sections)
-            }
+                "pass": sum(1 for s in self.sections if s.status == "pass"),
+                "fail": sum(1 for s in self.sections if s.status == "fail"),
+                "warning": sum(1 for s in self.sections if s.status == "warning"),
+                "total": len(self.sections),
+            },
         }
 
 
 class ReportBuilder:
     """Builder for creating detailed test reports."""
-    
+
     def __init__(self, test_type: str, url: str):
         self.report = TestReport(
             test_type=test_type,
             url=url,
-            start_time=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+            start_time=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
         )
-    
-    def add_section(self, title: str, status: str, findings: List[Dict] = None, 
-                   metrics: Dict = None, details: str = ""):
+
+    def add_section(
+        self,
+        title: str,
+        status: str,
+        findings: List[Dict] = None,
+        metrics: Dict = None,
+        details: str = "",
+    ):
         """Add a section to the report."""
-        self.report.sections.append(ReportSection(
-            title=title,
-            status=status,
-            findings=findings or [],
-            metrics=metrics or {},
-            details=details
-        ))
-    
+        self.report.sections.append(
+            ReportSection(
+                title=title,
+                status=status,
+                findings=findings or [],
+                metrics=metrics or {},
+                details=details,
+            )
+        )
+
     def add_screenshot(self, path: str):
         """Add a screenshot reference."""
         self.report.screenshots.append(path)
-    
+
     def add_recommendation(self, recommendation: str):
         """Add a recommendation."""
         self.report.recommendations.append(recommendation)
-    
+
     def set_status(self, status: str):
         """Set overall status."""
         self.report.overall_status = status
-    
+
     def finalize(self):
         """Finalize the report with end time."""
         self.report.end_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
-        
+
         # Auto-determine overall status
-        if any(s.status == 'fail' for s in self.report.sections):
-            self.report.overall_status = 'fail'
-        elif any(s.status == 'warning' for s in self.report.sections):
-            self.report.overall_status = 'warning'
+        if any(s.status == "fail" for s in self.report.sections):
+            self.report.overall_status = "fail"
+        elif any(s.status == "warning" for s in self.report.sections):
+            self.report.overall_status = "warning"
         else:
-            self.report.overall_status = 'pass'
-    
+            self.report.overall_status = "pass"
+
     def get_report(self) -> TestReport:
         """Get the completed report."""
         return self.report

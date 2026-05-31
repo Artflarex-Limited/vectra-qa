@@ -15,7 +15,7 @@ from playwright.async_api import async_playwright, Page, Browser, ConsoleMessage
 class BrowserAutomation:
     """
     Browser automation wrapper using Playwright.
-    
+
     Usage:
         browser = BrowserAutomation(headless=True)
         await browser.start()
@@ -24,7 +24,7 @@ class BrowserAutomation:
         await browser.screenshot("/path/to/screenshot.png")
         await browser.close()
     """
-    
+
     def __init__(self, headless: bool = True, slow_mo: int = 0):
         self.headless = headless
         self.slow_mo = slow_mo
@@ -34,57 +34,61 @@ class BrowserAutomation:
         self.console_logs: List[Dict[str, Any]] = []
         self.network_logs: List[Dict[str, Any]] = []
         self.errors: List[str] = []
-        
+
     async def start(self):
         """Launch browser and create page."""
         self.playwright = await async_playwright().start()
-        
+
         launch_options = {
             "headless": self.headless,
         }
-        
+
         if self.slow_mo > 0:
             launch_options["slow_mo"] = self.slow_mo
-            
+
         self.browser = await self.playwright.chromium.launch(**launch_options)
-        
+
         context = await self.browser.new_context(
             viewport={"width": 1920, "height": 1080},
-            user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.0 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.0 VectraQA/1.0"
+            user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.0 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.0 VectraQA/1.0",
         )
-        
+
         self.page = await context.new_page()
-        
+
         # Set up event listeners
         self.page.on("console", self._handle_console)
         self.page.on("pageerror", self._handle_page_error)
         self.page.on("response", self._handle_response)
-        
+
     def _handle_console(self, msg: ConsoleMessage):
         """Capture console messages."""
-        self.console_logs.append({
-            "type": msg.type,
-            "text": msg.text,
-            "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
-        })
-        
+        self.console_logs.append(
+            {
+                "type": msg.type,
+                "text": msg.text,
+                "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
+        )
+
     def _handle_page_error(self, error):
         """Capture page errors."""
         self.errors.append(str(error))
-        
+
     def _handle_response(self, response):
         """Capture network responses."""
-        self.network_logs.append({
-            "url": response.url,
-            "status": response.status,
-            "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
-        })
-        
+        self.network_logs.append(
+            {
+                "url": response.url,
+                "status": response.status,
+                "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
+        )
+
     async def visit(self, url: str, wait_until: str = "networkidle") -> Dict[str, Any]:
         """Navigate to URL."""
         if not self.page:
             raise RuntimeError("Browser not started. Call start() first.")
-            
+
         try:
             response = await self.page.goto(url, wait_until=wait_until, timeout=30000)
             return {
@@ -93,16 +97,16 @@ class BrowserAutomation:
                 "final_url": self.page.url,
                 "title": await self.page.title(),
                 "status": response.status if response else None,
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
         except Exception as e:
             return {
                 "success": False,
                 "url": url,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def click(self, selector: str, timeout: int = 5000) -> Dict[str, Any]:
         """Click element by selector."""
         try:
@@ -112,16 +116,16 @@ class BrowserAutomation:
                 "success": True,
                 "selector": selector,
                 "url": self.page.url,
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
         except Exception as e:
             return {
                 "success": False,
                 "selector": selector,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def fill(self, selector: str, text: str) -> Dict[str, Any]:
         """Fill input field."""
         try:
@@ -130,16 +134,16 @@ class BrowserAutomation:
                 "success": True,
                 "selector": selector,
                 "text": text,
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
         except Exception as e:
             return {
                 "success": False,
                 "selector": selector,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def get_text(self, selector: str) -> Dict[str, Any]:
         """Get text content of element."""
         try:
@@ -150,23 +154,23 @@ class BrowserAutomation:
                     "success": True,
                     "selector": selector,
                     "text": text.strip() if text else "",
-                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
                 }
             else:
                 return {
                     "success": False,
                     "selector": selector,
                     "error": "Element not found",
-                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
                 }
         except Exception as e:
             return {
                 "success": False,
                 "selector": selector,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def get_elements(self, selector: str) -> Dict[str, Any]:
         """Count elements matching selector."""
         try:
@@ -175,16 +179,16 @@ class BrowserAutomation:
                 "success": True,
                 "selector": selector,
                 "count": len(elements),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
         except Exception as e:
             return {
                 "success": False,
                 "selector": selector,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def screenshot(self, path: str, full_page: bool = True) -> Dict[str, Any]:
         """Take screenshot."""
         try:
@@ -195,16 +199,16 @@ class BrowserAutomation:
                 "success": True,
                 "path": path,
                 "full_page": full_page,
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
         except Exception as e:
             return {
                 "success": False,
                 "path": path,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def scroll_to_bottom(self) -> Dict[str, Any]:
         """Scroll to bottom of page."""
         try:
@@ -212,15 +216,15 @@ class BrowserAutomation:
             await asyncio.sleep(0.5)
             return {
                 "success": True,
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def check_responsive(self, width: int, height: int) -> Dict[str, Any]:
         """Test viewport size."""
         try:
@@ -229,20 +233,20 @@ class BrowserAutomation:
             return {
                 "success": True,
                 "viewport": f"{width}x{height}",
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def get_console_errors(self) -> List[str]:
         """Get console error messages."""
         errors = [log["text"] for log in self.console_logs if log["type"] == "error"]
         return errors
-        
+
     async def get_all_links(self) -> Dict[str, Any]:
         """Get all links on page."""
         try:
@@ -252,24 +256,26 @@ class BrowserAutomation:
                 href = await link.get_attribute("href")
                 text = await link.text_content()
                 if href:
-                    results.append({
-                        "href": href,
-                        "text": text.strip() if text else "",
-                        "visible": await link.is_visible()
-                    })
+                    results.append(
+                        {
+                            "href": href,
+                            "text": text.strip() if text else "",
+                            "visible": await link.is_visible(),
+                        }
+                    )
             return {
                 "success": True,
                 "count": len(results),
                 "links": results,
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def check_form(self, form_selector: str = "form") -> Dict[str, Any]:
         """Check form fields."""
         try:
@@ -278,9 +284,9 @@ class BrowserAutomation:
                 return {
                     "success": False,
                     "error": "Form not found",
-                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
                 }
-                
+
             inputs = await form.query_selector_all("input, textarea, select")
             fields = []
             for inp in inputs:
@@ -288,27 +294,29 @@ class BrowserAutomation:
                 name = await inp.get_attribute("name") or ""
                 placeholder = await inp.get_attribute("placeholder") or ""
                 required = await inp.get_attribute("required") is not None
-                
-                fields.append({
-                    "type": field_type,
-                    "name": name,
-                    "placeholder": placeholder,
-                    "required": required
-                })
-                
+
+                fields.append(
+                    {
+                        "type": field_type,
+                        "name": name,
+                        "placeholder": placeholder,
+                        "required": required,
+                    }
+                )
+
             return {
                 "success": True,
                 "fields": fields,
                 "count": len(fields),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             }
-            
+
     async def close(self):
         """Close browser."""
         if self.browser:
