@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-from mcp_server.features.visual_regression import VisualRegressionTester
+from mcp_server.features.visual_regression import HAS_PIL, VisualRegressionTester
 
 
 class PixelMap:
@@ -261,7 +261,7 @@ class TestVisualRegressionTester:
         mock_image.Resampling = Mock()
         mock_image.Resampling.LANCZOS = Mock()
 
-        with patch("mcp_server.features.visual_regression.Image", mock_image):
+        with patch("mcp_server.features.visual_regression.Image", mock_image, create=True):
             result = await tester._compare_images("baseline.png", "current.png")
 
         assert result["diff_percent"] == 0.0
@@ -298,7 +298,7 @@ class TestVisualRegressionTester:
         mock_image.Resampling = Mock()
         mock_image.Resampling.LANCZOS = Mock()
 
-        with patch("mcp_server.features.visual_regression.Image", mock_image):
+        with patch("mcp_server.features.visual_regression.Image", mock_image, create=True):
             result = await tester._compare_images("baseline.png", "current.png")
 
         mock_current.resize.assert_called_once()
@@ -329,7 +329,7 @@ class TestVisualRegressionTester:
         mock_image.Resampling = Mock()
         mock_image.Resampling.LANCZOS = Mock()
 
-        with patch("mcp_server.features.visual_regression.Image", mock_image):
+        with patch("mcp_server.features.visual_regression.Image", mock_image, create=True):
             await tester._compare_images("baseline.png", "current.png")
 
         mock_current.convert.assert_called_once_with("RGB")
@@ -365,7 +365,7 @@ class TestVisualRegressionTester:
         mock_image.Resampling = Mock()
         mock_image.Resampling.LANCZOS = Mock()
 
-        with patch("mcp_server.features.visual_regression.Image", mock_image):
+        with patch("mcp_server.features.visual_regression.Image", mock_image, create=True):
             result = await tester._compare_images("baseline.png", "current.png")
 
         assert result["pixel_diff_count"] == 1
@@ -407,7 +407,7 @@ class TestVisualRegressionTester:
         mock_image.Resampling = Mock()
         mock_image.Resampling.LANCZOS = Mock()
 
-        with patch("mcp_server.features.visual_regression.Image", mock_image):
+        with patch("mcp_server.features.visual_regression.Image", mock_image, create=True):
             result = await tester._compare_images("baseline.png", "current.png")
 
         assert result["pixel_diff_count"] == 2
@@ -420,6 +420,7 @@ class TestVisualRegressionTester:
         with patch(
             "mcp_server.features.visual_regression.Image.open",
             side_effect=Exception("Corrupt image"),
+            create=True,
         ):
             result = await tester._compare_images("baseline.png", "current.png")
 
