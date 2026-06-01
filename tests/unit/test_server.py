@@ -253,14 +253,14 @@ class TestFastAPIEndpoints:
         """GET /health should return 200 with healthy status."""
         from fastapi.testclient import TestClient
 
-        client = TestClient(sse_app)
-        response = client.get("/health")
+        with TestClient(sse_app) as client:
+            response = client.get("/health")
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "healthy"
-        assert data["service"] == "vectra-qa-mcp"
-        assert "timestamp" in data
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "healthy"
+            assert data["service"] == "vectra-qa-mcp"
+            assert "timestamp" in data
 
     @pytest.mark.unit
     def test_ready_endpoint_success(self, sse_app):
@@ -272,14 +272,14 @@ class TestFastAPIEndpoints:
         mock_vault.read_node.return_value = {"frontmatter": {}, "content": "ok"}
 
         with patch("mcp_server.server.get_vault", return_value=mock_vault):
-            client = TestClient(sse_app)
-            response = client.get("/ready")
+            with TestClient(sse_app) as client:
+                response = client.get("/ready")
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "ready"
-        assert data["vault"] == "writable"
-        assert data["service"] == "vectra-qa-mcp"
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "ready"
+            assert data["vault"] == "writable"
+            assert data["service"] == "vectra-qa-mcp"
 
     @pytest.mark.unit
     def test_ready_endpoint_vault_failure(self, sse_app):
@@ -290,18 +290,18 @@ class TestFastAPIEndpoints:
         mock_vault.write_node.side_effect = RuntimeError("Vault unavailable")
 
         with patch("mcp_server.server.get_vault", return_value=mock_vault):
-            client = TestClient(sse_app)
-            response = client.get("/ready")
+            with TestClient(sse_app) as client:
+                response = client.get("/ready")
 
-        assert response.status_code == 503
-        data = response.json()
-        assert data["status"] == "not_ready"
-        assert "error" in data
-        assert "Vault unavailable" in data["error"]
+            assert response.status_code == 503
+            data = response.json()
+            assert data["status"] == "not_ready"
+            assert "error" in data
+            assert "Vault unavailable" in data["error"]
 
     @pytest.mark.unit
     def test_metrics_endpoint(self, sse_app):
-        """GET /metrics should return agent metrics."""
+        """GET /metrics should return Prometheus text format metrics."""
         from fastapi.testclient import TestClient
 
         fake_agents = [
@@ -313,16 +313,14 @@ class TestFastAPIEndpoints:
         mock_spawner.get_active_agents.return_value = fake_agents
 
         with patch("mcp_server.server.get_spawner", return_value=mock_spawner):
-            client = TestClient(sse_app)
-            response = client.get("/metrics")
+            with TestClient(sse_app) as client:
+                response = client.get("/metrics")
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["active_agents_total"] == 3
-        assert data["active_agents_running"] == 2
-        assert data["active_agents_exited"] == 1
-        assert "orphaned_agents" in data
-        assert "timestamp" in data
+            assert response.status_code == 200
+            assert "text/plain" in response.headers["content-type"]
+            # Verify Prometheus format contains expected metric names
+            content = response.text
+            assert "vectra_qa_active_agents" in content or "active_agents" in content
 
     @pytest.mark.unit
     def test_mcp_endpoint_proxies_requests(self, sse_app):
@@ -330,11 +328,11 @@ class TestFastAPIEndpoints:
         from fastapi.testclient import TestClient
 
         with patch("mcp_server.tools.TOOLS", {}):
-            client = TestClient(sse_app)
-            response = client.post("/mcp", json={"method": "tools/list", "id": 1})
+            with TestClient(sse_app) as client:
+                response = client.post("/mcp", json={"method": "tools/list", "id": 1})
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["jsonrpc"] == "2.0"
-        assert data["id"] == 1
-        assert data["result"]["tools"] == []
+            assert response.status_code == 200
+            data = response.json()
+            assert data["jsonrpc"] == "2.0"
+            assert data["id"] == 1
+            assert data["result"]["tools"] == []

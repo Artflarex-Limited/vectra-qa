@@ -218,20 +218,24 @@ class TestAPIContractTester:
             }
         }
 
-        # Valid body
-        result = asyncio.new_event_loop().run_until_complete(
-            tester.validate_response_body({"name": "John", "age": 30}, "/users", "get", 200)
-        )
+        loop = asyncio.new_event_loop()
+        try:
+            # Valid body
+            result = loop.run_until_complete(
+                tester.validate_response_body({"name": "John", "age": 30}, "/users", "get", 200)
+            )
 
-        assert result["status"] == "pass"
+            assert result["status"] == "pass"
 
-        # Invalid body - missing required field
-        result = asyncio.new_event_loop().run_until_complete(
-            tester.validate_response_body({"age": 30}, "/users", "get", 200)
-        )
+            # Invalid body - missing required field
+            result = loop.run_until_complete(
+                tester.validate_response_body({"age": 30}, "/users", "get", 200)
+            )
 
-        assert result["status"] == "fail"
-        assert any("Missing Required Field" in f["title"] for f in result["findings"])
+            assert result["status"] == "fail"
+            assert any("Missing Required Field" in f["title"] for f in result["findings"])
+        finally:
+            loop.close()
 
 
 class TestAccessibilityTester:
@@ -240,7 +244,7 @@ class TestAccessibilityTester:
     @pytest.fixture
     def mock_browser(self):
         browser = Mock()
-        browser.page = AsyncMock()
+        browser.page = Mock()
         return browser
 
     @pytest.mark.asyncio
@@ -249,7 +253,7 @@ class TestAccessibilityTester:
         mock_browser.visit = AsyncMock(return_value={"success": True})
 
         # Mock images without alt
-        mock_img = AsyncMock()
+        mock_img = Mock()
         mock_img.get_attribute.return_value = None
 
         mock_browser.page.query_selector_all.side_effect = [
@@ -257,7 +261,7 @@ class TestAccessibilityTester:
             [],  # inputs
             [Mock()],  # h1
         ]
-        mock_browser.page.evaluate.return_value = "en"
+        mock_browser.page.evaluate = AsyncMock(return_value="en")
 
         tester = AccessibilityTester()
         result = await tester.test_accessibility(mock_browser, "https://example.com")

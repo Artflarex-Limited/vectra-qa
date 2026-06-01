@@ -8,6 +8,7 @@ import json
 import sys
 import asyncio
 import argparse
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -15,6 +16,7 @@ import structlog
 
 from mcp_server.tools import execute_tool, get_vault, get_spawner
 from mcp_server.state_manager import get_state_manager
+from mcp_server.metrics import get_metrics
 
 logger = structlog.get_logger()
 
@@ -118,27 +120,25 @@ class MCPServer:
         would create a nested event loop, which causes RuntimeError.
         """
         from fastapi import FastAPI, Request
-        from fastapi.responses import StreamingResponse, JSONResponse
+        from fastapi.responses import StreamingResponse, JSONResponse, Response
         import uvicorn
 
-        app = FastAPI(title="Vectra QA MCP Server")
-
-        # Register signal handlers
-        self.state_manager.register_signal_handlers()
-
-        # Restore state on startup
-        orphaned = self.state_manager.restore_state()
-        if orphaned:
-            logger.info("orphaned_agents_detected", count=len(orphaned))
-
-        @app.on_event("startup")
-        async def startup_event():
+        @asynccontextmanager
+        async def lifespan(app: FastAPI):
+            """Lifespan context manager for startup/shutdown."""
             logger.info("mcp_server_starting", host=host, port=port)
-
-        @app.on_event("shutdown")
-        async def shutdown_event():
+            # Register signal handlers
+            self.state_manager.register_signal_handlers()
+            # Restore state on startup
+            orphaned = self.state_manager.restore_state()
+            if orphaned:
+                logger.info("orphaned_agents_detected", count=len(orphaned))
+            yield
+            # Shutdown
             logger.info("mcp_server_shutting_down")
             self.state_manager.save_state()
+
+        app = FastAPI(title="Vectra QA MCP Server", lifespan=lifespan)
 
         @app.get("/health")
         async def health_check():
@@ -173,20 +173,7 @@ class MCPServer:
         @app.get("/metrics")
         async def metrics():
             """Prometheus-compatible metrics endpoint."""
-            agents = get_spawner().get_active_agents()
-            running = sum(1 for a in agents if a["status"] == "running")
-            exited = sum(1 for a in agents if a["status"] == "exited")
-
-            # Get orphaned agents
-            orphaned = self.state_manager.check_orphaned_agents()
-
-            return {
-                "active_agents_total": len(agents),
-                "active_agents_running": running,
-                "active_agents_exited": exited,
-                "orphaned_agents": len(orphaned),
-                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
-            }
+            return Response(content=get_metrics(), media_type="text/plain; charset=utf-8")
 
         @app.post("/mcp")
         async def handle_mcp(request: Request):

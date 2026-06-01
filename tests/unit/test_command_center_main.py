@@ -61,7 +61,9 @@ def client():
         mock_chat.interpret_results = MagicMock(return_value="Interpretation")
         mock_chat.stream_response = AsyncMock()
 
-        yield TestClient(app), mock_reader, mock_chat
+        client = TestClient(app)
+        yield client, mock_reader, mock_chat
+        client.close()  # Prevent ResourceWarning: unclosed event loop
 
 
 # =========================================================================

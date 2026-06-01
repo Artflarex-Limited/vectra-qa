@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vectra-qa.fullname" . }}-mcp-server
+  labels:
+    app: {{ .Chart.Name }}
+    component: mcp-server
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+      component: mcp-server
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+        component: mcp-server
+    spec:
+      containers:
+        - name: mcp-server
+          image: "{{ .Values.mcpServer.image }}:{{ .Values.image.tag }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.mcpServer.port }}
+              protocol: TCP
+          resources: {{ toYaml .Values.mcpServer.resources | nindent 10 }}
+          env:
+            - name: OBSIDIAN_VAULT_PATH
+              value: {{ .Values.env.OBSIDIAN_VAULT_PATH }}
+            - name: DATABASE_URL
+              value: {{ .Values.env.DATABASE_URL }}
+            - name: REDIS_HOST
+              value: {{ .Values.env.REDIS_HOST }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http

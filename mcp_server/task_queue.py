@@ -269,6 +269,51 @@ class RedisTaskQueue(TaskQueue):
                 tasks.append(Task(**json.loads(task_data)))
         return tasks
 
+    def subscribe(self, channel: str = "vectra:tasks"):
+        """Subscribe to task notifications on a channel."""
+        if not self._available:
+            return self._fallback.subscribe(channel) if hasattr(self._fallback, 'subscribe') else None
+        pubsub = self._redis.pubsub()
+        pubsub.subscribe(channel)
+        return pubsub
+
+    def publish(self, channel: str, message: Dict[str, Any]) -> None:
+        """Publish a task notification to a channel."""
+        if not self._available:
+            return
+        self._redis.publish(channel, json.dumps(message))
+
+    def enqueue_and_notify(
+        self, role: str, objective: str, memory_node: str, params: Dict[str, Any],
+        priority: int = 0, channel: str = "vectra:tasks"
+    ) -> str:
+        """Enqueue a task and notify workers via pub/sub."""
+        task_id = self.enqueue(role, objective, memory_node, params, priority)
+        self.publish(channel, {"action": "new_task", "task_id": task_id, "role": role})
+        return task_id
+
+    def acquire_leadership(self, agent_id: str, ttl: int = 30) -> bool:
+        """Acquire leadership for an agent. Returns True if won leadership."""
+        if not self._available:
+            return True  # In fallback mode, always succeed
+        key = f"vectra:leader:{agent_id}"
+        acquired = self._redis.set(key, "1", nx=True, ex=ttl)
+        return bool(acquired)
+
+    def release_leadership(self, agent_id: str) -> None:
+        """Release leadership for an agent."""
+        if not self._available:
+            return
+        key = f"vectra:leader:{agent_id}"
+        self._redis.delete(key)
+
+    def is_leader(self, agent_id: str) -> bool:
+        """Check if this agent is the leader."""
+        if not self._available:
+            return True
+        key = f"vectra:leader:{agent_id}"
+        return self._redis.exists(key) == 1
+
 
 # Global queue instance
 _queue_instance: Optional[TaskQueue] = None

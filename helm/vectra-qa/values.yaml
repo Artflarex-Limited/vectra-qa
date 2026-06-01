@@ -1,0 +1,65 @@
+# Default values for vectra-qa chart.
+
+replicaCount: 2
+
+image:
+  repository: vectra-qa
+  tag: latest
+  pullPolicy: IfNotPresent
+
+mcpServer:
+  image: vectra-qa-mcp-server
+  port: 8080
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+postgresql:
+  enabled: true
+  image: postgres:16
+  database: vectra_qa
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  # Custom metric for queue depth (requires Prometheus)
+  targetQueueDepth: 100
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: vectra-qa.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+# Environment variables
+env:
+  OBSIDIAN_VAULT_PATH: /data/vault
+  REDIS_HOST: vectra-qa-redis
+  DATABASE_URL: postgresql://postgres:password@vectra-qa-postgresql:5432/vectra_qa

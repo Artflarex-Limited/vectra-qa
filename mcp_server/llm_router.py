@@ -323,15 +323,14 @@ class LLMRouter:
 
         # Google (separate SDK)
         try:
-            import google.generativeai as genai
+            from google import genai
 
-            if os.getenv("GOOGLE_API_KEY"):
-                genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-                self.clients["google"] = genai
+            if os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY"):
+                self.clients["google"] = genai.Client(
+                    api_key=os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+                )
         except ImportError:
-            print(
-                "Warning: google-generativeai package not installed. Google provider unavailable."
-            )
+            print("Warning: google-genai package not installed. Google provider unavailable.")
 
     def _parse_model(self, model: str) -> tuple:
         """Parse provider/model-name format."""
@@ -497,30 +496,26 @@ class LLMRouter:
         self, model: str, messages: List[Dict], temperature: float, max_tokens: int, **kwargs
     ) -> LLMResponse:
         """Handle Google Gemini API calls."""
+        from google.genai import types
+
         client = self.clients["google"]
-
-        # Get model instance
-        model_instance = client.GenerativeModel(model)
-
-        # Convert messages to Gemini format (simple string concatenation for now)
         prompt = "\n".join([f"{msg['role']}: {msg['content']}" for msg in messages])
-
-        response = model_instance.generate_content(
-            prompt,
-            generation_config={
-                "temperature": temperature,
-                "max_output_tokens": max_tokens,
-            },
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=temperature,
+                max_output_tokens=max_tokens,
+            ),
         )
-
         return LLMResponse(
             content=response.text,
             model=model,
             provider="google",
             usage={
-                "prompt_tokens": 0,  # Google doesn't always return token counts
-                "completion_tokens": 0,
-                "total_tokens": 0,
+                "prompt_tokens": getattr(response.usage_metadata, 'prompt_token_count', 0) or 0,
+                "completion_tokens": getattr(response.usage_metadata, 'candidates_token_count', 0) or 0,
+                "total_tokens": getattr(response.usage_metadata, 'total_token_count', 0) or 0,
             },
             raw_response=response,
         )

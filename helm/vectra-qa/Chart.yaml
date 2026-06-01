@@ -1,0 +1,6 @@
+apiVersion: v2
+name: vectra-qa
+description: Vectra QA - Obsidian-backed Multi-Agent Testing Framework
+type: application
+version: 0.1.0
+appVersion: "1.0"

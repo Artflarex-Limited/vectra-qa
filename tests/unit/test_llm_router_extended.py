@@ -454,21 +454,24 @@ class TestLLMRouterProviderFallback:
     def test_google_completion(self):
         """Should handle Google provider completion."""
         router = LLMRouter.__new__(LLMRouter)
-        mock_genai = MagicMock()
-        mock_model = MagicMock()
+        mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.text = "Google response"
-        mock_model.generate_content.return_value = mock_response
-        mock_genai.GenerativeModel.return_value = mock_model
-        router.clients = {"google": mock_genai}
+        mock_response.usage_metadata = MagicMock()
+        mock_response.usage_metadata.prompt_token_count = 10
+        mock_response.usage_metadata.candidates_token_count = 20
+        mock_response.usage_metadata.total_token_count = 30
+        mock_client.models.generate_content.return_value = mock_response
+        router.clients = {"google": mock_client}
         router.cache = None
 
-        result = router._google_complete(
-            model="gemini-2.5-pro",
-            messages=[{"role": "user", "content": "Hello"}],
-            temperature=0.7,
-            max_tokens=100,
-        )
+        with patch.dict("sys.modules", {"google": MagicMock(), "google.genai": MagicMock(), "google.genai.types": MagicMock()}):
+            result = router._google_complete(
+                model="gemini-2.5-pro",
+                messages=[{"role": "user", "content": "Hello"}],
+                temperature=0.7,
+                max_tokens=100,
+            )
 
         assert result.content == "Google response"
         assert result.provider == "google"

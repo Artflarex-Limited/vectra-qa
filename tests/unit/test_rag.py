@@ -390,12 +390,9 @@ class TestRAGSingleton:
         rag_mod._rag_pipeline = None
 
         with (
-            patch("mcp_server.rag.get_db_manager") as mock_get_db,
-            patch("mcp_server.rag.get_embedding_provider") as mock_get_emb,
+            patch("mcp_server.rag.get_db_manager", new=MagicMock(return_value=AsyncMock())),
+            patch("mcp_server.rag.get_embedding_provider", new=MagicMock(return_value=AsyncMock())),
         ):
-            mock_get_db.return_value = MagicMock()
-            mock_get_emb.return_value = MagicMock()
-
             pipeline = await get_rag_pipeline()
             assert isinstance(pipeline, RAGPipeline)
 
@@ -408,12 +405,9 @@ class TestRAGSingleton:
         rag_mod._rag_pipeline = None
 
         with (
-            patch("mcp_server.rag.get_db_manager") as mock_get_db,
-            patch("mcp_server.rag.get_embedding_provider") as mock_get_emb,
+            patch("mcp_server.rag.get_db_manager", new=MagicMock(return_value=AsyncMock())),
+            patch("mcp_server.rag.get_embedding_provider", new=MagicMock(return_value=AsyncMock())),
         ):
-            mock_get_db.return_value = MagicMock()
-            mock_get_emb.return_value = MagicMock()
-
             p1 = await get_rag_pipeline()
             p2 = await get_rag_pipeline()
 
