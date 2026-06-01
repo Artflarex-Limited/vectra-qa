@@ -81,6 +81,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             except ImportError:
                 raise RuntimeError("openai package not installed. Run: pip install openai")
 
+        assert self._client is not None
         try:
             response = await self._client.embeddings.create(
                 model=self.model,
@@ -138,6 +139,7 @@ class SentenceTransformersProvider(EmbeddingProvider):
     async def embed(self, texts: List[str]) -> EmbeddingResult:
         """Embed texts locally using sentence-transformers."""
         self._load_model()
+        assert self._model is not None
 
         # Run in thread pool to avoid blocking
         loop = asyncio.get_event_loop()

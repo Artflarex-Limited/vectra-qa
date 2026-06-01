@@ -13,7 +13,7 @@ Usage:
 """
 
 import yaml
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -277,7 +277,7 @@ class DeterministicTester:
 def load_playbook(path: str) -> Dict[str, Any]:
     """Load a playbook from YAML file."""
     with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        return cast(Dict[str, Any], yaml.safe_load(f) or {})
 
 
 def save_playbook(playbook: Dict[str, Any], path: str):

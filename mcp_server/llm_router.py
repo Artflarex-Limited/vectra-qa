@@ -50,6 +50,7 @@ class LLMCache:
     def __init__(self, ttl_seconds: int = 3600, persist_path: Optional[str] = None):
         self.ttl_seconds = ttl_seconds
         self._memory_cache: Dict[str, Dict[str, Any]] = {}
+        self.db: Any = None
         self._use_postgres = self._init_postgres()
         # Keep file fallback for backward compatibility
         self.persist_path = Path(persist_path) if persist_path else None
@@ -62,7 +63,7 @@ class LLMCache:
             from mcp_server.db import get_db_manager_sync
 
             self.db = get_db_manager_sync()
-            return self.db._initialized
+            return bool(self.db._initialized)
         except Exception:
             return False
 

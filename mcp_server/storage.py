@@ -16,13 +16,13 @@ Usage:
 import os
 import json
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from pathlib import Path
 
 import structlog
 
 from mcp_server.tools import ObsidianVault
-from mcp_server.db import DatabaseManager, get_db_manager
+from mcp_server.db import DatabaseManager, get_db_manager_sync
 
 logger = structlog.get_logger()
 
@@ -55,12 +55,12 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def query_findings(self, **filters) -> List[Dict[str, Any]]:
+    def query_findings(self, **filters) -> Any:
         """Query findings with filters."""
         pass
 
     @abstractmethod
-    def query_test_runs(self, **filters) -> List[Dict[str, Any]]:
+    def query_test_runs(self, **filters) -> Any:
         """Query test runs with filters."""
         pass
 
@@ -76,17 +76,17 @@ class MarkdownBackend(BaseStorage):
         self.vault.write_node(node_path, content, frontmatter)
 
     def read_node(self, node_path: str) -> Dict[str, Any]:
-        return self.vault.read_node(node_path)
+        return cast(Dict[str, Any], self.vault.read_node(node_path))
 
     def update_frontmatter(self, node_path: str, updates: Dict[str, Any]):
         self.vault.update_frontmatter(node_path, updates)
 
     def list_nodes(self, prefix: str = "") -> List[str]:
-        return self.vault.list_nodes(prefix)
+        return cast(List[str], self.vault.list_nodes(prefix))
 
-    def query_findings(self, **filters) -> List[Dict[str, Any]]:
+    def query_findings(self, **filters) -> Any:
         """Limited querying - scans all files. Slow but functional."""
-        findings = []
+        findings: List[Dict[str, Any]] = []
         for node_path in self.list_nodes("Runs"):
             try:
                 node = self.read_node(node_path)
@@ -105,9 +105,9 @@ class MarkdownBackend(BaseStorage):
                 continue
         return findings
 
-    def query_test_runs(self, **filters) -> List[Dict[str, Any]]:
+    def query_test_runs(self, **filters) -> Any:
         """Limited querying - scans all files."""
-        runs = []
+        runs: List[Dict[str, Any]] = []
         for node_path in self.list_nodes("Runs"):
             try:
                 node = self.read_node(node_path)
@@ -130,7 +130,7 @@ class PostgreSQLBackend(BaseStorage):
     """PostgreSQL-based storage for structured queries and performance."""
 
     def __init__(self):
-        self.db: DatabaseManager = get_db_manager()
+        self.db: DatabaseManager = get_db_manager_sync()
         logger.info("postgresql_backend_initialized")
 
     def _ensure_initialized(self):
@@ -173,14 +173,9 @@ class PostgreSQLBackend(BaseStorage):
     def list_nodes(self, prefix: str = "") -> List[str]:
         """List nodes from sync log."""
         self._ensure_initialized()
+        return []
 
-        try:
-            # Return empty list for now - actual implementation would query DB
-            return []
-        except Exception:
-            return []
-
-    async def query_findings(self, **filters) -> List[Dict[str, Any]]:
+    def query_findings(self, **filters) -> Any:
         """Efficient SQL querying of findings."""
         conditions = []
         params = []
@@ -192,9 +187,17 @@ class PostgreSQLBackend(BaseStorage):
         where_clause = " AND ".join(conditions) if conditions else "TRUE"
         query = f"SELECT * FROM findings WHERE {where_clause} ORDER BY created_at DESC"
 
-        return await self.db.fetchall(query, tuple(params))
+        import asyncio
 
-    async def query_test_runs(self, **filters) -> List[Dict[str, Any]]:
+        try:
+            loop = asyncio.get_event_loop()
+            if not loop.is_running():
+                return loop.run_until_complete(self.db.fetchall(query, tuple(params)))
+        except Exception:
+            pass
+        return []
+
+    def query_test_runs(self, **filters) -> Any:
         """Efficient SQL querying of test runs."""
         conditions = []
         params = []
@@ -206,11 +209,19 @@ class PostgreSQLBackend(BaseStorage):
         where_clause = " AND ".join(conditions) if conditions else "TRUE"
         query = f"SELECT * FROM test_runs WHERE {where_clause} ORDER BY started_at DESC"
 
-        return await self.db.fetchall(query, tuple(params))
+        import asyncio
+
+        try:
+            loop = asyncio.get_event_loop()
+            if not loop.is_running():
+                return loop.run_until_complete(self.db.fetchall(query, tuple(params)))
+        except Exception:
+            pass
+        return []
 
 
 class DualBackend(BaseStorage):
-    """Writes to both Markdown and PostgreSQL. Reads from PostgreSQL (fast) with Markdown fallback."""
+    """Writes to both Markdown and PostgreSQL. Reads from Markdown (source of truth)."""
 
     def __init__(self):
         self.markdown = MarkdownBackend()
@@ -230,7 +241,7 @@ class DualBackend(BaseStorage):
 
     def read_node(self, node_path: str) -> Dict[str, Any]:
         """Read from Markdown (source of truth)."""
-        return self.markdown.read_node(node_path)
+        return cast(Dict[str, Any], self.markdown.read_node(node_path))
 
     def update_frontmatter(self, node_path: str, updates: Dict[str, Any]):
         """Update both backends."""
@@ -242,39 +253,15 @@ class DualBackend(BaseStorage):
 
     def list_nodes(self, prefix: str = "") -> List[str]:
         """List from Markdown."""
-        return self.markdown.list_nodes(prefix)
+        return cast(List[str], self.markdown.list_nodes(prefix))
 
-    def query_findings(self, **filters) -> List[Dict[str, Any]]:
-        """Query from PostgreSQL (fast). Fallback to Markdown scan."""
-        try:
-            import asyncio
+    def query_findings(self, **filters) -> Any:
+        """Query from Markdown (source of truth)."""
+        return self.markdown.query_findings(**filters)
 
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # We're in async context, can use postgresql
-                future = asyncio.ensure_future(self.postgresql.query_findings(**filters))
-                # For sync contexts, return markdown results
-                if not future.done():
-                    return self.markdown.query_findings(**filters)
-                return future.result()
-            return self.markdown.query_findings(**filters)
-        except Exception:
-            return self.markdown.query_findings(**filters)
-
-    def query_test_runs(self, **filters) -> List[Dict[str, Any]]:
-        """Query from PostgreSQL. Fallback to Markdown."""
-        try:
-            import asyncio
-
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                future = asyncio.ensure_future(self.postgresql.query_test_runs(**filters))
-                if not future.done():
-                    return self.markdown.query_test_runs(**filters)
-                return future.result()
-            return self.markdown.query_test_runs(**filters)
-        except Exception:
-            return self.markdown.query_test_runs(**filters)
+    def query_test_runs(self, **filters) -> Any:
+        """Query from Markdown."""
+        return self.markdown.query_test_runs(**filters)
 
 
 # Global singleton

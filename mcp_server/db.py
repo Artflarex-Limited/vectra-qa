@@ -7,7 +7,7 @@ Uses psycopg[binary] for async PostgreSQL operations.
 
 import os
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from contextlib import asynccontextmanager
 
 import structlog
@@ -105,7 +105,7 @@ class DatabaseManager:
         """Execute a query and return command status."""
         async with self.connection() as conn:
             result = await conn.execute(query, params)
-            return result.statusmessage
+            return cast(str, result.statusmessage)
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
     async def fetchone(
@@ -115,7 +115,7 @@ class DatabaseManager:
         async with self.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(query, params)
-                return await cur.fetchone()
+                return cast(Optional[Dict[str, Any]], await cur.fetchone())
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
     async def fetchall(self, query: str, params: Optional[tuple] = None) -> List[Dict[str, Any]]:
@@ -123,7 +123,7 @@ class DatabaseManager:
         async with self.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(query, params)
-                return await cur.fetchall()
+                return cast(List[Dict[str, Any]], await cur.fetchall())
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
     async def fetchval(self, query: str, params: Optional[tuple] = None) -> Any:

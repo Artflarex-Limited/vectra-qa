@@ -20,7 +20,7 @@ from decimal import Decimal
 
 import structlog
 
-from mcp_server.db import get_db_manager
+from mcp_server.db import get_db_manager_sync
 
 logger = structlog.get_logger()
 
@@ -66,7 +66,7 @@ class CostTracker:
         self.budget_usd = budget_usd or LLM_BUDGET_USD
         self.alert_threshold = self.budget_usd * (LLM_BUDGET_ALERT_PCT / Decimal("100"))
         self._alert_sent = False
-        self.db = get_db_manager()
+        self.db = get_db_manager_sync()
 
     def calculate_cost(self, model: str, input_tokens: int, output_tokens: int) -> Decimal:
         """Calculate cost for a given model and token usage."""

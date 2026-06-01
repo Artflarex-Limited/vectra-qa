@@ -68,20 +68,19 @@ class DocumentChunker:
 
     def chunk_markdown(self, content: str) -> List[Dict[str, Any]]:
         """Chunk markdown by headers, preserving structure."""
-        chunks = []
-        current_chunk = []
+        chunks: List[Dict[str, Any]] = []
+        current_chunk: List[str] = []
         current_header = ""
 
         for line in content.split("\n"):
             if line.startswith("#"):
                 # Save previous chunk
                 if current_chunk:
-                    chunks.append(
-                        {
-                            "header": current_header,
-                            "text": "\n".join(current_chunk),
-                        }
-                    )
+                    chunk_data: Dict[str, Any] = {
+                        "header": current_header,
+                        "text": "\n".join(current_chunk),
+                    }
+                    chunks.append(chunk_data)
                 current_header = line
                 current_chunk = [line]
             else:
@@ -155,7 +154,7 @@ class RAGPipeline:
         doc_result = await self.db.fetchone(
             doc_query, (source_path, content, doc_type, title, json.dumps(metadata))
         )
-        document_id = doc_result["id"]
+        document_id = int(doc_result["id"])
 
         # Chunk the document
         chunks = self.chunker.chunk_markdown(content)

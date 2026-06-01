@@ -127,7 +127,7 @@ class EcommerceTester:
             return False
         try:
             result = await browser.click(selector, timeout=timeout)
-            return result.get("success", False)
+            return bool(result.get("success", False))
         except Exception:
             return False
 
@@ -137,7 +137,7 @@ class EcommerceTester:
             return False
         try:
             result = await browser.fill(selector, text)
-            return result.get("success", False)
+            return bool(result.get("success", False))
         except Exception:
             return False
 

@@ -11,7 +11,7 @@ Usage:
 
 import json
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import structlog
 
@@ -37,7 +37,7 @@ def extract_json(text: str, fallback: Optional[Dict] = None) -> Dict[str, Any]:
     json_match = re.search(r"```json\s*\n(.*?)\n```", text, re.DOTALL)
     if json_match:
         try:
-            return json.loads(json_match.group(1).strip())
+            return cast(Dict[str, Any], json.loads(json_match.group(1).strip()))
         except json.JSONDecodeError:
             pass
 
@@ -45,7 +45,7 @@ def extract_json(text: str, fallback: Optional[Dict] = None) -> Dict[str, Any]:
     code_match = re.search(r"```\w*\s*\n(.*?)\n```", text, re.DOTALL)
     if code_match:
         try:
-            return json.loads(code_match.group(1).strip())
+            return cast(Dict[str, Any], json.loads(code_match.group(1).strip()))
         except json.JSONDecodeError:
             pass
 
@@ -75,7 +75,7 @@ def extract_json(text: str, fallback: Optional[Dict] = None) -> Dict[str, Any]:
                     brace_count -= 1
                     if brace_count == 0:
                         try:
-                            return json.loads(text[start : i + 1])
+                            return cast(Dict[str, Any], json.loads(text[start : i + 1]))
                         except json.JSONDecodeError:
                             break
 
@@ -104,7 +104,7 @@ def extract_json(text: str, fallback: Optional[Dict] = None) -> Dict[str, Any]:
                     bracket_count -= 1
                     if bracket_count == 0:
                         try:
-                            return json.loads(text[start : i + 1])
+                            return cast(Dict[str, Any], json.loads(text[start : i + 1]))
                         except json.JSONDecodeError:
                             break
 
