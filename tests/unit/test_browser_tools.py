@@ -24,6 +24,7 @@ class TestBrowserAutomationBasic:
         mock_browser = AsyncMock()
         mock_context = AsyncMock()
         mock_page = AsyncMock()
+        mock_page.on = Mock()  # Event registration is synchronous
 
         mock_playwright.start.return_value = mock_playwright
         mock_playwright.chromium.launch.return_value = mock_browser
@@ -36,6 +37,8 @@ class TestBrowserAutomationBasic:
         assert browser.browser == mock_browser
         assert browser.page == mock_page
         mock_playwright.chromium.launch.assert_called_once_with(headless=True)
+        # Verify event listeners were registered
+        assert mock_page.on.call_count == 3
 
     @pytest.mark.asyncio
     async def test_close_browser(self, browser):

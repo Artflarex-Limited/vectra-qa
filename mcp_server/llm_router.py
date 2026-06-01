@@ -21,6 +21,7 @@ import time
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from pathlib import Path
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -55,6 +56,7 @@ class LLMCache:
         """Initialize PostgreSQL connection if available."""
         try:
             from mcp_server.db import get_db_manager_sync
+
             self.db = get_db_manager_sync()
             return self.db._initialized
         except Exception:
@@ -78,7 +80,7 @@ class LLMCache:
     ) -> Optional[LLMResponse]:
         """Get cached response if available and not expired."""
         key = self._generate_key(model, messages, temperature, max_tokens)
-        
+
         # Check memory cache first
         entry = self._memory_cache.get(key)
         if entry and time.time() - entry["timestamp"] <= self.ttl_seconds:
@@ -94,6 +96,7 @@ class LLMCache:
         if self._use_postgres:
             try:
                 import asyncio
+
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
                     # Async context - can't block, skip DB read for now
@@ -102,7 +105,7 @@ class LLMCache:
                     row = loop.run_until_complete(
                         self.db.fetchone(
                             "SELECT content, model, provider, usage_tokens, created_at FROM llm_cache WHERE hash_key = %s AND expires_at > NOW()",
-                            (key,)
+                            (key,),
                         )
                     )
                     if row:
@@ -111,7 +114,11 @@ class LLMCache:
                             "model": row["model"],
                             "provider": row["provider"],
                             "usage": {"total_tokens": row.get("usage_tokens", 0)},
-                            "timestamp": row["created_at"].timestamp() if hasattr(row["created_at"], 'timestamp') else time.time(),
+                            "timestamp": (
+                                row["created_at"].timestamp()
+                                if hasattr(row["created_at"], "timestamp")
+                                else time.time()
+                            ),
                         }
                         self._memory_cache[key] = entry
                         return LLMResponse(
@@ -138,7 +145,7 @@ class LLMCache:
         key = self._generate_key(model, messages, temperature, max_tokens)
         now = time.time()
         expires = datetime.fromtimestamp(now + self.ttl_seconds, timezone.utc)
-        
+
         entry = {
             "content": response.content,
             "model": response.model,
@@ -152,6 +159,7 @@ class LLMCache:
         if self._use_postgres:
             try:
                 import asyncio
+
                 loop = asyncio.get_event_loop()
                 if not loop.is_running():
                     loop.run_until_complete(
@@ -165,7 +173,14 @@ class LLMCache:
                                 usage_tokens = EXCLUDED.usage_tokens,
                                 expires_at = EXCLUDED.expires_at
                             """,
-                            (key, model, response.content, response.provider, response.usage.get("total_tokens", 0), expires)
+                            (
+                                key,
+                                model,
+                                response.content,
+                                response.provider,
+                                response.usage.get("total_tokens", 0),
+                                expires,
+                            ),
                         )
                     )
             except Exception:
@@ -181,6 +196,7 @@ class LLMCache:
         if self._use_postgres:
             try:
                 import asyncio
+
                 loop = asyncio.get_event_loop()
                 if not loop.is_running():
                     loop.run_until_complete(self.db.execute("DELETE FROM llm_cache"))

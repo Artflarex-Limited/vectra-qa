@@ -8,7 +8,7 @@ Supports:
 
 Usage:
     from mcp_server.embeddings import get_embedding_provider
-    
+
     provider = get_embedding_provider()
     embeddings = await provider.embed(["text to embed", "another text"])
 """
@@ -76,6 +76,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         if self._client is None:
             try:
                 import openai
+
                 self._client = openai.AsyncOpenAI()
             except ImportError:
                 raise RuntimeError("openai package not installed. Run: pip install openai")
@@ -123,9 +124,12 @@ class SentenceTransformersProvider(EmbeddingProvider):
         if self._model is None:
             try:
                 from sentence_transformers import SentenceTransformer
+
                 self._model = SentenceTransformer(self.model_name)
                 self._dimension = self._model.get_sentence_embedding_dimension()
-                logger.info("sentence_transformers_loaded", model=self.model_name, dimension=self._dimension)
+                logger.info(
+                    "sentence_transformers_loaded", model=self.model_name, dimension=self._dimension
+                )
             except ImportError:
                 raise RuntimeError(
                     "sentence-transformers not installed. Run: pip install sentence-transformers"

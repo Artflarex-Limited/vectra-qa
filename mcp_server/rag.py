@@ -6,7 +6,7 @@ PostgreSQL + pgvector. Retrieves relevant context for LLM queries.
 
 Usage:
     from mcp_server.rag import RAGPipeline
-    
+
     rag = RAGPipeline()
     await rag.ingest_document("Requirements/login.md", content, doc_type="requirement")
     results = await rag.retrieve("How should the login flow behave?", k=5)
@@ -17,12 +17,11 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 
 import structlog
 
-from mcp_server.embeddings import get_embedding_provider, EmbeddingResult
+from mcp_server.embeddings import get_embedding_provider
 from mcp_server.db import get_db_manager
 
 logger = structlog.get_logger()
@@ -77,10 +76,12 @@ class DocumentChunker:
             if line.startswith("#"):
                 # Save previous chunk
                 if current_chunk:
-                    chunks.append({
-                        "header": current_header,
-                        "text": "\n".join(current_chunk),
-                    })
+                    chunks.append(
+                        {
+                            "header": current_header,
+                            "text": "\n".join(current_chunk),
+                        }
+                    )
                 current_header = line
                 current_chunk = [line]
             else:
@@ -88,10 +89,12 @@ class DocumentChunker:
 
         # Save final chunk
         if current_chunk:
-            chunks.append({
-                "header": current_header,
-                "text": "\n".join(current_chunk),
-            })
+            chunks.append(
+                {
+                    "header": current_header,
+                    "text": "\n".join(current_chunk),
+                }
+            )
 
         # If chunks are too large, split further
         result = []
@@ -100,11 +103,13 @@ class DocumentChunker:
             if len(words) > self.chunk_size:
                 sub_chunks = self.chunk_text(chunk["text"])
                 for i, sub in enumerate(sub_chunks):
-                    result.append({
-                        "header": chunk["header"],
-                        "text": sub,
-                        "sub_index": i,
-                    })
+                    result.append(
+                        {
+                            "header": chunk["header"],
+                            "text": sub,
+                            "sub_index": i,
+                        }
+                    )
             else:
                 result.append(chunk)
 
@@ -310,12 +315,14 @@ class RAGPipeline:
 
         results = []
         for chunk in chunks:
-            results.append({
-                "source": chunk.source_path,
-                "text": chunk.chunk_text[:500],  # Truncate for LLM context
-                "relevance": round(chunk.similarity, 3),
-                "chunk_index": chunk.chunk_index,
-            })
+            results.append(
+                {
+                    "source": chunk.source_path,
+                    "text": chunk.chunk_text[:500],  # Truncate for LLM context
+                    "relevance": round(chunk.similarity, 3),
+                    "chunk_index": chunk.chunk_index,
+                }
+            )
 
         return results
 

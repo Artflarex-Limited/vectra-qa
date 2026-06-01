@@ -1,0 +1,41 @@
+name: Homepage Smoke Test
+url: http://localhost:8765
+steps:
+  - action: visit
+    url: http://localhost:8765/
+
+  - action: assert
+    selector: h1
+    expected_text: "Hoş Geldiniz"
+
+  - action: assert
+    selector: nav
+    expected_count: 1
+
+  - action: click
+    selector: "a[href='/contact']"
+
+  - action: wait
+    ms: 500
+
+  - action: assert
+    selector: "h1"
+    expected_text: "İletişim"
+
+  - action: screenshot
+    path: screenshots/contact_page.png
+    full_page: true
+
+  - action: visit
+    url: http://localhost:8765/products
+
+  - action: assert
+    selector: ".product"
+    expected_count: 3
+
+  - action: click
+    selector: ".add-to-cart"
+    required: false
+
+  - action: wait
+    ms: 1000

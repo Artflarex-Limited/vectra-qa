@@ -60,7 +60,7 @@ class BrowserAutomation:
         self.page.on("pageerror", self._handle_page_error)
         self.page.on("response", self._handle_response)
 
-    def _handle_console(self, msg: ConsoleMessage):
+    async def _handle_console(self, msg: ConsoleMessage):
         """Capture console messages."""
         self.console_logs.append(
             {
@@ -70,11 +70,11 @@ class BrowserAutomation:
             }
         )
 
-    def _handle_page_error(self, error):
+    async def _handle_page_error(self, error):
         """Capture page errors."""
         self.errors.append(str(error))
 
-    def _handle_response(self, response):
+    async def _handle_response(self, response):
         """Capture network responses."""
         self.network_logs.append(
             {

@@ -5,7 +5,7 @@ Tracks per-call costs, enforces budget limits, provides real-time spend visibili
 
 Usage:
     from mcp_server.cost_tracker import CostTracker
-    
+
     tracker = CostTracker()
     tracker.track_usage(model="gpt-4o", input_tokens=1000, output_tokens=500)
     if tracker.is_budget_exceeded():
@@ -13,7 +13,7 @@ Usage:
 """
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -55,6 +55,7 @@ class UsageRecord:
 
 class BudgetExceededError(Exception):
     """Raised when LLM budget is exceeded."""
+
     pass
 
 
@@ -71,7 +72,9 @@ class CostTracker:
         """Calculate cost for a given model and token usage."""
         # Normalize model name
         model_key = model.split("/")[-1]  # Remove provider prefix
-        pricing = MODEL_PRICING.get(model_key, {"input": Decimal("0.001"), "output": Decimal("0.001")})
+        pricing = MODEL_PRICING.get(
+            model_key, {"input": Decimal("0.001"), "output": Decimal("0.001")}
+        )
 
         input_cost = Decimal(input_tokens) / 1000 * pricing["input"]
         output_cost = Decimal(output_tokens) / 1000 * pricing["output"]
@@ -109,6 +112,7 @@ class CostTracker:
         # Persist to database
         if self.db._initialized:
             import asyncio
+
             try:
                 loop = asyncio.get_event_loop()
                 if not loop.is_running():
@@ -118,7 +122,15 @@ class CostTracker:
                             INSERT INTO llm_usage (model, provider, input_tokens, output_tokens, cost_usd, test_run_id, cache_hit)
                             VALUES (%s, %s, %s, %s, %s, %s, %s)
                             """,
-                            (model, provider, input_tokens, output_tokens, cost, test_run_id, cache_hit)
+                            (
+                                model,
+                                provider,
+                                input_tokens,
+                                output_tokens,
+                                cost,
+                                test_run_id,
+                                cache_hit,
+                            ),
                         )
                     )
             except Exception as e:
@@ -167,6 +179,7 @@ class CostTracker:
             return Decimal("0.000000")
 
         import asyncio
+
         try:
             loop = asyncio.get_event_loop()
             if not loop.is_running():

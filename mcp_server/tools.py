@@ -400,10 +400,15 @@ class AgentSpawner:
 
             # Start a thread to capture output to log file
             def capture_output(proc, log_path):
-                with open(log_path, "w") as f:
-                    for line in proc.stdout:
-                        f.write(line.decode("utf-8", errors="replace"))
-                        f.flush()
+                try:
+                    log_path = Path(log_path)
+                    log_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(log_path, "w") as f:
+                        for line in proc.stdout:
+                            f.write(line.decode("utf-8", errors="replace"))
+                            f.flush()
+                except Exception:
+                    pass  # Silently fail if log capture fails
 
             import threading
 

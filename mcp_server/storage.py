@@ -6,7 +6,7 @@ and PostgreSQL for structured queries and performance.
 
 Usage:
     from mcp_server.storage import get_storage
-    
+
     storage = get_storage()
     storage.write_node("Runs/Test.md", content="# Test", frontmatter={"status": "pass"})
     node = storage.read_node("Runs/Test.md")
@@ -18,12 +18,11 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 from pathlib import Path
-from datetime import datetime, timezone
 
 import structlog
 
-from mcp_server.tools import ObsidianVault, VaultError
-from mcp_server.db import get_db_manager, DatabaseManager
+from mcp_server.tools import ObsidianVault
+from mcp_server.db import DatabaseManager, get_db_manager
 
 logger = structlog.get_logger()
 
@@ -95,11 +94,13 @@ class MarkdownBackend(BaseStorage):
                 # Simple filtering on frontmatter
                 match = all(fm.get(k) == v for k, v in filters.items())
                 if match:
-                    findings.append({
-                        "node_path": node_path,
-                        "frontmatter": fm,
-                        "content": node.get("content", "")[:500],
-                    })
+                    findings.append(
+                        {
+                            "node_path": node_path,
+                            "frontmatter": fm,
+                            "content": node.get("content", "")[:500],
+                        }
+                    )
             except Exception:
                 continue
         return findings
@@ -114,10 +115,12 @@ class MarkdownBackend(BaseStorage):
                 if fm.get("test_run_id"):
                     match = all(fm.get(k) == v for k, v in filters.items())
                     if match:
-                        runs.append({
-                            "node_path": node_path,
-                            "frontmatter": fm,
-                        })
+                        runs.append(
+                            {
+                                "node_path": node_path,
+                                "frontmatter": fm,
+                            }
+                        )
             except Exception:
                 continue
         return runs
@@ -127,19 +130,20 @@ class PostgreSQLBackend(BaseStorage):
     """PostgreSQL-based storage for structured queries and performance."""
 
     def __init__(self):
-        self.db: DatabaseManager = get_db_manager_sync()
+        self.db: DatabaseManager = get_db_manager()
         logger.info("postgresql_backend_initialized")
 
     def _ensure_initialized(self):
         if not self.db._initialized:
-            logger.warning("postgresql_not_initialized", 
-                          message="Database not connected. Queries will fail.")
+            logger.warning(
+                "postgresql_not_initialized", message="Database not connected. Queries will fail."
+            )
 
     def write_node(self, node_path: str, content: str, frontmatter: Optional[Dict] = None):
         """Store node metadata in PostgreSQL (content stays in Markdown)."""
         self._ensure_initialized()
         frontmatter = frontmatter or {}
-        
+
         # Upsert into vault_sync_log
         query = """
             INSERT INTO vault_sync_log (node_path, last_modified, checksum, action)
@@ -148,8 +152,9 @@ class PostgreSQLBackend(BaseStorage):
             DO UPDATE SET last_modified = NOW(), checksum = EXCLUDED.checksum, action = 'synced'
         """
         checksum = str(hash(content + json.dumps(frontmatter, sort_keys=True)))
-        
+
         import asyncio
+
         try:
             loop = asyncio.get_event_loop()
             loop.create_task(self.db.execute(query, (node_path, checksum)))
@@ -168,10 +173,8 @@ class PostgreSQLBackend(BaseStorage):
     def list_nodes(self, prefix: str = "") -> List[str]:
         """List nodes from sync log."""
         self._ensure_initialized()
-        
-        import asyncio
+
         try:
-            loop = asyncio.get_event_loop()
             # Return empty list for now - actual implementation would query DB
             return []
         except Exception:
@@ -181,28 +184,28 @@ class PostgreSQLBackend(BaseStorage):
         """Efficient SQL querying of findings."""
         conditions = []
         params = []
-        
+
         for key, value in filters.items():
             conditions.append(f"{key} = %s")
             params.append(value)
-        
+
         where_clause = " AND ".join(conditions) if conditions else "TRUE"
         query = f"SELECT * FROM findings WHERE {where_clause} ORDER BY created_at DESC"
-        
+
         return await self.db.fetchall(query, tuple(params))
 
     async def query_test_runs(self, **filters) -> List[Dict[str, Any]]:
         """Efficient SQL querying of test runs."""
         conditions = []
         params = []
-        
+
         for key, value in filters.items():
             conditions.append(f"{key} = %s")
             params.append(value)
-        
+
         where_clause = " AND ".join(conditions) if conditions else "TRUE"
         query = f"SELECT * FROM test_runs WHERE {where_clause} ORDER BY started_at DESC"
-        
+
         return await self.db.fetchall(query, tuple(params))
 
 
@@ -218,7 +221,7 @@ class DualBackend(BaseStorage):
         """Write to both backends."""
         # Always write to Markdown (source of truth)
         self.markdown.write_node(node_path, content, frontmatter)
-        
+
         # Best-effort write to PostgreSQL
         try:
             self.postgresql.write_node(node_path, content, frontmatter)
@@ -245,6 +248,7 @@ class DualBackend(BaseStorage):
         """Query from PostgreSQL (fast). Fallback to Markdown scan."""
         try:
             import asyncio
+
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 # We're in async context, can use postgresql
@@ -261,6 +265,7 @@ class DualBackend(BaseStorage):
         """Query from PostgreSQL. Fallback to Markdown."""
         try:
             import asyncio
+
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 future = asyncio.ensure_future(self.postgresql.query_test_runs(**filters))

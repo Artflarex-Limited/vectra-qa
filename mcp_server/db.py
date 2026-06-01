@@ -7,7 +7,7 @@ Uses psycopg[binary] for async PostgreSQL operations.
 
 import os
 import asyncio
-from typing import Any, Dict, List, Optional, AsyncGenerator
+from typing import Any, Dict, List, Optional
 from contextlib import asynccontextmanager
 
 import structlog
@@ -15,7 +15,6 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 try:
     import psycopg
-    from psycopg import sql
     from psycopg.rows import dict_row
     PSYCOPG_AVAILABLE = True
 except ImportError:
@@ -26,7 +25,7 @@ logger = structlog.get_logger()
 # Configuration
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://vectra:vectra_dev_password_change_in_production@localhost:5432/vectra_qa"
+    "postgresql://vectra:vectra_dev_password_change_in_production@localhost:5432/vectra_qa",
 )
 DB_POOL_MIN_SIZE = int(os.getenv("DB_POOL_MIN_SIZE", "2"))
 DB_POOL_MAX_SIZE = int(os.getenv("DB_POOL_MAX_SIZE", "10"))
@@ -46,8 +45,10 @@ class DatabaseManager:
             return True
 
         if not PSYCOPG_AVAILABLE:
-            logger.warning("psycopg_not_installed", 
-                          message="PostgreSQL support disabled. Install with: pip install psycopg[binary]")
+            logger.warning(
+                "psycopg_not_installed",
+                message="PostgreSQL support disabled. Install with: pip install psycopg[binary]",
+            )
             return False
 
         async with self._lock:
@@ -62,9 +63,11 @@ class DatabaseManager:
                     kwargs={"row_factory": dict_row},
                 )
                 self._initialized = True
-                logger.info("database_pool_initialized", 
-                           min_size=DB_POOL_MIN_SIZE, 
-                           max_size=DB_POOL_MAX_SIZE)
+                logger.info(
+                    "database_pool_initialized",
+                    min_size=DB_POOL_MIN_SIZE,
+                    max_size=DB_POOL_MAX_SIZE,
+                )
                 return True
             except Exception as e:
                 logger.error("database_pool_init_failed", error=str(e))
@@ -104,7 +107,9 @@ class DatabaseManager:
             return result.statusmessage
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
-    async def fetchone(self, query: str, params: Optional[tuple] = None) -> Optional[Dict[str, Any]]:
+    async def fetchone(
+        self, query: str, params: Optional[tuple] = None
+    ) -> Optional[Dict[str, Any]]:
         """Fetch a single row."""
         async with self.connection() as conn:
             async with conn.cursor() as cur:
@@ -131,7 +136,7 @@ class DatabaseManager:
         """Check database health."""
         try:
             start = asyncio.get_event_loop().time()
-            result = await self.fetchval("SELECT 1")
+            await self.fetchval("SELECT 1")
             latency = (asyncio.get_event_loop().time() - start) * 1000
             return {
                 "status": "healthy",

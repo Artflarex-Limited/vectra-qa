@@ -7,14 +7,12 @@ Platform-agnostic testing using CSS selector maps. Supports:
 
 Usage:
     from mcp_server.ecommerce import EcommerceTester, ECOMMERCE_SELECTOR_MAPS
-    
+
     tester = EcommerceTester("optozon")
     await tester.test_cart_flow(browser, "https://www.optozon.com.tr")
 """
 
-import os
-import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -121,8 +119,9 @@ class EcommerceTester:
         """Get CSS selector for a given element key."""
         return self.selectors.get(key, "")
 
-    async def _safe_click(self, browser: BrowserAutomation, selector: str, 
-                         timeout: int = 5000) -> bool:
+    async def _safe_click(
+        self, browser: BrowserAutomation, selector: str, timeout: int = 5000
+    ) -> bool:
         """Safely click an element, return success status."""
         if not selector:
             return False
@@ -132,8 +131,7 @@ class EcommerceTester:
         except Exception:
             return False
 
-    async def _safe_fill(self, browser: BrowserAutomation, selector: str, 
-                        text: str) -> bool:
+    async def _safe_fill(self, browser: BrowserAutomation, selector: str, text: str) -> bool:
         """Safely fill an input, return success status."""
         if not selector:
             return False
@@ -167,7 +165,9 @@ class EcommerceTester:
     # CART FLOW TESTS
     # ============================================
 
-    async def test_cart_flow(self, browser: BrowserAutomation, product_url: str) -> EcommerceTestResult:
+    async def test_cart_flow(
+        self, browser: BrowserAutomation, product_url: str
+    ) -> EcommerceTestResult:
         """Test add to cart, update quantity, remove item."""
         start_time = datetime.now(timezone.utc)
         self.findings = []
@@ -176,11 +176,13 @@ class EcommerceTester:
             # Visit product page
             result = await browser.visit(product_url)
             if not result.get("success"):
-                self.findings.append({
-                    "title": "Product Page Load Failed",
-                    "description": f"Cannot navigate to {product_url}",
-                    "severity": "critical",
-                })
+                self.findings.append(
+                    {
+                        "title": "Product Page Load Failed",
+                        "description": f"Cannot navigate to {product_url}",
+                        "severity": "critical",
+                    }
+                )
                 return self._build_result("cart_flow", "fail", start_time, product_url)
 
             # Check product info
@@ -188,26 +190,32 @@ class EcommerceTester:
             name = await self._get_element_text(browser, self._get_selector("product_name"))
 
             if not price:
-                self.findings.append({
-                    "title": "Missing Product Price",
-                    "description": "Product price not displayed",
-                    "severity": "high",
-                })
+                self.findings.append(
+                    {
+                        "title": "Missing Product Price",
+                        "description": "Product price not displayed",
+                        "severity": "high",
+                    }
+                )
             if not name:
-                self.findings.append({
-                    "title": "Missing Product Name",
-                    "description": "Product name not displayed",
-                    "severity": "medium",
-                })
+                self.findings.append(
+                    {
+                        "title": "Missing Product Name",
+                        "description": "Product name not displayed",
+                        "severity": "medium",
+                    }
+                )
 
             # Add to cart
             added = await self._safe_click(browser, self._get_selector("add_to_cart"))
             if not added:
-                self.findings.append({
-                    "title": "Add to Cart Failed",
-                    "description": "Add to cart button not found or not clickable",
-                    "severity": "critical",
-                })
+                self.findings.append(
+                    {
+                        "title": "Add to Cart Failed",
+                        "description": "Add to cart button not found or not clickable",
+                        "severity": "critical",
+                    }
+                )
                 return self._build_result("cart_flow", "fail", start_time, product_url)
 
             await browser.page.wait_for_timeout(2000) if browser.page else None
@@ -215,17 +223,21 @@ class EcommerceTester:
             # Verify cart count increased
             cart_count = await self._get_element_text(browser, self._get_selector("cart_count"))
             if not cart_count or cart_count == "0":
-                self.findings.append({
-                    "title": "Cart Not Updated",
-                    "description": "Cart count did not increase after adding item",
-                    "severity": "high",
-                })
+                self.findings.append(
+                    {
+                        "title": "Cart Not Updated",
+                        "description": "Cart count did not increase after adding item",
+                        "severity": "high",
+                    }
+                )
             else:
-                self.findings.append({
-                    "title": "Item Added to Cart",
-                    "description": f"Cart count: {cart_count}",
-                    "severity": "info",
-                })
+                self.findings.append(
+                    {
+                        "title": "Item Added to Cart",
+                        "description": f"Cart count: {cart_count}",
+                        "severity": "info",
+                    }
+                )
 
             # Navigate to cart
             await self._safe_click(browser, self._get_selector("cart_icon"))
@@ -234,27 +246,33 @@ class EcommerceTester:
             # Remove from cart
             removed = await self._safe_click(browser, self._get_selector("remove_from_cart"))
             if removed:
-                self.findings.append({
-                    "title": "Item Removed from Cart",
-                    "description": "Successfully removed item from cart",
-                    "severity": "info",
-                })
+                self.findings.append(
+                    {
+                        "title": "Item Removed from Cart",
+                        "description": "Successfully removed item from cart",
+                        "severity": "info",
+                    }
+                )
 
             return self._build_result("cart_flow", "pass", start_time, product_url)
 
         except Exception as e:
-            self.findings.append({
-                "title": "Cart Flow Error",
-                "description": str(e),
-                "severity": "critical",
-            })
+            self.findings.append(
+                {
+                    "title": "Cart Flow Error",
+                    "description": str(e),
+                    "severity": "critical",
+                }
+            )
             return self._build_result("cart_flow", "error", start_time, product_url)
 
     # ============================================
     # CHECKOUT FLOW TESTS
     # ============================================
 
-    async def test_checkout_flow(self, browser: BrowserAutomation, cart_url: str) -> EcommerceTestResult:
+    async def test_checkout_flow(
+        self, browser: BrowserAutomation, cart_url: str
+    ) -> EcommerceTestResult:
         """Test checkout page elements and form validation."""
         start_time = datetime.now(timezone.utc)
         self.findings = []
@@ -265,47 +283,63 @@ class EcommerceTester:
                 return self._build_result("checkout_flow", "fail", start_time, cart_url)
 
             # Check checkout button
-            checkout_exists = await self._get_element_count(browser, self._get_selector("checkout_button")) > 0
+            checkout_exists = (
+                await self._get_element_count(browser, self._get_selector("checkout_button")) > 0
+            )
             if not checkout_exists:
-                self.findings.append({
-                    "title": "Missing Checkout Button",
-                    "description": "Checkout button not found on cart page",
-                    "severity": "critical",
-                })
+                self.findings.append(
+                    {
+                        "title": "Missing Checkout Button",
+                        "description": "Checkout button not found on cart page",
+                        "severity": "critical",
+                    }
+                )
 
             # Check shipping form (if on checkout page)
-            shipping_exists = await self._get_element_count(browser, self._get_selector("shipping_form")) > 0
+            shipping_exists = (
+                await self._get_element_count(browser, self._get_selector("shipping_form")) > 0
+            )
             if shipping_exists:
-                self.findings.append({
-                    "title": "Shipping Form Present",
-                    "description": "Shipping address form is available",
-                    "severity": "info",
-                })
+                self.findings.append(
+                    {
+                        "title": "Shipping Form Present",
+                        "description": "Shipping address form is available",
+                        "severity": "info",
+                    }
+                )
 
             # Check payment methods
-            payment_count = await self._get_element_count(browser, self._get_selector("payment_methods"))
+            payment_count = await self._get_element_count(
+                browser, self._get_selector("payment_methods")
+            )
             if payment_count == 0:
-                self.findings.append({
-                    "title": "No Payment Methods",
-                    "description": "No payment method options found",
-                    "severity": "high",
-                })
+                self.findings.append(
+                    {
+                        "title": "No Payment Methods",
+                        "description": "No payment method options found",
+                        "severity": "high",
+                    }
+                )
             else:
-                self.findings.append({
-                    "title": "Payment Methods Available",
-                    "description": f"Found {payment_count} payment option(s)",
-                    "severity": "info",
-                })
+                self.findings.append(
+                    {
+                        "title": "Payment Methods Available",
+                        "description": f"Found {payment_count} payment option(s)",
+                        "severity": "info",
+                    }
+                )
 
             status = "pass" if checkout_exists else "fail"
             return self._build_result("checkout_flow", status, start_time, cart_url)
 
         except Exception as e:
-            self.findings.append({
-                "title": "Checkout Flow Error",
-                "description": str(e),
-                "severity": "critical",
-            })
+            self.findings.append(
+                {
+                    "title": "Checkout Flow Error",
+                    "description": str(e),
+                    "severity": "critical",
+                }
+            )
             return self._build_result("checkout_flow", "error", start_time, cart_url)
 
     # ============================================
@@ -331,31 +365,39 @@ class EcommerceTester:
             found_chars = [c for c in turkish_chars if c in page_text]
 
             if not found_chars:
-                self.findings.append({
-                    "title": "Missing Turkish Characters",
-                    "description": "No Turkish characters (ç,ğ,ı,ö,ş,ü) found on page",
-                    "severity": "medium",
-                })
+                self.findings.append(
+                    {
+                        "title": "Missing Turkish Characters",
+                        "description": "No Turkish characters (ç,ğ,ı,ö,ş,ü) found on page",
+                        "severity": "medium",
+                    }
+                )
             else:
-                self.findings.append({
-                    "title": "Turkish Characters Present",
-                    "description": f"Found characters: {', '.join(found_chars)}",
-                    "severity": "info",
-                })
+                self.findings.append(
+                    {
+                        "title": "Turkish Characters Present",
+                        "description": f"Found characters: {', '.join(found_chars)}",
+                        "severity": "info",
+                    }
+                )
 
             # Check for Turkish Lira symbol
             if "₺" in page_text or "TL" in page_text:
-                self.findings.append({
-                    "title": "Turkish Lira Currency",
-                    "description": "Turkish Lira (₺) symbol found",
-                    "severity": "info",
-                })
+                self.findings.append(
+                    {
+                        "title": "Turkish Lira Currency",
+                        "description": "Turkish Lira (₺) symbol found",
+                        "severity": "info",
+                    }
+                )
             else:
-                self.findings.append({
-                    "title": "Missing Turkish Lira Symbol",
-                    "description": "No Turkish Lira (₺) symbol found",
-                    "severity": "low",
-                })
+                self.findings.append(
+                    {
+                        "title": "Missing Turkish Lira Symbol",
+                        "description": "No Turkish Lira (₺) symbol found",
+                        "severity": "low",
+                    }
+                )
 
             # Check page language
             lang = ""
@@ -363,33 +405,41 @@ class EcommerceTester:
                 lang = await browser.page.evaluate("() => document.documentElement.lang")
 
             if lang and "tr" in lang.lower():
-                self.findings.append({
-                    "title": "Turkish Language Set",
-                    "description": f"Page language: {lang}",
-                    "severity": "info",
-                })
+                self.findings.append(
+                    {
+                        "title": "Turkish Language Set",
+                        "description": f"Page language: {lang}",
+                        "severity": "info",
+                    }
+                )
             else:
-                self.findings.append({
-                    "title": "Language Not Set to Turkish",
-                    "description": f"Page language attribute: {lang}",
-                    "severity": "low",
-                })
+                self.findings.append(
+                    {
+                        "title": "Language Not Set to Turkish",
+                        "description": f"Page language attribute: {lang}",
+                        "severity": "low",
+                    }
+                )
 
             return self._build_result("locale", "pass", start_time, url)
 
         except Exception as e:
-            self.findings.append({
-                "title": "Locale Test Error",
-                "description": str(e),
-                "severity": "critical",
-            })
+            self.findings.append(
+                {
+                    "title": "Locale Test Error",
+                    "description": str(e),
+                    "severity": "critical",
+                }
+            )
             return self._build_result("locale", "error", start_time, url)
 
     # ============================================
     # GDPR TESTS
     # ============================================
 
-    async def test_gdpr_compliance(self, browser: BrowserAutomation, url: str) -> EcommerceTestResult:
+    async def test_gdpr_compliance(
+        self, browser: BrowserAutomation, url: str
+    ) -> EcommerceTestResult:
         """Test GDPR compliance indicators."""
         start_time = datetime.now(timezone.utc)
         self.findings = []
@@ -400,50 +450,68 @@ class EcommerceTester:
                 return self._build_result("gdpr", "fail", start_time, url)
 
             # Check for cookie banner
-            banner_count = await self._get_element_count(browser, self._get_selector("cookie_banner"))
+            banner_count = await self._get_element_count(
+                browser, self._get_selector("cookie_banner")
+            )
             if banner_count > 0:
-                self.findings.append({
-                    "title": "Cookie Banner Present",
-                    "description": "Cookie consent banner found on page",
-                    "severity": "info",
-                })
+                self.findings.append(
+                    {
+                        "title": "Cookie Banner Present",
+                        "description": "Cookie consent banner found on page",
+                        "severity": "info",
+                    }
+                )
 
                 # Check for reject option
-                reject_count = await self._get_element_count(browser, self._get_selector("cookie_reject"))
+                reject_count = await self._get_element_count(
+                    browser, self._get_selector("cookie_reject")
+                )
                 if reject_count > 0:
-                    self.findings.append({
-                        "title": "Cookie Reject Option Available",
-                        "description": "Users can reject non-essential cookies",
-                        "severity": "info",
-                    })
+                    self.findings.append(
+                        {
+                            "title": "Cookie Reject Option Available",
+                            "description": "Users can reject non-essential cookies",
+                            "severity": "info",
+                        }
+                    )
                 else:
-                    self.findings.append({
-                        "title": "Missing Cookie Reject Option",
-                        "description": "No reject option found - may violate GDPR",
-                        "severity": "high",
-                    })
+                    self.findings.append(
+                        {
+                            "title": "Missing Cookie Reject Option",
+                            "description": "No reject option found - may violate GDPR",
+                            "severity": "high",
+                        }
+                    )
             else:
-                self.findings.append({
-                    "title": "No Cookie Banner",
-                    "description": "No cookie consent mechanism found",
-                    "severity": "medium",
-                })
+                self.findings.append(
+                    {
+                        "title": "No Cookie Banner",
+                        "description": "No cookie consent mechanism found",
+                        "severity": "medium",
+                    }
+                )
 
             # Check for privacy policy link
             if browser.page:
-                links = await browser.page.query_selector_all("a[href*='privacy'], a[href*='gizlilik']")
+                links = await browser.page.query_selector_all(
+                    "a[href*='privacy'], a[href*='gizlilik']"
+                )
                 if len(links) > 0:
-                    self.findings.append({
-                        "title": "Privacy Policy Link Found",
-                        "description": f"Found {len(links)} privacy-related link(s)",
-                        "severity": "info",
-                    })
+                    self.findings.append(
+                        {
+                            "title": "Privacy Policy Link Found",
+                            "description": f"Found {len(links)} privacy-related link(s)",
+                            "severity": "info",
+                        }
+                    )
                 else:
-                    self.findings.append({
-                        "title": "Missing Privacy Policy",
-                        "description": "No privacy policy link found",
-                        "severity": "medium",
-                    })
+                    self.findings.append(
+                        {
+                            "title": "Missing Privacy Policy",
+                            "description": "No privacy policy link found",
+                            "severity": "medium",
+                        }
+                    )
 
             # Check for tracking pixels (Facebook, Google)
             if browser.page:
@@ -457,20 +525,24 @@ class EcommerceTester:
                     trackers.append("Hotjar")
 
                 if trackers:
-                    self.findings.append({
-                        "title": "Tracking Pixels Detected",
-                        "description": f"Found: {', '.join(trackers)}",
-                        "severity": "info",
-                    })
+                    self.findings.append(
+                        {
+                            "title": "Tracking Pixels Detected",
+                            "description": f"Found: {', '.join(trackers)}",
+                            "severity": "info",
+                        }
+                    )
 
             return self._build_result("gdpr", "pass", start_time, url)
 
         except Exception as e:
-            self.findings.append({
-                "title": "GDPR Test Error",
-                "description": str(e),
-                "severity": "critical",
-            })
+            self.findings.append(
+                {
+                    "title": "GDPR Test Error",
+                    "description": str(e),
+                    "severity": "critical",
+                }
+            )
             return self._build_result("gdpr", "error", start_time, url)
 
     # ============================================
@@ -503,6 +575,7 @@ class EcommerceTester:
 # OPTOZON-SPECIFIC TESTS
 # ============================================
 
+
 class OptozonTester(EcommerceTester):
     """Pre-configured tester for Optozon (www.optozon.com.tr)."""
 
@@ -528,13 +601,25 @@ class OptozonTester(EcommerceTester):
             await browser.page.wait_for_timeout(2000)
 
             search_results = await browser.page.title()
-            results.append(EcommerceTestResult(
-                test_type="search",
-                status="pass" if "laptop" in search_results.lower() or "sonuç" in search_results.lower() else "warning",
-                findings=[{"title": "Search Test", "description": f"Searched for 'laptop', page title: {search_results}", "severity": "info"}],
-                url=f"{self.base_url}/search?q=laptop",
-                platform="optozon",
-            ))
+            results.append(
+                EcommerceTestResult(
+                    test_type="search",
+                    status=(
+                        "pass"
+                        if "laptop" in search_results.lower() or "sonuç" in search_results.lower()
+                        else "warning"
+                    ),
+                    findings=[
+                        {
+                            "title": "Search Test",
+                            "description": f"Searched for 'laptop', page title: {search_results}",
+                            "severity": "info",
+                        }
+                    ],
+                    url=f"{self.base_url}/search?q=laptop",
+                    platform="optozon",
+                )
+            )
 
         # 3. GDPR check
         logger.info("optozon_smoke_test", step="gdpr")
