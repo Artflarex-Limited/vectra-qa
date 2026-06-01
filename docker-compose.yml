@@ -15,7 +15,30 @@
 #   3. Open http://localhost:3000
 
 services:
-  # Redis - Task queue and LLM response cache
+  # PostgreSQL + pgvector - Primary database for structured data and vector search
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: vectra-postgres
+    environment:
+      POSTGRES_DB: vectra_qa
+      POSTGRES_USER: vectra
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-vectra_dev_password_change_in_production}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - vectra-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vectra -d vectra_qa"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # Redis - Task queue (kept for distributed workers, cache moved to PostgreSQL)
   redis:
     image: redis:7-alpine
     container_name: vectra-redis
@@ -59,10 +82,12 @@ services:
       - CHATBOT_MODEL=${CHATBOT_MODEL:-anthropic/claude-3-5-sonnet-20241022}
       # Worker Configuration
       - VECTRA_LLM_WORKERS=${VECTRA_LLM_WORKERS:-true}
-      # LLM Cache
+      # Database
+      - DATABASE_URL=postgresql://vectra:${DB_PASSWORD:-vectra_dev_password_change_in_production}@postgres:5432/vectra_qa
+      - VECTRA_BACKEND=${VECTRA_BACKEND:-dual}
+      # LLM Cache (now in PostgreSQL)
       - VECTRA_LLM_CACHE=${VECTRA_LLM_CACHE:-true}
       - VECTRA_LLM_CACHE_TTL=${VECTRA_LLM_CACHE_TTL:-3600}
-      - VECTRA_LLM_CACHE_PATH=/app/obsidian_vault/.llm_cache.json
       # Redis
       - REDIS_URL=redis://redis:6379/0
       # Server Config
@@ -79,6 +104,8 @@ services:
     networks:
       - vectra-network
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
@@ -117,6 +144,8 @@ services:
     depends_on:
       mcp-server:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
@@ -147,6 +176,8 @@ services:
     networks:
       - vectra-network
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
       mcp-server:
@@ -201,6 +232,8 @@ volumes:
   obsidian-vault:
     driver: local
   redis-data:
+    driver: local
+  postgres-data:
     driver: local
   # ollama-data:
   #   driver: local

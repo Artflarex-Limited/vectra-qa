@@ -32,7 +32,15 @@ filelock>=3.13.0
 # Optional: Redis for distributed workers
 redis>=5.0.0
 
+# PostgreSQL Database + pgvector support
+psycopg[binary]>=3.1.0
+
+# Local embeddings (fallback when no API key)
+sentence-transformers>=2.3.0
+numpy>=1.24.0
+
 # Optional: For testing
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 pytest-cov>=4.1.0
+pytest-postgresql>=5.0.0
