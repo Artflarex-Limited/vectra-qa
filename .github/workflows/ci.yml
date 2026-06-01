@@ -37,7 +37,7 @@ jobs:
       
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --cov=mcp_server --cov=command_center --cov=agents --cov-report=xml --cov-report=term
+          pytest tests/ -v --cov=mcp_server --cov=command_center --cov=agents --cov-report=xml --cov-report=term --cov-fail-under=80
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
