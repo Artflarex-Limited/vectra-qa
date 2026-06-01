@@ -179,11 +179,11 @@ result = execute_tool("test_visual_regression", {
 
 ## Next Steps
 
-- Learn to [write custom test scenarios](user-guide/writing-tests.md)
-- Explore [feature testing capabilities](user-guide/feature-testing.md)
-- Understand the [architecture](architecture/overview.md)
-- Configure [multiple LLM providers](getting-started/configuration.md)
-- Set up [CI/CD integration](user-guide/advanced-usage.md)
+- Learn to [write custom test scenarios](../user-guide/writing-tests.md)
+- Explore [feature testing capabilities](../user-guide/feature-testing.md)
+- Understand the [architecture](../architecture/overview.md)
+- Configure [multiple LLM providers](configuration.md)
+- Set up [CI/CD integration](../user-guide/advanced-usage.md)
 
 ## Common Commands
 

@@ -103,9 +103,12 @@ nav:
     - Endpoints: api/endpoints.md
     - Chatbot: api/chatbot.md
     - Agents: api/agents.md
+  - Setup:
+    - PostgreSQL: setup/postgresql.md
   - User Guide:
     - Writing Tests: user-guide/writing-tests.md
     - Feature Testing: user-guide/feature-testing.md
+    - Deterministic Mode: user-guide/deterministic-mode.md
     - Understanding Results: user-guide/understanding-results.md
     - Advanced Usage: user-guide/advanced-usage.md
   - Development:

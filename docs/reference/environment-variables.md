@@ -26,7 +26,17 @@ At least one LLM provider API key is required for chatbot and orchestrator featu
 | `OBSIDIAN_VAULT_PATH` | `/app/obsidian_vault` | Path to Obsidian vault |
 | `COMMAND_CENTER_PORT` | `3000` | Dashboard HTTP port |
 | `MCP_SERVER_PORT` | `8080` | MCP server HTTP port |
+| `MCP_TRANSPORT` | `sse` | MCP transport: `sse` or `stdio` |
 | `COMMAND_CENTER_HOST` | `0.0.0.0` | Dashboard bind address |
+
+## Database
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `postgresql://vectra:vectra_dev_password_change_in_production@localhost:5432/vectra_qa` | PostgreSQL connection string |
+| `VECTRA_BACKEND` | `dual` | Storage mode: `markdown`, `postgresql`, or `dual` |
+
+**Note**: If `DATABASE_URL` is not set and `VECTRA_BACKEND` is `postgresql` or `dual`, the framework will use the default connection string.
 
 ## Model Selection
 
@@ -50,6 +60,13 @@ Format: `provider/model-name`
 | `minimax` | `minimax-text-01` | Budget option |
 | `kimi` | `kimi-k2` | Chinese-optimized |
 | `local` | `llama3.1:70b` | Privacy-first |
+
+## Embeddings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `EMBEDDING_PROVIDER` | `openai` | Provider: `openai`, `local`, `ollama` |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | OpenAI embedding model (when provider is `openai`) |
 
 ## Worker Configuration
 
@@ -83,6 +100,13 @@ Format: `provider/model-name`
 
 **Note**: If `REDIS_URL` is not set, uses in-memory queue (single-node only).
 
+## Obsidian Vault
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AGENT_TEMPLATE_DIR` | `{OBSIDIAN_VAULT_PATH}/Templates` | Template directory for agent memory nodes |
+| `GLOBAL_NODES_DIR` | `{OBSIDIAN_VAULT_PATH}/Global` | Global memory nodes directory |
+
 ## Chatbot Configuration
 
 | Variable | Default | Description |
@@ -96,8 +120,9 @@ Format: `provider/model-name`
 |----------|---------|-------------|
 | `HEADLESS` | `true` | Run browsers headlessly |
 | `PLAYWRIGHT_BROWSER` | `chromium` | Default browser engine |
-| `PLAYWRIGHT_TIMEOUT` | `30000` | Page load timeout (ms) |
-| `BROWSER_POOL_MAX` | `10` | Max concurrent browser instances |
+| `PLAYWRIGHT_SLOW_MO` | `0` | Slow down operations by N milliseconds |
+| `PLAYWRIGHT_VIEWPORT_WIDTH` | `1920` | Browser viewport width |
+| `PLAYWRIGHT_VIEWPORT_HEIGHT` | `1080` | Browser viewport height |
 
 ## Feature Test Configuration
 
@@ -170,12 +195,14 @@ GOOGLE_API_KEY=...
 ```bash
 MINIMAX_API_KEY=...
 MINIMAX_BASE_URL=https://api.minimax.chat/v1
+MINIMAX_MODEL=minimax-m2.7
 ```
 
 ### Kimi/Moonshot
 ```bash
 KIMI_API_KEY=...
 KIMI_BASE_URL=https://api.moonshot.cn/v1
+KIMI_MODEL=kimi-k2.6
 ```
 
 ### Local (Ollama)
@@ -259,6 +286,21 @@ VECTRA_LLM_CACHE_TTL=3600
 # Distributed Workers
 REDIS_URL=redis://localhost:6379/0
 ```
+
+## Deprecated / Removed
+
+The following variables are no longer used by the current codebase. They are listed here for migration purposes only.
+
+| Variable | Status | Replacement |
+|----------|--------|-------------|
+| `PLAYWRIGHT_TIMEOUT` | **Removed** | Not implemented; use `PLAYWRIGHT_SLOW_MO` for debugging |
+| `BROWSER_POOL_MAX` | **Removed** | Not implemented |
+| `CHROMA_PERSIST_DIR` | **Removed** | Use PostgreSQL + pgvector via `DATABASE_URL` |
+| `CHROMA_COLLECTION_NAME` | **Removed** | Use PostgreSQL + pgvector via `DATABASE_URL` |
+| `PINECONE_API_KEY` | **Removed** | Use PostgreSQL + pgvector via `DATABASE_URL` |
+| `PINECONE_ENVIRONMENT` | **Removed** | Use PostgreSQL + pgvector via `DATABASE_URL` |
+| `PINECONE_INDEX_NAME` | **Removed** | Use PostgreSQL + pgvector via `DATABASE_URL` |
+| `VECTOR_DB_PROVIDER` | **Removed** | Use `VECTRA_BACKEND` |
 
 ## Docker Compose Environment
 
