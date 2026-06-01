@@ -52,7 +52,10 @@ jobs:
           echo "${GH_TOKEN}" | gh auth login --with-token
           
           # Clone wiki repository
-          gh repo clone ${{ github.repository }}.wiki wiki_repo
+          gh repo clone Artflarex-Limited/vectra-qa.wiki wiki_repo || {
+            echo "Failed to clone wiki. Ensure wiki is enabled and GITHUB_TOKEN has wiki permissions."
+            exit 1
+          }
           
           # Copy prepared content to wiki repo
           cp wiki_output/*.md wiki_repo/ 2>/dev/null || true
@@ -67,7 +70,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git add .
             git commit -m "docs(wiki): sync from main repo ($(date -u '+%Y-%m-%d %H:%M:%S UTC'))"
-            git push origin master
+            git push origin main
             echo "✅ Wiki synced successfully"
           else
             echo "ℹ️ No changes to sync"
