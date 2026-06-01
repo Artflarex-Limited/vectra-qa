@@ -39,16 +39,29 @@ class BrowserPool:
                 # Try to reuse an available browser
                 while self._pool:
                     browser = self._pool.pop()
-                    is_connected = True
-                    if (
-                        browser.page
-                        and browser.browser
-                        and hasattr(browser.browser, "is_connected")
-                    ):
-                        is_connected = browser.browser.is_connected()
-                    if browser.page and not is_connected:
-                        # Browser is dead, skip it
+
+                    # Validate: must have both page and browser instances
+                    if browser.page is None or browser.browser is None:
+                        logger.debug(
+                            "browser_skipped_no_instance",
+                            page=browser.page is not None,
+                            browser=browser.browser is not None,
+                        )
+                        try:
+                            await browser.close()
+                        except Exception as e:
+                            logger.warning("browser_close_failed", error=str(e), context="acquire_validation_no_instance")
                         continue
+
+                    # Validate: must be connected (if method available)
+                    if hasattr(browser.browser, "is_connected") and not browser.browser.is_connected():
+                        logger.debug("browser_skipped_disconnected")
+                        try:
+                            await browser.close()
+                        except Exception as e:
+                            logger.warning("browser_close_failed", error=str(e), context="acquire_validation_disconnected")
+                        continue
+
                     self._in_use.add(browser)
                     logger.debug("browser_reused_from_pool", pool_size=len(self._pool))
                     return browser
@@ -79,20 +92,20 @@ class BrowserPool:
                         # Don't return broken browsers to pool
                         try:
                             await browser.close()
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.warning("browser_close_failed", error=str(e), context="release_reset_failed")
                         return
 
                 # Add back to pool if not full
-                if len(self._pool) < self.max_size // 2:  # Keep half max in pool
+                if len(self._pool) < self.max_size:  # Keep up to max_size browsers in pool
                     self._pool.append(browser)
                     logger.debug("browser_returned_to_pool", pool_size=len(self._pool))
                 else:
                     # Pool is full, close browser
                     try:
                         await browser.close()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning("browser_close_failed", error=str(e), context="release_pool_full")
                     logger.debug("browser_closed_pool_full")
 
     async def cleanup(self):
@@ -101,15 +114,15 @@ class BrowserPool:
             for browser in self._pool:
                 try:
                     await browser.close()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("browser_close_failed", error=str(e), context="cleanup_pool")
             self._pool.clear()
 
             for browser in list(self._in_use):
                 try:
                     await browser.close()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("browser_close_failed", error=str(e), context="cleanup_in_use")
             self._in_use.clear()
 
             logger.info("browser_pool_cleaned")

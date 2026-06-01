@@ -211,10 +211,11 @@ class StateManager:
                     node = self.vault.read_node(node_path)
                     if node["frontmatter"].get("agent_id") == agent_id:
                         return cast(str, node_path)
-                except Exception:
+                except Exception as e:
+                    logger.warning("agent_memory_read_skipped", error=str(e), node_path=node_path)
                     continue
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("agent_memory_list_failed", error=str(e))
         return None
 
     def check_orphaned_agents(self) -> List[Dict[str, Any]]:
@@ -235,10 +236,11 @@ class StateManager:
                                 "orphaned_at": frontmatter.get("orphaned_at", "unknown"),
                             }
                         )
-                except Exception:
+                except Exception as e:
+                    logger.warning("orphaned_check_read_skipped", error=str(e), node_path=node_path)
                     continue
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("orphaned_check_list_failed", error=str(e))
 
         return orphaned
 

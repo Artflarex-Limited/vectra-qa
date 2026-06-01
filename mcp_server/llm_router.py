@@ -17,6 +17,7 @@ Usage:
 import os
 import json
 import hashlib
+import threading
 import time
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
@@ -49,6 +50,7 @@ class LLMCache:
 
     def __init__(self, ttl_seconds: int = 3600, persist_path: Optional[str] = None):
         self.ttl_seconds = ttl_seconds
+        self._lock = threading.Lock()
         self._memory_cache: Dict[str, Dict[str, Any]] = {}
         self.db: Any = None
         self._use_postgres = self._init_postgres()
@@ -64,7 +66,8 @@ class LLMCache:
 
             self.db = get_db_manager_sync()
             return bool(self.db._initialized)
-        except Exception:
+        except Exception as e:
+            logger.warning("db_init_failed", error=str(e))
             return False
 
     def _generate_key(
@@ -87,15 +90,16 @@ class LLMCache:
         key = self._generate_key(model, messages, temperature, max_tokens)
 
         # Check memory cache first
-        entry = self._memory_cache.get(key)
-        if entry and time.time() - entry["timestamp"] <= self.ttl_seconds:
-            return LLMResponse(
-                content=entry["content"],
-                model=entry["model"],
-                provider=entry["provider"],
-                usage=entry["usage"],
-                raw_response=None,
-            )
+        with self._lock:
+            entry = self._memory_cache.get(key)
+            if entry and time.time() - entry["timestamp"] <= self.ttl_seconds:
+                return LLMResponse(
+                    content=entry["content"],
+                    model=entry["model"],
+                    provider=entry["provider"],
+                    usage=entry["usage"],
+                    raw_response=None,
+                )
 
         # Check PostgreSQL
         if self._use_postgres:
@@ -125,7 +129,8 @@ class LLMCache:
                                 else time.time()
                             ),
                         }
-                        self._memory_cache[key] = entry
+                        with self._lock:
+                            self._memory_cache[key] = entry
                         return LLMResponse(
                             content=entry["content"],
                             model=entry["model"],
@@ -133,8 +138,8 @@ class LLMCache:
                             usage=entry["usage"],
                             raw_response=None,
                         )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("cache_read_failed", error=str(e), source="postgresql")
 
         return None
 
@@ -158,7 +163,8 @@ class LLMCache:
             "usage": response.usage,
             "timestamp": now,
         }
-        self._memory_cache[key] = entry
+        with self._lock:
+            self._memory_cache[key] = entry
 
         # Persist to PostgreSQL
         if self._use_postgres:
@@ -188,8 +194,8 @@ class LLMCache:
                             ),
                         )
                     )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("cache_write_failed", error=str(e), source="postgresql")
 
         # Fallback to disk
         if not self._use_postgres and self.persist_path:
@@ -197,7 +203,8 @@ class LLMCache:
 
     def clear(self) -> None:
         """Clear all cached entries."""
-        self._memory_cache.clear()
+        with self._lock:
+            self._memory_cache.clear()
         if self._use_postgres:
             try:
                 import asyncio
@@ -205,8 +212,8 @@ class LLMCache:
                 loop = asyncio.get_event_loop()
                 if not loop.is_running():
                     loop.run_until_complete(self.db.execute("DELETE FROM llm_cache"))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("cache_clear_failed", error=str(e), source="postgresql")
         if self.persist_path and self.persist_path.exists():
             self.persist_path.unlink()
 
@@ -217,9 +224,10 @@ class LLMCache:
         try:
             self.persist_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.persist_path, "w") as f:
-                json.dump(self._memory_cache, f)
-        except Exception:
-            pass
+                with self._lock:
+                    json.dump(self._memory_cache, f)
+        except Exception as e:
+            logger.warning("cache_disk_save_failed", error=str(e))
 
     def _load_from_disk(self) -> None:
         """Load cache from disk (legacy fallback)."""
@@ -227,15 +235,17 @@ class LLMCache:
             return
         try:
             with open(self.persist_path, "r") as f:
-                self._memory_cache = json.load(f)
-            now = time.time()
-            expired_keys = [
-                k for k, v in self._memory_cache.items() if now - v["timestamp"] > self.ttl_seconds
-            ]
-            for k in expired_keys:
-                del self._memory_cache[k]
-        except Exception:
-            pass
+                data = json.load(f)
+            with self._lock:
+                self._memory_cache = data
+                now = time.time()
+                expired_keys = [
+                    k for k, v in self._memory_cache.items() if now - v["timestamp"] > self.ttl_seconds
+                ]
+                for k in expired_keys:
+                    del self._memory_cache[k]
+        except Exception as e:
+            logger.warning("cache_disk_load_failed", error=str(e))
 
 
 class LLMRouter:
@@ -368,8 +378,8 @@ class LLMRouter:
                         provider="cache",
                         cache_hit=True,
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("cache_cost_tracking_failed", error=str(e))
                 return cached
 
         provider, model_name = self._parse_model(model)
@@ -522,7 +532,7 @@ class LLMRouter:
         if "anthropic" in self.clients:
             models["anthropic"] = ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229"]
         if "google" in self.clients:
-            models["google"] = ["gemini-1.5-pro", "gemini-1.5-flash"]
+            models["google"] = ["gemini-2.5-pro", "gemini-2.0-flash"]
         if "minimax" in self.clients:
             models["minimax"] = ["minimax-text-01", "abab6.5s-chat"]
         if "kimi" in self.clients:

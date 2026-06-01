@@ -187,8 +187,8 @@ class CostTracker:
                     self.db.fetchval("SELECT COALESCE(SUM(cost_usd), 0) FROM llm_usage")
                 )
                 return Decimal(str(result)) if result else Decimal("0.000000")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("cost_query_failed", error=str(e))
 
         return Decimal("0.000000")
 

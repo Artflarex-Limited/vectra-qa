@@ -240,7 +240,8 @@ class AuthFlowTester:
         try:
             element = await self.browser.page.query_selector(selector)
             return element is not None
-        except Exception:
+        except Exception as e:
+            logger.warning("element_exists_check_failed", error=str(e), selector=selector)
             return False
 
     def _find_session_cookie(self, cookies: List[Dict]) -> Optional[Dict]:

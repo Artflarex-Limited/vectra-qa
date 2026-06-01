@@ -101,7 +101,8 @@ class MarkdownBackend(BaseStorage):
                             "content": node.get("content", "")[:500],
                         }
                     )
-            except Exception:
+            except Exception as e:
+                logger.warning("finding_query_skipped", error=str(e), node_path=node_path)
                 continue
         return findings
 
@@ -121,7 +122,8 @@ class MarkdownBackend(BaseStorage):
                                 "frontmatter": fm,
                             }
                         )
-            except Exception:
+            except Exception as e:
+                logger.warning("test_run_query_skipped", error=str(e), node_path=node_path)
                 continue
         return runs
 
@@ -193,8 +195,8 @@ class PostgreSQLBackend(BaseStorage):
             loop = asyncio.get_event_loop()
             if not loop.is_running():
                 return loop.run_until_complete(self.db.fetchall(query, tuple(params)))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("pg_query_findings_failed", error=str(e))
         return []
 
     def query_test_runs(self, **filters) -> Any:
@@ -215,8 +217,8 @@ class PostgreSQLBackend(BaseStorage):
             loop = asyncio.get_event_loop()
             if not loop.is_running():
                 return loop.run_until_complete(self.db.fetchall(query, tuple(params)))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("pg_query_test_runs_failed", error=str(e))
         return []
 
 

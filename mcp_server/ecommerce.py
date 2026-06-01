@@ -128,7 +128,8 @@ class EcommerceTester:
         try:
             result = await browser.click(selector, timeout=timeout)
             return bool(result.get("success", False))
-        except Exception:
+        except Exception as e:
+            logger.warning("safe_click_failed", error=str(e), selector=selector)
             return False
 
     async def _safe_fill(self, browser: BrowserAutomation, selector: str, text: str) -> bool:
@@ -138,7 +139,8 @@ class EcommerceTester:
         try:
             result = await browser.fill(selector, text)
             return bool(result.get("success", False))
-        except Exception:
+        except Exception as e:
+            logger.warning("safe_fill_failed", error=str(e), selector=selector)
             return False
 
     async def _get_element_text(self, browser: BrowserAutomation, selector: str) -> str:
@@ -148,7 +150,8 @@ class EcommerceTester:
         try:
             result = await browser.get_text(selector)
             return result.get("text", "") if result.get("success") else ""
-        except Exception:
+        except Exception as e:
+            logger.warning("get_element_text_failed", error=str(e), selector=selector)
             return ""
 
     async def _get_element_count(self, browser: BrowserAutomation, selector: str) -> int:
@@ -158,7 +161,8 @@ class EcommerceTester:
         try:
             result = await browser.get_elements(selector)
             return result.get("count", 0) if result.get("success") else 0
-        except Exception:
+        except Exception as e:
+            logger.warning("get_element_count_failed", error=str(e), selector=selector)
             return 0
 
     # ============================================

@@ -88,3 +88,8 @@ warn_unused_configs = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "unit: Tests that use only mocks, no external services (fast, default)",
+    "integration: Tests that need PostgreSQL or a real browser (slower, opt-in)",
+    "e2e: Full end-to-end tests with real LLM + browser (manual or scheduled run)",
+]

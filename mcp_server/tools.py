@@ -404,11 +404,12 @@ class AgentSpawner:
                     log_path = Path(log_path)
                     log_path.parent.mkdir(parents=True, exist_ok=True)
                     with open(log_path, "w") as f:
-                        for line in proc.stdout:
-                            f.write(line.decode("utf-8", errors="replace"))
-                            f.flush()
-                except Exception:
-                    pass  # Silently fail if log capture fails
+                        if proc.stdout:
+                            for line in proc.stdout:
+                                f.write(line.decode("utf-8", errors="replace"))
+                                f.flush()
+                except Exception as e:
+                    logger.warning("log_capture_failed", error=str(e), log_path=str(log_path))
 
             import threading
 
@@ -455,7 +456,8 @@ class AgentSpawner:
                         node_path, {"status": "terminated", "terminated_at": timestamp}
                     )
                     break
-            except Exception:
+            except Exception as e:
+                logger.warning("agent_cleanup_skipped", error=str(e), node_path=node_path)
                 continue
 
         del self.active_processes[agent_id]
@@ -751,8 +753,8 @@ async def _async_browser_tool(tool_type: str, params: Dict[str, Any]) -> Dict[st
                 try:
                     if await el.is_visible():
                         visible_count += 1
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("element_visibility_check_failed", error=str(e))
 
             return {
                 "selector": selector,
