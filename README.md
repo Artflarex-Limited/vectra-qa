@@ -1,9 +1,10 @@
 # Vectra QA
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg)](https://fastapi.tiangolo.com)
-[![Tests](https://img.shields.io/badge/tests-79%20passing-brightgreen.svg)](tests/)
+![Tests](https://img.shields.io/github/actions/workflow/status/bugratok/vectra-qa/ci.yml?label=tests)
+![Coverage](https://img.shields.io/codecov/c/github/bugratok/vectra-qa)
+![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Docs](https://img.shields.io/github/actions/workflow/status/bugratok/vectra-qa/docs.yml?label=docs)
 
 ## The Death of Static E2E Testing
 
