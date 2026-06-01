@@ -88,7 +88,7 @@ class MultiBrowserTester:
                 # Attach to BrowserAutomation
                 browser.browser = launched_browser
                 browser.page = page
-                browser.playwright = playwright
+                browser.playwright = playwright  # type: ignore[assignment]
 
                 # Run test
                 result = await test_func(browser, url)

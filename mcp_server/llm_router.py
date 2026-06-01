@@ -240,7 +240,9 @@ class LLMCache:
                 self._memory_cache = data
                 now = time.time()
                 expired_keys = [
-                    k for k, v in self._memory_cache.items() if now - v["timestamp"] > self.ttl_seconds
+                    k
+                    for k, v in self._memory_cache.items()
+                    if now - v["timestamp"] > self.ttl_seconds
                 ]
                 for k in expired_keys:
                     del self._memory_cache[k]

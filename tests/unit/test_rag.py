@@ -7,7 +7,7 @@ embedding providers.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from mcp_server.rag import (
     DocumentChunker,
@@ -16,7 +16,6 @@ from mcp_server.rag import (
     get_rag_pipeline,
 )
 from mcp_server.embeddings import EmbeddingResult
-
 
 # =========================================================================
 # Fixtures
@@ -78,9 +77,10 @@ def rag_pipeline(mock_db, mock_embedder):
     """Create a RAGPipeline with mocked dependencies."""
     # get_db_manager is async but called synchronously in __init__;
     # use a plain MagicMock so the call returns mock_db directly.
-    with patch(
-        "mcp_server.rag.get_db_manager", new=MagicMock(return_value=mock_db)
-    ), patch("mcp_server.rag.get_embedding_provider", return_value=mock_embedder):
+    with (
+        patch("mcp_server.rag.get_db_manager", new=MagicMock(return_value=mock_db)),
+        patch("mcp_server.rag.get_embedding_provider", return_value=mock_embedder),
+    ):
         pipeline = RAGPipeline()
         pipeline.chunker = DocumentChunker(chunk_size=512, overlap=50)
         return pipeline
@@ -227,7 +227,9 @@ class TestIngestDocument:
     @pytest.mark.asyncio
     async def test_skips_very_short_chunks(self, rag_pipeline, mock_db, mock_embedder):
         """Should skip chunks shorter than 20 characters."""
-        content = "# Short\n\nab\n\n# Normal\n\nThis is a normal chunk with enough text to be meaningful."
+        content = (
+            "# Short\n\nab\n\n# Normal\n\nThis is a normal chunk with enough text to be meaningful."
+        )
         await rag_pipeline.ingest_document(
             source_path="test.md",
             content=content,
@@ -248,7 +250,10 @@ class TestIngestDocument:
     async def test_embedder_failure_logs_and_continues(self, rag_pipeline, mock_db):
         """Should log a warning and continue when embedding a chunk fails."""
         rag_pipeline.embedder.embed = AsyncMock(
-            side_effect=[RuntimeError("API timeout"), EmbeddingResult(embeddings=[[0.1]], model="test", provider="test")]
+            side_effect=[
+                RuntimeError("API timeout"),
+                EmbeddingResult(embeddings=[[0.1]], model="test", provider="test"),
+            ]
         )
         content = "# Chunk1\n\nThis is the first chunk with enough text.\n\n# Chunk2\n\nThis is the second chunk with enough text."
 
@@ -384,9 +389,10 @@ class TestRAGSingleton:
 
         rag_mod._rag_pipeline = None
 
-        with patch("mcp_server.rag.get_db_manager") as mock_get_db, patch(
-            "mcp_server.rag.get_embedding_provider"
-        ) as mock_get_emb:
+        with (
+            patch("mcp_server.rag.get_db_manager") as mock_get_db,
+            patch("mcp_server.rag.get_embedding_provider") as mock_get_emb,
+        ):
             mock_get_db.return_value = MagicMock()
             mock_get_emb.return_value = MagicMock()
 
@@ -401,9 +407,10 @@ class TestRAGSingleton:
 
         rag_mod._rag_pipeline = None
 
-        with patch("mcp_server.rag.get_db_manager") as mock_get_db, patch(
-            "mcp_server.rag.get_embedding_provider"
-        ) as mock_get_emb:
+        with (
+            patch("mcp_server.rag.get_db_manager") as mock_get_db,
+            patch("mcp_server.rag.get_embedding_provider") as mock_get_emb,
+        ):
             mock_get_db.return_value = MagicMock()
             mock_get_emb.return_value = MagicMock()
 

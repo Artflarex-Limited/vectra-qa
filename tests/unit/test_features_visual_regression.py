@@ -12,10 +12,13 @@ from mcp_server.features.visual_regression import VisualRegressionTester
 
 class PixelMap:
     """Dict-like pixel data that supports both get and set item."""
+
     def __init__(self, data=None):
         self._data = data or {}
+
     def __getitem__(self, key):
         return self._data[key]
+
     def __setitem__(self, key, value):
         self._data[key] = value
 
@@ -47,9 +50,7 @@ class TestVisualRegressionTester:
     @pytest.mark.asyncio
     async def test_capture_baseline_success(self, tester, mock_browser):
         """Should capture baseline screenshot successfully."""
-        result = await tester.capture_baseline(
-            mock_browser, "https://example.com", "homepage"
-        )
+        result = await tester.capture_baseline(mock_browser, "https://example.com", "homepage")
 
         assert result["success"] is True
         assert result["name"] == "homepage"
@@ -63,9 +64,7 @@ class TestVisualRegressionTester:
         """Should fail when navigation fails."""
         mock_browser.visit = AsyncMock(return_value={"success": False})
 
-        result = await tester.capture_baseline(
-            mock_browser, "https://example.com", "homepage"
-        )
+        result = await tester.capture_baseline(mock_browser, "https://example.com", "homepage")
 
         assert result["success"] is False
         assert "Cannot navigate" in result["error"]
@@ -77,9 +76,7 @@ class TestVisualRegressionTester:
             return_value={"success": False, "error": "Screenshot timeout"}
         )
 
-        result = await tester.capture_baseline(
-            mock_browser, "https://example.com", "homepage"
-        )
+        result = await tester.capture_baseline(mock_browser, "https://example.com", "homepage")
 
         assert result["success"] is False
         assert "Screenshot timeout" in result["error"]
@@ -95,9 +92,7 @@ class TestVisualRegressionTester:
             full_page=False,
         )
 
-        mock_browser.page.set_viewport_size.assert_awaited_once_with(
-            {"width": 1280, "height": 720}
-        )
+        mock_browser.page.set_viewport_size.assert_awaited_once_with({"width": 1280, "height": 720})
         mock_browser.screenshot.assert_awaited_once()
         call_args = mock_browser.screenshot.call_args
         assert call_args.kwargs.get("full_page") is False
@@ -107,9 +102,7 @@ class TestVisualRegressionTester:
         """Should handle exceptions during baseline capture."""
         mock_browser.visit = AsyncMock(side_effect=Exception("Network error"))
 
-        result = await tester.capture_baseline(
-            mock_browser, "https://example.com", "homepage"
-        )
+        result = await tester.capture_baseline(mock_browser, "https://example.com", "homepage")
 
         assert result["success"] is False
         assert "Network error" in result["error"]
@@ -117,9 +110,7 @@ class TestVisualRegressionTester:
     @pytest.mark.asyncio
     async def test_compare_screenshot_no_baseline(self, tester, mock_browser):
         """Should create baseline when none exists."""
-        result = await tester.compare_screenshot(
-            mock_browser, "https://example.com", "new_page"
-        )
+        result = await tester.compare_screenshot(mock_browser, "https://example.com", "new_page")
 
         assert result["success"] is True
         assert result["name"] == "new_page"
@@ -134,9 +125,7 @@ class TestVisualRegressionTester:
 
         mock_browser.visit = AsyncMock(return_value={"success": False})
 
-        result = await tester.compare_screenshot(
-            mock_browser, "https://example.com", "existing"
-        )
+        result = await tester.compare_screenshot(mock_browser, "https://example.com", "existing")
 
         assert result["status"] == "fail"
         assert any("Navigation Failed" in f["title"] for f in result["findings"])
@@ -151,9 +140,7 @@ class TestVisualRegressionTester:
             return_value={"success": False, "error": "Camera broken"}
         )
 
-        result = await tester.compare_screenshot(
-            mock_browser, "https://example.com", "existing"
-        )
+        result = await tester.compare_screenshot(mock_browser, "https://example.com", "existing")
 
         assert result["status"] == "fail"
         assert any("Screenshot Failed" in f["title"] for f in result["findings"])
@@ -165,7 +152,9 @@ class TestVisualRegressionTester:
         baseline_path.write_bytes(b"fake_png_data")
 
         with patch.object(
-            tester, "_compare_images", return_value={"diff_percent": 0.5, "pixel_diff_count": 10, "total_pixels": 1000}
+            tester,
+            "_compare_images",
+            return_value={"diff_percent": 0.5, "pixel_diff_count": 10, "total_pixels": 1000},
         ):
             with patch("mcp_server.features.visual_regression.HAS_PIL", True):
                 result = await tester.compare_screenshot(
@@ -183,7 +172,9 @@ class TestVisualRegressionTester:
         baseline_path.write_bytes(b"fake_png_data")
 
         with patch.object(
-            tester, "_compare_images", return_value={"diff_percent": 15.0, "pixel_diff_count": 150, "total_pixels": 1000}
+            tester,
+            "_compare_images",
+            return_value={"diff_percent": 15.0, "pixel_diff_count": 150, "total_pixels": 1000},
         ):
             with patch("mcp_server.features.visual_regression.HAS_PIL", True):
                 result = await tester.compare_screenshot(
@@ -221,18 +212,17 @@ class TestVisualRegressionTester:
         baseline_path.write_bytes(b"fake_png_data")
 
         with patch.object(
-            tester, "_compare_images", return_value={"diff_percent": 0.0, "pixel_diff_count": 0, "total_pixels": 1}
+            tester,
+            "_compare_images",
+            return_value={"diff_percent": 0.0, "pixel_diff_count": 0, "total_pixels": 1},
         ):
             with patch("mcp_server.features.visual_regression.HAS_PIL", True):
                 result = await tester.compare_screenshot(
-                    mock_browser, "https://example.com", "viewport",
-                    viewport=(1280, 720)
+                    mock_browser, "https://example.com", "viewport", viewport=(1280, 720)
                 )
 
         assert result["status"] == "pass"
-        mock_browser.page.set_viewport_size.assert_awaited_once_with(
-            {"width": 1280, "height": 720}
-        )
+        mock_browser.page.set_viewport_size.assert_awaited_once_with({"width": 1280, "height": 720})
 
     @pytest.mark.asyncio
     async def test_compare_screenshot_exception(self, tester, mock_browser):
@@ -242,9 +232,7 @@ class TestVisualRegressionTester:
 
         mock_browser.visit = AsyncMock(side_effect=Exception("Kaboom"))
 
-        result = await tester.compare_screenshot(
-            mock_browser, "https://example.com", "err"
-        )
+        result = await tester.compare_screenshot(mock_browser, "https://example.com", "err")
 
         assert result["status"] == "fail"
         assert any("Comparison Error" in f["title"] for f in result["findings"])
@@ -252,11 +240,7 @@ class TestVisualRegressionTester:
     @pytest.mark.asyncio
     async def test_compare_images_with_pil(self, tester):
         """Should compare images using PIL."""
-        pixel_data = {
-            (x, y): (128, 128, 128)
-            for x in range(10)
-            for y in range(10)
-        }
+        pixel_data = {(x, y): (128, 128, 128) for x in range(10) for y in range(10)}
 
         mock_baseline = Mock()
         mock_baseline.size = (10, 10)
@@ -287,11 +271,7 @@ class TestVisualRegressionTester:
     @pytest.mark.asyncio
     async def test_compare_images_size_mismatch(self, tester):
         """Should resize images when sizes differ."""
-        pixel_data = {
-            (x, y): (128, 128, 128)
-            for x in range(10)
-            for y in range(10)
-        }
+        pixel_data = {(x, y): (128, 128, 128) for x in range(10) for y in range(10)}
 
         mock_baseline = Mock()
         mock_baseline.size = (10, 10)
@@ -323,16 +303,12 @@ class TestVisualRegressionTester:
 
         mock_current.resize.assert_called_once()
         assert result["diff_percent"] == 0.0
-        assert any(
-            "Size Mismatch" in f["title"] for f in tester.findings
-        )
+        assert any("Size Mismatch" in f["title"] for f in tester.findings)
 
     @pytest.mark.asyncio
     async def test_compare_images_mode_mismatch(self, tester):
         """Should convert image modes when they differ."""
-        pixel_data = {
-            (x, y): (128, 128, 128) for x in range(2) for y in range(2)
-        }
+        pixel_data = {(x, y): (128, 128, 128) for x in range(2) for y in range(2)}
 
         mock_baseline = Mock()
         mock_baseline.size = (2, 2)
@@ -460,9 +436,7 @@ class TestVisualRegressionTester:
         with patch.object(
             tester, "compare_screenshot", return_value={"status": "pass"}
         ) as mock_compare:
-            result = await tester.test_visual_regression(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_visual_regression(mock_browser, "https://example.com")
 
         mock_compare.assert_awaited_once_with(mock_browser, "https://example.com", name="default")
         assert result["status"] == "pass"

@@ -120,7 +120,7 @@ Rules:
                 "error": "Browser page not initialized",
             }
 
-        observation = {
+        observation: Dict[str, Any] = {
             "url": page.url,
             "title": await page.title(),
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
@@ -131,7 +131,7 @@ Rules:
             elements = await page.query_selector_all(
                 'button, a, input, select, textarea, [role="button"], [role="link"]'
             )
-            observation["interactive_elements"] = []
+            interactive_elements: List[Dict[str, Any]] = []
             for i, el in enumerate(elements[:20]):  # Limit to 20 elements
                 try:
                     tag = await el.evaluate("el => el.tagName.toLowerCase()")
@@ -142,7 +142,7 @@ Rules:
                     )
 
                     if visible and text and text.strip():
-                        observation["interactive_elements"].append(
+                        interactive_elements.append(
                             {
                                 "index": i,
                                 "tag": tag,
@@ -152,6 +152,7 @@ Rules:
                         )
                 except Exception:
                     pass
+            observation["interactive_elements"] = interactive_elements
         except Exception as e:
             observation["interactive_elements_error"] = str(e)
 
@@ -162,7 +163,7 @@ Rules:
 
         # Get current viewport
         try:
-            viewport = await page.viewport_size()
+            viewport = await page.viewport_size()  # type: ignore[misc]
             observation["viewport"] = viewport
         except Exception:
             pass

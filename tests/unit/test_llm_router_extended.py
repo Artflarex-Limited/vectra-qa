@@ -14,10 +14,9 @@ import time
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
 
 from mcp_server.llm_router import LLMRouter, LLMResponse, LLMCache
-
 
 # ──────────────────────────────────────────────
 # LLMCache
@@ -171,7 +170,7 @@ class TestLLMCacheDiskPersistence:
                 json.dump(cache_data, f)
 
             cache = LLMCache(ttl_seconds=3600, persist_path=path)
-            result = cache.get("model", [{"role": "user", "content": "Hi"}], 0.7, 100)
+            _result = cache.get("model", [{"role": "user", "content": "Hi"}], 0.7, 100)
             # Note: keys are generated from params, so direct key lookup won't match
             # unless we use the same key. Let's verify load happened by checking memory.
             assert len(cache._memory_cache) >= 1
@@ -414,7 +413,9 @@ class TestLLMRouterCostTracking:
         router.clients = {"openai": mock_client}
         router.cache = None
 
-        with patch("mcp_server.cost_tracker.get_cost_tracker", side_effect=Exception("Tracker error")):
+        with patch(
+            "mcp_server.cost_tracker.get_cost_tracker", side_effect=Exception("Tracker error")
+        ):
             result = router.complete(
                 model="openai/gpt-4o",
                 messages=[{"role": "user", "content": "Hello"}],
@@ -513,7 +514,7 @@ class TestLLMRouterInitialization:
             "LOCAL_LLM_BASE_URL": "http://localhost:11434",
         }
         with patch.dict(os.environ, env, clear=True):
-            with patch("openai.OpenAI") as mock_openai:
+            with patch("openai.OpenAI") as _mock_openai:
                 router = LLMRouter(cache_enabled=False)
                 assert "openai" in router.clients
                 assert "minimax" in router.clients

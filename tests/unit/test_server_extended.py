@@ -13,7 +13,6 @@ from unittest.mock import patch, MagicMock
 
 from mcp_server.server import MCPServer
 
-
 # ──────────────────────────────────────────────
 # Fixtures
 # ──────────────────────────────────────────────
@@ -76,9 +75,7 @@ class TestHandleRequestErrors:
     @pytest.mark.asyncio
     async def test_handle_tools_call_execute_tool_raises(self, server):
         """Should propagate exception from execute_tool."""
-        with patch(
-            "mcp_server.server.execute_tool", side_effect=RuntimeError("Tool failed")
-        ):
+        with patch("mcp_server.server.execute_tool", side_effect=RuntimeError("Tool failed")):
             with pytest.raises(RuntimeError, match="Tool failed"):
                 await server.handle_request(
                     {
@@ -276,9 +273,7 @@ class TestStdioTransport:
 
         with patch("sys.stdin", StringIO(request_line)):
             with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
-                with patch.object(
-                    server, "handle_request", side_effect=RuntimeError("Boom")
-                ):
+                with patch.object(server, "handle_request", side_effect=RuntimeError("Boom")):
                     loop_count = 0
                     original_readline = sys.stdin.readline
 

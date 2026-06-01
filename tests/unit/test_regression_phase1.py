@@ -8,12 +8,9 @@ and bare except:pass removal.
 Each test targets a specific fix from Phase 1.1 through 1.6.
 """
 
-import os
-import time
-import json
 import threading
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -21,10 +18,10 @@ from mcp_server.resource_manager import BrowserPool
 from mcp_server.llm_router import LLMCache, LLMResponse, LLMRouter
 from mcp_server.tools import AgentSpawner, ObsidianVault
 
-
 # =============================================================================
 # Helpers
 # =============================================================================
+
 
 def _make_mock_browser(page=None, browser=None, connected=True):
     """Build a mocked BrowserAutomation with controllable dead/alive state."""
@@ -58,6 +55,7 @@ def _make_live_browser():
 # =============================================================================
 # 1.1  BrowserPool.acquire() — dead browser detection
 # =============================================================================
+
 
 @pytest.mark.unit
 class TestBrowserPoolAcquireDeadDetection:
@@ -148,6 +146,7 @@ class TestBrowserPoolAcquireDeadDetection:
 # 1.2  BrowserPool.release() — pool capacity cap bug
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestBrowserPoolReleaseCapacity:
     """Pool capacity cap fix in release() — Phase 1.2."""
@@ -223,6 +222,7 @@ class TestBrowserPoolReleaseCapacity:
 # 1.3  capture_output thread — silent exception swallowing
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestCaptureOutputThread:
     """capture_output thread exception handling — Phase 1.3."""
@@ -245,6 +245,7 @@ class TestCaptureOutputThread:
         except Exception as e:
             # This is the key fix: log the error instead of bare except:pass
             import structlog
+
             logger = structlog.get_logger()
             logger.warning("log_capture_failed", error=str(e), log_path=str(log_path))
 
@@ -315,6 +316,7 @@ class TestCaptureOutputThread:
 # 1.4  LLM cache concurrency
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestLLMCacheConcurrency:
     """LLM cache thread safety — Phase 1.4."""
@@ -336,7 +338,7 @@ class TestLLMCacheConcurrency:
 
     def test_concurrent_set_and_get(self, cache, sample_response):
         """Multiple threads should be able to read/write cache without corruption."""
-        messages = [{"role": "user", "content": "Hello"}]
+        _messages = [{"role": "user", "content": "Hello"}]
         errors = []
         lock = threading.Lock()
 
@@ -406,6 +408,7 @@ class TestLLMCacheConcurrency:
 # 1.5  Google AI deprecated model
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestGoogleModels:
     """Google AI model updates — Phase 1.5."""
@@ -456,6 +459,7 @@ class TestGoogleModels:
 # 1.6  Bare except:pass removal
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestBareExceptRemoval:
     """Bare except:pass removal — Phase 1.6."""
@@ -473,7 +477,10 @@ class TestBareExceptRemoval:
         warning_calls = []
 
         # Patch the module-level logger that LLMCache actually uses
-        with patch("mcp_server.llm_router.logger.warning", side_effect=lambda *a, **kw: warning_calls.append((a, kw))):
+        with patch(
+            "mcp_server.llm_router.logger.warning",
+            side_effect=lambda *a, **kw: warning_calls.append((a, kw)),
+        ):
             # Force fetchone to raise synchronously by patching run_until_complete
             with patch("asyncio.get_event_loop") as mock_get_loop:
                 mock_loop = MagicMock()
@@ -502,10 +509,18 @@ class TestBareExceptRemoval:
         warning_calls = []
 
         # Write to memory cache then fail on DB persist
-        response = LLMResponse(content="x", model="gpt-4o", provider="openai",
-                               usage={"total_tokens": 5}, raw_response=None)
+        response = LLMResponse(
+            content="x",
+            model="gpt-4o",
+            provider="openai",
+            usage={"total_tokens": 5},
+            raw_response=None,
+        )
 
-        with patch("mcp_server.llm_router.logger.warning", side_effect=lambda *a, **kw: warning_calls.append((a, kw))):
+        with patch(
+            "mcp_server.llm_router.logger.warning",
+            side_effect=lambda *a, **kw: warning_calls.append((a, kw)),
+        ):
             with patch("asyncio.get_event_loop") as mock_get_loop:
                 mock_loop = MagicMock()
                 mock_loop.is_running.return_value = False
@@ -528,12 +543,16 @@ class TestBareExceptRemoval:
 
         # Patch the module-level logger and BrowserAutomation so acquire()
         # doesn't try to spin up a real browser when all pooled ones are dead.
-        with patch("mcp_server.resource_manager.logger.warning", side_effect=lambda *a, **kw: warning_calls.append((a, kw))):
+        with patch(
+            "mcp_server.resource_manager.logger.warning",
+            side_effect=lambda *a, **kw: warning_calls.append((a, kw)),
+        ):
             with patch("mcp_server.resource_manager.BrowserAutomation") as mock_browser_cls:
                 mock_browser = _make_live_browser()
                 mock_browser_cls.return_value = mock_browser
                 with patch.object(pool, "_semaphore"):
                     import asyncio
+
                     # Run acquire to trigger dead browser cleanup
                     loop = asyncio.new_event_loop()
                     loop.run_until_complete(pool.acquire())

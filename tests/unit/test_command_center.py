@@ -9,11 +9,8 @@ orchestrator status).
 import os
 import tempfile
 import pytest
-import yaml
-from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch, mock_open, PropertyMock
-from typing import Dict, Any, List, Optional
+from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
 # Set OBSIDIAN_VAULT_PATH to a writable temp location before importing
@@ -24,13 +21,14 @@ from typing import Dict, Any, List, Optional
 _VAULT_TMPDIR = tempfile.mkdtemp(prefix="vectra_test_vault_")
 os.environ["OBSIDIAN_VAULT_PATH"] = _VAULT_TMPDIR
 
-from command_center.chatbot import ChatEngine, ChatMessage, TEST_TYPES
-from command_center.obsidian_reader import ObsidianReader, ObsidianNode
+from command_center.chatbot import ChatEngine, ChatMessage, TEST_TYPES  # noqa: E402
+from command_center.obsidian_reader import ObsidianReader  # noqa: E402
 
 
 def teardown_module(module):
     """Clean up the temporary vault directory created at module import."""
     import shutil
+
     shutil.rmtree(_VAULT_TMPDIR, ignore_errors=True)
 
 
@@ -123,36 +121,28 @@ class TestClassifyIntent:
     @pytest.mark.unit
     def test_classify_interpret_results(self, chat_engine):
         """Should classify messages about results as interpret_results."""
-        chat_engine.llm.complete = MagicMock(
-            side_effect=RuntimeError("LLM unavailable")
-        )
+        chat_engine.llm.complete = MagicMock(side_effect=RuntimeError("LLM unavailable"))
         intent = chat_engine._classify_intent("What did the test find?")
         assert intent == "interpret_results"
 
     @pytest.mark.unit
     def test_classify_chat(self, chat_engine):
         """Should fall back to 'chat' for general conversation."""
-        chat_engine.llm.complete = MagicMock(
-            side_effect=RuntimeError("LLM unavailable")
-        )
+        chat_engine.llm.complete = MagicMock(side_effect=RuntimeError("LLM unavailable"))
         intent = chat_engine._classify_intent("Hello, how are you?")
         assert intent == "chat"
 
     @pytest.mark.unit
     def test_classify_uses_llm_when_available(self, chat_engine):
         """Should use LLM when it succeeds, and return the parsed intent."""
-        chat_engine.llm.complete = MagicMock(
-            return_value=MagicMock(content="plan_tests")
-        )
+        chat_engine.llm.complete = MagicMock(return_value=MagicMock(content="plan_tests"))
         intent = chat_engine._classify_intent("I need to test something")
         assert intent == "plan_tests"
 
     @pytest.mark.unit
     def test_classify_llm_rejects_invalid_intent(self, chat_engine):
         """Should reject an intent not in the valid set."""
-        chat_engine.llm.complete = MagicMock(
-            return_value=MagicMock(content="invalid_response")
-        )
+        chat_engine.llm.complete = MagicMock(return_value=MagicMock(content="invalid_response"))
         # Fallback should fire
         intent = chat_engine._classify_intent("Hello")
         assert intent in ("chat", "plan_tests", "interpret_results")
@@ -203,12 +193,8 @@ class TestExtractTestPlan:
     @pytest.mark.unit
     def test_plan_with_keyword_match(self, chat_engine):
         """Should extract URL and matching test types via keyword matching."""
-        chat_engine.llm.complete = MagicMock(
-            side_effect=RuntimeError("LLM unavailable")
-        )
-        plan = chat_engine._extract_test_plan(
-            "Run a homepage test on https://example.com"
-        )
+        chat_engine.llm.complete = MagicMock(side_effect=RuntimeError("LLM unavailable"))
+        plan = chat_engine._extract_test_plan("Run a homepage test on https://example.com")
 
         assert plan is not None
         assert plan["url"] == "https://example.com"
@@ -217,21 +203,15 @@ class TestExtractTestPlan:
     @pytest.mark.unit
     def test_plan_no_url_returns_none(self, chat_engine):
         """Should return None when no URL is found."""
-        chat_engine.llm.complete = MagicMock(
-            side_effect=RuntimeError("LLM unavailable")
-        )
+        chat_engine.llm.complete = MagicMock(side_effect=RuntimeError("LLM unavailable"))
         plan = chat_engine._extract_test_plan("Run some tests")
         assert plan is None
 
     @pytest.mark.unit
     def test_plan_defaults_to_homepage(self, chat_engine):
         """Should default to homepage test when URL is present but no tests match."""
-        chat_engine.llm.complete = MagicMock(
-            side_effect=RuntimeError("LLM unavailable")
-        )
-        plan = chat_engine._extract_test_plan(
-            "Just check the site https://example.com"
-        )
+        chat_engine.llm.complete = MagicMock(side_effect=RuntimeError("LLM unavailable"))
+        plan = chat_engine._extract_test_plan("Just check the site https://example.com")
 
         assert plan is not None
         assert plan["url"] == "https://example.com"
@@ -287,9 +267,13 @@ class TestMessageHistory:
         """Should persist a message and retrieve it from history."""
         engine = chat_engine
 
-        with patch.object(Path, "exists", return_value=True), patch.object(
-            Path, "read_text", return_value="---\nmessage_count: 0\n---\n\n# Chat Log\n\n"
-        ), patch.object(Path, "write_text") as mock_write:
+        with (
+            patch.object(Path, "exists", return_value=True),
+            patch.object(
+                Path, "read_text", return_value="---\nmessage_count: 0\n---\n\n# Chat Log\n\n"
+            ),
+            patch.object(Path, "write_text") as mock_write,
+        ):
 
             engine.add_message("user", "Hello Vectra!")
             engine.add_message("assistant", "How can I help you?")
@@ -313,9 +297,11 @@ Hello Vectra!
 How can I help you?
 """
 
-        with patch.object(Path, "exists", return_value=True), patch.object(
-            Path, "read_text", return_value=raw_log
-        ), patch.object(Path, "write_text"):
+        with (
+            patch.object(Path, "exists", return_value=True),
+            patch.object(Path, "read_text", return_value=raw_log),
+            patch.object(Path, "write_text"),
+        ):
             history = chat_engine.get_history(limit=10)
 
         assert len(history) == 2
@@ -344,9 +330,11 @@ Message 2
 Reply 2
 """
 
-        with patch.object(Path, "exists", return_value=True), patch.object(
-            Path, "read_text", return_value=raw_log
-        ), patch.object(Path, "write_text"):
+        with (
+            patch.object(Path, "exists", return_value=True),
+            patch.object(Path, "read_text", return_value=raw_log),
+            patch.object(Path, "write_text"),
+        ):
             history = chat_engine.get_history(limit=2)
 
         assert len(history) == 2
@@ -451,12 +439,8 @@ class TestObsidianReader:
         global_dir = vault_dir / "Global"
         global_dir.mkdir(parents=True)
 
-        (global_dir / "Test_Run_Master.md").write_text(
-            "---\nstatus: active\n---\n# Master\n"
-        )
-        (global_dir / "UI_State_Log.md").write_text(
-            "---\nstatus: idle\n---\n# UI State\n"
-        )
+        (global_dir / "Test_Run_Master.md").write_text("---\nstatus: active\n---\n# Master\n")
+        (global_dir / "UI_State_Log.md").write_text("---\nstatus: idle\n---\n# UI State\n")
 
         reader = ObsidianReader(vault_dir)
         nodes = reader.get_global_nodes()

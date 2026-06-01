@@ -6,14 +6,14 @@ and database persistence with mocked dependencies.
 """
 
 import pytest
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import MagicMock, patch
 from decimal import Decimal
-from datetime import datetime, timezone
-
+from datetime import datetime
 
 # ---------------------------------------------------------------------------
 #  Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_db():
@@ -41,12 +41,14 @@ def tracker(mock_db):
     Default budget of $1,000 ensures budget tests don't false-positive.
     """
     from mcp_server.cost_tracker import CostTracker
+
     return CostTracker(budget_usd=Decimal("1000.00"))
 
 
 # ---------------------------------------------------------------------------
 #  Cost Calculation Tests
 # ---------------------------------------------------------------------------
+
 
 class TestCalculateCost:
     """Tests for the calculate_cost method."""
@@ -55,6 +57,7 @@ class TestCalculateCost:
     def test_known_model_returns_expected_cost(self):
         """Should calculate $0.02 for 1000 input + 1000 output tokens on gpt-4o."""
         from mcp_server.cost_tracker import CostTracker
+
         tracker = CostTracker(budget_usd=Decimal("1000.00"))
 
         # gpt-4o: $0.005/1K input, $0.015/1K output
@@ -69,6 +72,7 @@ class TestCalculateCost:
     def test_unknown_model_falls_back_to_default_pricing(self):
         """Should use default pricing ($0.001/1K) for unknown models."""
         from mcp_server.cost_tracker import CostTracker
+
         tracker = CostTracker(budget_usd=Decimal("1000.00"))
 
         # unknown model: default $0.001/1K input + $0.001/1K output
@@ -81,6 +85,7 @@ class TestCalculateCost:
     def test_local_model_is_free(self):
         """Should calculate $0 cost for local models with zero pricing."""
         from mcp_server.cost_tracker import CostTracker
+
         tracker = CostTracker(budget_usd=Decimal("1000.00"))
 
         cost = tracker.calculate_cost("llama3.1:70b", 5000, 5000)
@@ -91,6 +96,7 @@ class TestCalculateCost:
     def test_zero_tokens_cost_nothing(self):
         """Should return $0 when both token counts are zero."""
         from mcp_server.cost_tracker import CostTracker
+
         tracker = CostTracker(budget_usd=Decimal("1000.00"))
 
         cost = tracker.calculate_cost("gpt-4o", 0, 0)
@@ -101,6 +107,7 @@ class TestCalculateCost:
     def test_provider_prefix_is_stripped(self):
         """Should strip provider prefix (e.g. 'openai/gpt-4o') for lookup."""
         from mcp_server.cost_tracker import CostTracker
+
         tracker = CostTracker(budget_usd=Decimal("1000.00"))
 
         # 'openai/gpt-4o' -> 'gpt-4o' after split
@@ -112,6 +119,7 @@ class TestCalculateCost:
 # ---------------------------------------------------------------------------
 #  Usage Tracking Tests
 # ---------------------------------------------------------------------------
+
 
 class TestTrackUsage:
     """Tests for the track_usage method."""
@@ -205,10 +213,13 @@ class TestTrackUsage:
             mock_get_db.return_value = mock_db
 
             from mcp_server.cost_tracker import CostTracker
+
             tracker = CostTracker(budget_usd=Decimal("1000.00"))
 
             record = tracker.track_usage(
-                model="gpt-4o", input_tokens=10, output_tokens=10,
+                model="gpt-4o",
+                input_tokens=10,
+                output_tokens=10,
             )
 
             assert record.model == "gpt-4o"
@@ -219,6 +230,7 @@ class TestTrackUsage:
 # ---------------------------------------------------------------------------
 #  Total Spend & Summary Tests
 # ---------------------------------------------------------------------------
+
 
 class TestTotalSpend:
     """Tests for get_total_spent and get_usage_summary."""
@@ -245,6 +257,7 @@ class TestTotalSpend:
             mock_get_db.return_value = mock_db
 
             from mcp_server.cost_tracker import CostTracker
+
             tracker = CostTracker(budget_usd=Decimal("1000.00"))
 
             total = tracker.get_total_spent()
@@ -282,6 +295,7 @@ class TestTotalSpend:
 # ---------------------------------------------------------------------------
 #  Budget Enforcement Tests
 # ---------------------------------------------------------------------------
+
 
 class TestBudgetEnforcement:
     """Tests for budget checking and alerting."""
@@ -347,6 +361,7 @@ class TestBudgetEnforcement:
 #  CostTracker Constructor / Singleton Tests
 # ---------------------------------------------------------------------------
 
+
 class TestCostTrackerInit:
     """Tests for CostTracker initialization and the get_cost_tracker factory."""
 
@@ -358,6 +373,7 @@ class TestCostTrackerInit:
             patch("mcp_server.cost_tracker.get_db_manager_sync"),
         ):
             from mcp_server.cost_tracker import CostTracker
+
             tracker = CostTracker()
             assert tracker.budget_usd == Decimal("25.00")
 
@@ -366,6 +382,7 @@ class TestCostTrackerInit:
         """Should use passed budget over environment variable."""
         with patch("mcp_server.cost_tracker.get_db_manager_sync"):
             from mcp_server.cost_tracker import CostTracker
+
             tracker = CostTracker(budget_usd=Decimal("5.00"))
             assert tracker.budget_usd == Decimal("5.00")
 
@@ -374,8 +391,10 @@ class TestCostTrackerInit:
         """Should return the same CostTracker instance on repeated calls."""
         with patch("mcp_server.cost_tracker.get_db_manager_sync"):
             from mcp_server.cost_tracker import get_cost_tracker
+
             # Reset singleton
             import mcp_server.cost_tracker as ct_mod
+
             ct_mod._cost_tracker = None
 
             t1 = get_cost_tracker()

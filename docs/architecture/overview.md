@@ -93,6 +93,7 @@ Cache + Queue]
 ### 1. Agent-Centric Design
 
 Instead of writing test scripts, you **deploy agents** with objectives. Each agent:
+
 - Has a unique behavioral DNA (persona from `soul.md` and `agents.md`)
 - Maintains its own memory in the Obsidian Vault
 - Communicates through the vault (not direct messaging)
@@ -102,6 +103,7 @@ Instead of writing test scripts, you **deploy agents** with objectives. Each age
 ### 2. Filesystem as Message Bus
 
 Agents don't use HTTP APIs or message queues to communicate. They read/write **Markdown files** in the Obsidian Vault:
+
 - **Frontmatter** (YAML) for structured state (status, metrics, timestamps)
 - **Content** for findings and logs
 - **Wiki-links** (`[[ ]]`) for semantic relationships between tests
@@ -111,6 +113,7 @@ Agents don't use HTTP APIs or message queues to communicate. They read/write **M
 ### 3. Real-Time Observation
 
 The Command Center doesn't poll. It uses:
+
 - **Watchdog** file system events → instant updates
 - **Server-Sent Events** → push to browser
 - **HTMX** → partial page updates without full reloads
@@ -126,6 +129,7 @@ The Command Center doesn't poll. It uses:
 ## Component Breakdown
 
 ### Command Center
+
 - **FastAPI** backend with async endpoints
 - **HTMX** frontend for hypermedia-driven UI
 - **SSE streams** for live data (agents, orchestrator, results)
@@ -133,6 +137,7 @@ The Command Center doesn't poll. It uses:
 - **Health endpoints**: `/health`, `/ready`, `/metrics`
 
 ### MCP Server
+
 - **Tool registry** exposing 15+ tools (spawn, read/write, feature tests)
 - **Agent spawner** managing subprocess lifecycle
 - **Pydantic validation** for all tool inputs
@@ -141,7 +146,9 @@ The Command Center doesn't poll. It uses:
 - **SSE transport** for agent updates
 
 ### Feature Testers (Direct Execution)
+
 No agent spawning needed — execute directly via MCP tools:
+
 - **`test_auth_flow`**: Login/logout with security validation
 - **`test_performance`**: Core Web Vitals + Lighthouse CI
 - **`test_accessibility`**: axe-core + manual WCAG checks
@@ -150,7 +157,9 @@ No agent spawning needed — execute directly via MCP tools:
 - **`test_multi_browser`**: Chromium/Firefox/WebKit smoke tests
 
 ### Agent Workers (LLM-Driven Exploration)
+
 For complex scenarios requiring AI reasoning:
+
 - **UI Explorer**: Playwright + LLM observe-plan-act loop
 - **Data Validator**: Network interception and API validation
 - **Auth Tester**: Security-focused authentication testing
@@ -162,6 +171,7 @@ For complex scenarios requiring AI reasoning:
 - **Orchestrator**: Mission planning and multi-agent coordination
 
 ### Infrastructure
+
 - **BrowserPool**: Limits concurrent browser instances (max 10)
 - **AgentResourceTracker**: Enforces step/time/LLM call limits per agent
 - **StateManager**: Handles SIGTERM, persists state, restores on startup
@@ -169,6 +179,7 @@ For complex scenarios requiring AI reasoning:
 - **LLMCache**: SHA256-based response cache with TTL and disk persistence
 
 ### Obsidian Vault
+
 - **Global nodes**: System state, logs, chat history, agent state backups
 - **Run nodes**: Individual test results with YAML frontmatter
 - **Templates**: Agent spawn templates
@@ -325,6 +336,7 @@ Unlike traditional testing frameworks that keep browsers open indefinitely:
 ## Scalability
 
 Current architecture supports:
+
 - **10+ concurrent agents** per MCP server (configurable)
 - **Distributed workers** via Redis task queue
 - **Horizontal scaling** — Multiple MCP servers behind load balancer

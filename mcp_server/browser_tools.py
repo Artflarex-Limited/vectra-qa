@@ -90,7 +90,7 @@ class BrowserAutomation:
             raise RuntimeError("Browser not started. Call start() first.")
 
         try:
-            response = await self.page.goto(url, wait_until=wait_until, timeout=30000)
+            response = await self.page.goto(url, wait_until=wait_until, timeout=30000)  # type: ignore[arg-type]
             return {
                 "success": True,
                 "url": url,

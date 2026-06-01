@@ -139,9 +139,7 @@ class TestAPIContractTester:
         """Should return warning when no matching network logs."""
         tester.schema = sample_schema
         browser = Mock()
-        browser.network_logs = [
-            {"url": "/other", "method": "GET", "status": 200, "headers": {}}
-        ]
+        browser.network_logs = [{"url": "/other", "method": "GET", "status": 200, "headers": {}}]
 
         result = await tester.validate_response(browser, "/users", "GET")
 
@@ -243,9 +241,7 @@ class TestAPIContractTester:
 
         result = await tester.validate_response(browser, "/users", "GET")
 
-        assert not any(
-            "Missing Content-Type" in f["title"] for f in result["findings"]
-        )
+        assert not any("Missing Content-Type" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_validate_response_exception(self, tester, sample_schema):
@@ -307,9 +303,7 @@ class TestAPIContractTester:
     @pytest.mark.asyncio
     async def test_validate_response_body_no_schema(self, tester):
         """Should fail when no schema loaded."""
-        result = await tester.validate_response_body(
-            {"name": "John"}, "/users", "GET", 200
-        )
+        result = await tester.validate_response_body({"name": "John"}, "/users", "GET", 200)
         assert result["status"] == "fail"
 
     @pytest.mark.asyncio
@@ -317,14 +311,10 @@ class TestAPIContractTester:
         """Should return warning when no response spec."""
         tester.schema = sample_schema
 
-        result = await tester.validate_response_body(
-            {"name": "John"}, "/users", "GET", 500
-        )
+        result = await tester.validate_response_body({"name": "John"}, "/users", "GET", 500)
 
         assert result["status"] == "warning"
-        assert any(
-            "No Schema for Status Code" in f["title"] for f in result["findings"]
-        )
+        assert any("No Schema for Status Code" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_validate_response_body_no_json_schema(self, tester, sample_schema):
@@ -334,19 +324,11 @@ class TestAPIContractTester:
             **sample_schema,
             "paths": {
                 **sample_schema["paths"],
-                "/health": {
-                    "get": {
-                        "responses": {
-                            "200": {"description": "OK"}
-                        }
-                    }
-                }
+                "/health": {"get": {"responses": {"200": {"description": "OK"}}}},
             },
         }
 
-        result = await tester.validate_response_body(
-            {}, "/health", "GET", 200
-        )
+        result = await tester.validate_response_body({}, "/health", "GET", 200)
 
         assert result["status"] == "pass"
         assert any("No JSON Schema" in f["title"] for f in result["findings"])
@@ -371,23 +353,17 @@ class TestAPIContractTester:
         """Should fail for missing required fields."""
         tester.schema = sample_schema
 
-        result = await tester.validate_response_body(
-            {"active": True}, "/users", "GET", 200
-        )
+        result = await tester.validate_response_body({"active": True}, "/users", "GET", 200)
 
         assert result["status"] == "fail"
-        assert any(
-            "Missing Required Field" in f["title"] for f in result["findings"]
-        )
+        assert any("Missing Required Field" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_validate_response_body_type_mismatch_string(self, tester, sample_schema):
         """Should detect string type mismatch."""
         tester.schema = sample_schema
 
-        result = await tester.validate_response_body(
-            {"id": 1, "name": 123}, "/users", "GET", 200
-        )
+        result = await tester.validate_response_body({"id": 1, "name": 123}, "/users", "GET", 200)
 
         assert result["status"] == "fail"
         assert any(
@@ -492,9 +468,7 @@ class TestAPIContractTester:
         )
         assert result["status"] == "pass"
 
-        result = await tester.validate_response_body(
-            {"user": {}}, "/nested", "GET", 200
-        )
+        result = await tester.validate_response_body({"user": {}}, "/nested", "GET", 200)
         assert result["status"] == "fail"
         assert any(
             "Missing Required Field" in f["title"] and "root.user" in f["description"]
@@ -506,12 +480,8 @@ class TestAPIContractTester:
         """Should handle exceptions during body validation."""
         tester.schema = sample_schema
 
-        with patch.object(
-            tester, "_validate_value", side_effect=Exception("Validation crash")
-        ):
-            result = await tester.validate_response_body(
-                {"id": 1}, "/users", "GET", 200
-            )
+        with patch.object(tester, "_validate_value", side_effect=Exception("Validation crash")):
+            result = await tester.validate_response_body({"id": 1}, "/users", "GET", 200)
 
         assert result["status"] == "fail"
         assert any("Validation Error" in f["title"] for f in result["findings"])
@@ -534,8 +504,7 @@ class TestAPIContractTester:
         tester.findings = []
         tester._validate_value({"name": 123, "count": 5}, schema, "root")
         assert any(
-            "Type Mismatch" in f["title"] and "name" in f["description"]
-            for f in tester.findings
+            "Type Mismatch" in f["title"] and "name" in f["description"] for f in tester.findings
         )
 
     def test_validate_value_array(self, tester):
@@ -548,8 +517,7 @@ class TestAPIContractTester:
 
         tester._validate_value([1, 2, "three"], schema, "root")
         assert any(
-            "Type Mismatch" in f["title"] and "root[2]" in f["description"]
-            for f in tester.findings
+            "Type Mismatch" in f["title"] and "root[2]" in f["description"] for f in tester.findings
         )
 
     def test_validate_value_no_type(self, tester):
@@ -641,20 +609,14 @@ class TestAPIContractTester:
             }
         ]
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             MockBrowserAuto.return_value = mock_browser
 
-            result = await tester.test_endpoint(
-                "https://api.example.com", "/users", "GET"
-            )
+            result = await tester.test_endpoint("https://api.example.com", "/users", "GET")
 
         assert result["status"] == "pass"
         mock_browser.start.assert_awaited_once()
-        mock_browser.visit.assert_awaited_once_with(
-            "https://api.example.com/users"
-        )
+        mock_browser.visit.assert_awaited_once_with("https://api.example.com/users")
         mock_browser.close.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -665,9 +627,7 @@ class TestAPIContractTester:
         mock_browser = AsyncMock()
         mock_browser.network_logs = []
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             MockBrowserAuto.return_value = mock_browser
 
             result = await tester.test_endpoint(

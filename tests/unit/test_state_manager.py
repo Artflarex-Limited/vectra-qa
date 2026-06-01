@@ -13,10 +13,10 @@ from mcp_server.state_manager import (
     get_state_manager,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_vault():
@@ -44,8 +44,9 @@ def mock_spawner():
 @pytest.fixture
 def state_manager(mock_vault, mock_spawner):
     """Create a StateManager with mocked vault and spawner."""
-    with patch("mcp_server.state_manager.get_vault", return_value=mock_vault), patch(
-        "mcp_server.state_manager.get_spawner", return_value=mock_spawner
+    with (
+        patch("mcp_server.state_manager.get_vault", return_value=mock_vault),
+        patch("mcp_server.state_manager.get_spawner", return_value=mock_spawner),
     ):
         sm = StateManager()
         yield sm
@@ -505,9 +506,10 @@ class TestSignalHandlers:
     @pytest.mark.unit
     def test_register_signal_handlers(self, state_manager):
         """Should register SIGTERM, SIGINT and atexit handlers."""
-        with patch("mcp_server.state_manager.signal.signal") as mock_signal, patch(
-            "mcp_server.state_manager.atexit.register"
-        ) as mock_atexit:
+        with (
+            patch("mcp_server.state_manager.signal.signal") as mock_signal,
+            patch("mcp_server.state_manager.atexit.register") as mock_atexit,
+        ):
             state_manager.register_signal_handlers()
 
             assert mock_signal.call_count == 2
@@ -565,8 +567,9 @@ class TestStateManagerSingleton:
 
         sm_mod._state_manager_instance = None
 
-        with patch("mcp_server.state_manager.get_vault"), patch(
-            "mcp_server.state_manager.get_spawner"
+        with (
+            patch("mcp_server.state_manager.get_vault"),
+            patch("mcp_server.state_manager.get_spawner"),
         ):
             s1 = get_state_manager()
             s2 = get_state_manager()

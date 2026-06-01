@@ -156,11 +156,13 @@ asyncio.run(main())
 ### Creating a New Agent Type
 
 1. **Create worker directory**:
+
 ```bash
 mkdir agents/security_scanner
 ```
 
-2. **Write worker script**:
+1. **Write worker script**:
+
 ```python
 # agents/security_scanner/worker.py
 import asyncio
@@ -178,7 +180,8 @@ if __name__ == "__main__":
     asyncio.run(run_agent(agent_id, memory_node))
 ```
 
-3. **Register in spawner**:
+1. **Register in spawner**:
+
 ```python
 # mcp_server/tools.py
 worker_scripts = {
@@ -188,7 +191,8 @@ worker_scripts = {
 }
 ```
 
-4. **Add to chatbot**:
+1. **Add to chatbot**:
+
 ```python
 # command_center/chatbot.py
 TEST_TYPES = {
@@ -393,6 +397,7 @@ services:
 ### Sensitive Data
 
 Never include in test objectives:
+
 - API keys
 - Passwords
 - Personal information

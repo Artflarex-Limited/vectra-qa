@@ -12,7 +12,6 @@ from unittest.mock import patch, MagicMock
 
 from mcp_server.server import MCPServer
 
-
 # ──────────────────────────────────────────────
 # Fixtures
 # ──────────────────────────────────────────────
@@ -193,9 +192,7 @@ class TestHandleRequest:
     @pytest.mark.unit
     async def test_handle_unknown_method_returns_error(self, server):
         """Should return a JSON-RPC error for unrecognised methods."""
-        response = await server.handle_request(
-            {"method": "unknown/method", "id": 99}
-        )
+        response = await server.handle_request({"method": "unknown/method", "id": 99})
 
         assert response["jsonrpc"] == "2.0"
         assert response["id"] == 99

@@ -30,6 +30,7 @@ GET /health
 Returns 200 if the server is running.
 
 **Response:**
+
 ```json
 {
   "status": "ok"
@@ -45,6 +46,7 @@ GET /ready
 Returns 200 if the server is ready to accept requests (vault accessible).
 
 **Response:**
+
 ```json
 {
   "status": "ready",
@@ -74,6 +76,7 @@ GET /api/orchestrator/status
 Returns the current orchestrator status from `Global/Test_Run_Master.md`.
 
 **Response:**
+
 ```json
 {
   "status": "active",
@@ -103,6 +106,7 @@ GET /api/agents/active
 Returns all currently active agents.
 
 **Response:**
+
 ```json
 {
   "agents": [
@@ -136,6 +140,7 @@ Spawn a new specialized agent.
 | `memory_node` | string | Yes | Target vault path (e.g., `Runs/Login_Test.md`) |
 
 **Response:**
+
 ```json
 {
   "status": "active",
@@ -171,6 +176,7 @@ Test login/logout flows with security validation.
 | `logout_url` | string | No | Logout page URL |
 
 **Response:**
+
 ```json
 {
   "status": "pass",
@@ -207,6 +213,7 @@ Measure Core Web Vitals and page performance.
 | `thresholds` | object | No | Custom thresholds `{lcp_ms, fid_ms, cls, ttfb_ms, fcp_ms, tbt_ms}` |
 
 **Response:**
+
 ```json
 {
   "status": "pass",
@@ -242,6 +249,7 @@ Run accessibility checks (axe-core + manual).
 | `standard` | string | No | WCAG standard: `wcag2a`, `wcag2aa` (default), `wcag21aa` |
 
 **Response:**
+
 ```json
 {
   "status": "warning",
@@ -278,6 +286,7 @@ Compare page screenshot against baseline.
 | `name` | string | No | Baseline name identifier |
 
 **Response:**
+
 ```json
 {
   "status": "pass",
@@ -317,6 +326,7 @@ Validate API response against OpenAPI schema.
 | `body` | object | No | Request body for POST/PUT |
 
 **Response:**
+
 ```json
 {
   "status": "pass",
@@ -347,6 +357,7 @@ Run smoke tests across Chromium, Firefox, and WebKit.
 | `url` | string | Yes | URL to test |
 
 **Response:**
+
 ```json
 {
   "chromium": {
@@ -387,6 +398,7 @@ Launch a traditional agent-based test.
 | `test_type` | string | Yes | Test type (homepage, navigation, contact, api, accessibility, responsive, full) |
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -406,6 +418,7 @@ GET /api/tests/types
 Returns available test types.
 
 **Response:**
+
 ```json
 {
   "types": [
@@ -428,6 +441,7 @@ GET /api/results
 Returns all test runs sorted by date (newest first).
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -454,6 +468,7 @@ GET /api/results/{agent_id}
 Returns detailed result for a specific agent.
 
 **Response:**
+
 ```json
 {
   "agent_id": "ui_explorer-...",
@@ -500,6 +515,7 @@ Process a chat message and get Vectra's response.
 | `stream` | boolean | No | Enable SSE streaming (default: false) |
 
 **Response (plan):**
+
 ```json
 {
   "type": "plan",
@@ -514,6 +530,7 @@ Process a chat message and get Vectra's response.
 ```
 
 **Response (chat):**
+
 ```json
 {
   "type": "chat",
@@ -531,6 +548,7 @@ GET /api/chat/history?limit=50
 Returns conversation history.
 
 **Response:**
+
 ```json
 {
   "messages": [
@@ -558,6 +576,7 @@ Execute a confirmed test plan.
 | `tests` | string | Yes | Comma-separated test types |
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -577,6 +596,7 @@ GET /api/chat/interpret/{agent_id}
 Get LLM-interpreted results for a specific test.
 
 **Response:**
+
 ```json
 {
   "agent_id": "ui_explorer-...",
@@ -599,6 +619,7 @@ Content-Type: text/event-stream
 Primary SSE endpoint streaming orchestrator + agents + nodes updates every 2 seconds.
 
 **Event format:**
+
 ```
 data: {"orchestrator": {...}, "agents": [...], "nodes": {...}}
 ```
@@ -622,6 +643,7 @@ Content-Type: text/event-stream
 Agent-specific updates for a single test run.
 
 **Event format:**
+
 ```
 data: {
   "agent_id": "...",
@@ -677,6 +699,7 @@ Common status codes:
 ## Rate Limits
 
 No rate limiting is currently implemented. For production use, consider adding:
+
 - Per-IP rate limiting
 - Concurrent agent limits
 - LLM API quota management

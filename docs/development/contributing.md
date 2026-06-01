@@ -266,6 +266,7 @@ git commit -m "feat(chatbot): add sentiment analysis
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation
@@ -281,6 +282,7 @@ git push origin feature/my-feature
 ```
 
 Create Pull Request with:
+
 - Clear title
 - Description of changes
 - Testing instructions
@@ -310,6 +312,7 @@ Create Pull Request with:
 ### Versioning
 
 We follow semantic versioning:
+
 - `0.1.0` — Initial release
 - `0.2.0` — New features
 - `0.2.1` — Bug fixes

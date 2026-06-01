@@ -203,9 +203,7 @@ class TestDatabaseManagerInit:
         row = await db_manager.fetchone("SELECT * FROM test WHERE id = %s", (1,))
 
         assert row == {"id": 1, "name": "test"}
-        mock_cur.execute.assert_called_once_with(
-            "SELECT * FROM test WHERE id = %s", (1,)
-        )
+        mock_cur.execute.assert_called_once_with("SELECT * FROM test WHERE id = %s", (1,))
 
     @pytest.mark.unit
     async def test_fetchone_returns_none_when_no_row(self, db_manager):

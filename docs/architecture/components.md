@@ -7,6 +7,7 @@ Vectra QA consists of four main components that work together to provide autonom
 The user-facing web application and API server.
 
 ### Responsibilities
+
 - Serve the dark-mode dashboard (HTMX frontend)
 - Handle API requests for test execution
 - Stream real-time updates via Server-Sent Events
@@ -14,6 +15,7 @@ The user-facing web application and API server.
 - Parse and present test results
 
 ### Key Files
+
 - `command_center/main.py` — FastAPI application with all endpoints
 - `command_center/obsidian_reader.py` — Vault file watcher and parser
 - `command_center/chatbot.py` — Conversational AI engine
@@ -38,12 +40,14 @@ The user-facing web application and API server.
 The Model Context Protocol tool server that exposes operations for agent management.
 
 ### Responsibilities
+
 - Expose tools via JSON-RPC over HTTP
 - Spawn and terminate agent processes
 - Manage the tool registry
 - Provide vault operations (read/write nodes)
 
 ### Key Files
+
 - `mcp_server/server.py` — MCP protocol server
 - `mcp_server/tools.py` — Tool definitions and agent spawner
 - `mcp_server/llm_router.py` — Multi-provider LLM routing
@@ -64,6 +68,7 @@ The Model Context Protocol tool server that exposes operations for agent managem
 Specialized processes that perform actual testing work.
 
 ### UI Explorer Agent
+
 - **Role**: `ui_explorer`
 - **Purpose**: Browser automation and UI testing
 - **Technologies**: Playwright, Python asyncio
@@ -71,6 +76,7 @@ Specialized processes that perform actual testing work.
 - **Reports**: Structured Markdown with findings and screenshots
 
 ### Data Validator Agent
+
 - **Role**: `data_validator`
 - **Purpose**: API monitoring and data validation
 - **Technologies**: Playwright network interception
@@ -183,6 +189,7 @@ Agents communicate indirectly through the vault:
 5. **Agent B** (if running) can read Agent A's results
 
 This pattern ensures:
+
 - **Decoupling**: Agents don't depend on each other
 - **Persistence**: All state is durable (filesystem)
 - **Observability**: Humans can read agent logs directly
@@ -197,6 +204,7 @@ Users interact with agents through:
 3. **API Calls**: Programmatic test execution
 
 All interactions ultimately result in:
+
 - Vault node creation
 - Agent process spawn
 - Real-time progress updates

@@ -10,7 +10,6 @@ from unittest.mock import Mock, AsyncMock, patch
 
 from mcp_server.browser_tools import BrowserAutomation
 
-
 # ──────────────────────────────────────────────
 # Fixtures
 # ──────────────────────────────────────────────
@@ -59,9 +58,7 @@ class TestBrowserStartOptions:
         with patch("mcp_server.browser_tools.async_playwright", return_value=mock_playwright):
             await browser.start()
 
-        mock_playwright.chromium.launch.assert_called_once_with(
-            headless=True, slow_mo=100
-        )
+        mock_playwright.chromium.launch.assert_called_once_with(headless=True, slow_mo=100)
 
 
 # ──────────────────────────────────────────────

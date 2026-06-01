@@ -13,6 +13,7 @@
 Vectra QA's test suite consists of **79 unit tests** covering all major components of the framework. All tests pass with 11 minor warnings (deprecated `datetime.utcnow()` usage in test fixtures, not in production code).
 
 The test suite validates:
+
 - **Foundation Layer:** Vault operations, file I/O, path security
 - **Agent Layer:** Spawning, lifecycle, resource management
 - **Browser Layer:** Playwright automation, DOM interaction
@@ -79,6 +80,7 @@ The test suite validates:
 ### 4. Feature Modules (`tests/unit/test_features.py`) — 11 tests
 
 #### Authentication Testing (3 tests)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_login_success` | ✅ PASS | Test login flow with credentials |
@@ -86,28 +88,33 @@ The test suite validates:
 | `test_logout` | ✅ PASS | Test logout flow and session cleanup |
 
 #### Visual Regression (2 tests)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_baseline_capture` | ✅ PASS | Create baseline screenshot directory |
 | `test_comparison_no_baseline` | ✅ PASS | Handle missing baseline gracefully |
 
 #### Performance (1 test)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_performance_navigation` | ✅ PASS | Measure TTFB, FCP, resource metrics |
 
 #### API Contract (2 tests)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_load_schema` | ✅ PASS | Load and parse OpenAPI schema file |
 | `test_validate_response_body` | ✅ PASS | Validate response against schema |
 
 #### Accessibility (1 test)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_manual_checks` | ✅ PASS | Run manual accessibility checks |
 
 #### Multi-Browser (2 tests)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_browser_list` | ✅ PASS | Verify supported browser list |
@@ -176,6 +183,7 @@ The test suite validates:
 ### 8. Obsidian Vault (`tests/unit/test_vault.py`) — 17 tests
 
 #### Basic Operations (7 tests)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_read_nonexistent_node` | ✅ PASS | Handle missing file gracefully |
@@ -187,12 +195,14 @@ The test suite validates:
 | `test_find_wiki_links` | ✅ PASS | Extract `[[wiki-links]]` from content |
 
 #### Concurrency (2 tests)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_concurrent_writes_same_node` | ✅ PASS | File locking prevents corruption |
 | `test_concurrent_writes_different_nodes` | ✅ PASS | Parallel writes don't block each other |
 
 #### Atomic Writes (3 tests)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_atomic_write_no_partial_files` | ✅ PASS | No partial files left on crash |
@@ -200,6 +210,7 @@ The test suite validates:
 | `test_yaml_corruption_recovery` | ✅ PASS | Recover from malformed YAML |
 
 #### Path Security (2 tests)
+
 | Test | Status | Description |
 |------|--------|-------------|
 | `test_path_traversal_blocked` | ✅ PASS | Block `../` escape attempts |
@@ -230,6 +241,7 @@ python -m pytest tests/ -W error
 ### Continuous Integration
 
 The test suite runs automatically on every push via GitHub Actions:
+
 - Python 3.12 on Ubuntu
 - pytest with coverage reporting
 - Black code formatting check

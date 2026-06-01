@@ -50,16 +50,27 @@ class BrowserPool:
                         try:
                             await browser.close()
                         except Exception as e:
-                            logger.warning("browser_close_failed", error=str(e), context="acquire_validation_no_instance")
+                            logger.warning(
+                                "browser_close_failed",
+                                error=str(e),
+                                context="acquire_validation_no_instance",
+                            )
                         continue
 
                     # Validate: must be connected (if method available)
-                    if hasattr(browser.browser, "is_connected") and not browser.browser.is_connected():
+                    if (
+                        hasattr(browser.browser, "is_connected")
+                        and not browser.browser.is_connected()
+                    ):
                         logger.debug("browser_skipped_disconnected")
                         try:
                             await browser.close()
                         except Exception as e:
-                            logger.warning("browser_close_failed", error=str(e), context="acquire_validation_disconnected")
+                            logger.warning(
+                                "browser_close_failed",
+                                error=str(e),
+                                context="acquire_validation_disconnected",
+                            )
                         continue
 
                     self._in_use.add(browser)
@@ -93,7 +104,9 @@ class BrowserPool:
                         try:
                             await browser.close()
                         except Exception as e:
-                            logger.warning("browser_close_failed", error=str(e), context="release_reset_failed")
+                            logger.warning(
+                                "browser_close_failed", error=str(e), context="release_reset_failed"
+                            )
                         return
 
                 # Add back to pool if not full
@@ -105,7 +118,9 @@ class BrowserPool:
                     try:
                         await browser.close()
                     except Exception as e:
-                        logger.warning("browser_close_failed", error=str(e), context="release_pool_full")
+                        logger.warning(
+                            "browser_close_failed", error=str(e), context="release_pool_full"
+                        )
                     logger.debug("browser_closed_pool_full")
 
     async def cleanup(self):

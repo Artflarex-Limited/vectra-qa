@@ -17,10 +17,10 @@ from mcp_server.deterministic import (
     get_deterministic_tester,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_browser():
@@ -43,9 +43,7 @@ def mock_browser():
     browser.get_text = AsyncMock(
         return_value={"success": True, "selector": ".item", "text": "Hello World"}
     )
-    browser.screenshot = AsyncMock(
-        return_value={"success": True, "path": "/tmp/shot.png"}
-    )
+    browser.screenshot = AsyncMock(return_value={"success": True, "path": "/tmp/shot.png"})
     browser.scroll_to_bottom = AsyncMock(return_value={"success": True})
     browser.page.hover = AsyncMock(return_value=None)
     return browser

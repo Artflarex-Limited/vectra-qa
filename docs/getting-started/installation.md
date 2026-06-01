@@ -28,6 +28,7 @@ docker compose up --build
 ```
 
 This will start three services:
+
 - **MCP Server** (port 8080) — Tool server for agent spawning
 - **Command Center** (port 3000) — Dashboard and API
 - **Vault Watcher** — File system watcher for real-time updates
@@ -87,7 +88,7 @@ open http://localhost:3000
 |----------|----------|-------------|
 | `OPENAI_API_KEY` | Yes* | OpenAI API key for LLM features |
 | `ANTHROPIC_API_KEY` | Alternative | Anthropic API key (Claude) |
-| `MCP_SERVER_URL` | Yes | URL for MCP server (default: http://mcp-server:8080) |
+| `MCP_SERVER_URL` | Yes | URL for MCP server (default: <http://mcp-server:8080>) |
 | `OBSIDIAN_VAULT_PATH` | No | Path to Obsidian vault (default: /app/obsidian_vault) |
 | `CHATBOT_MODEL` | No | LLM model for chatbot (default: anthropic/claude-3-5-sonnet) |
 
@@ -96,13 +97,17 @@ open http://localhost:3000
 ## Troubleshooting
 
 **Issue**: Docker containers fail to start
+
 - **Solution**: Ensure Docker daemon is running and ports 3000/8080 are available
 
 **Issue**: Playwright browser not found
+
 - **Solution**: Run `playwright install chromium` inside the container or locally
 
 **Issue**: LLM features not working
+
 - **Solution**: Check that API keys are set correctly in `.env`
 
 **Issue**: Dashboard shows no data
+
 - **Solution**: Ensure Vault Watcher is running and `obsidian_vault/` directory exists

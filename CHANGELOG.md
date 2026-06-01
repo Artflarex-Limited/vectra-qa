@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2026-01-15
 
 ### Added
+
 - Initial release of Vectra QA
 - Multi-agent testing framework with UI Explorer and Data Validator agents
 - Obsidian Vault memory layer for structured test logging
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Versioned documentation support
 
 ### Features
+
 - **Dynamic Agent Spawning**: On-demand agent creation with auto-termination
 - **Natural Language Testing**: Chat with Vectra to configure and run tests
 - **Real-Time Monitoring**: Live progress updates via SSE
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Result Interpretation**: LLM-powered plain-English result summaries
 
 ### Technical
+
 - FastAPI backend with HTMX frontend
 - Playwright browser automation
 - YAML frontmatter for structured metadata

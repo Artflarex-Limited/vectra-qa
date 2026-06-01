@@ -57,7 +57,7 @@ class DatabaseManager:
                 return True
 
             try:
-                self.pool = await psycopg.AsyncConnectionPool(
+                self.pool = await psycopg.AsyncConnectionPool(  # type: ignore[attr-defined]
                     conninfo=DATABASE_URL,
                     min_size=DB_POOL_MIN_SIZE,
                     max_size=DB_POOL_MAX_SIZE,

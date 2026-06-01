@@ -8,16 +8,17 @@ Usage:
     pytest tests/integration/ -v
 """
 
-import pytest
-
-pytestmark = pytest.mark.integration
 import asyncio
 import tempfile
 import shutil
 from pathlib import Path
 
+import pytest
+
 # Import framework modules
 from mcp_server.browser_tools import BrowserAutomation
+
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture(scope="module")

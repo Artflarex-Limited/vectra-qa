@@ -239,6 +239,7 @@ Run accessibility checks using axe-core with manual fallback.
 ### Checks Performed
 
 #### Automated (axe-core)
+
 - Color contrast ratios
 - ARIA usage and validity
 - Form label associations
@@ -246,6 +247,7 @@ Run accessibility checks using axe-core with manual fallback.
 - Heading hierarchy
 
 #### Manual Fallback
+
 - Images without `alt` text
 - Form inputs without labels
 - Missing `lang` attribute

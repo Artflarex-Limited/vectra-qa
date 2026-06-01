@@ -12,12 +12,10 @@ import json
 from unittest.mock import patch, MagicMock
 
 from mcp_server.task_queue import (
-    Task,
     InMemoryTaskQueue,
     RedisTaskQueue,
     get_task_queue,
 )
-
 
 # ──────────────────────────────────────────────
 # RedisTaskQueue with mocked redis
@@ -254,7 +252,22 @@ class TestRedisTaskQueueOperations:
     def test_redis_list_pending_missing_data(self, redis_queue, mock_redis):
         """Should skip tasks with missing data."""
         mock_redis.zrange.return_value = ["task-abc123", "task-def456"]
-        mock_redis.hget.side_effect = [json.dumps({"id": "task-abc123", "type": "t", "params": {}, "role": "r", "objective": "o", "memory_node": "n", "priority": 0, "created_at": "2025-01-01T00:00:00Z", "status": "pending"}), None]
+        mock_redis.hget.side_effect = [
+            json.dumps(
+                {
+                    "id": "task-abc123",
+                    "type": "t",
+                    "params": {},
+                    "role": "r",
+                    "objective": "o",
+                    "memory_node": "n",
+                    "priority": 0,
+                    "created_at": "2025-01-01T00:00:00Z",
+                    "status": "pending",
+                }
+            ),
+            None,
+        ]
 
         tasks = redis_queue.list_pending()
         assert len(tasks) == 1

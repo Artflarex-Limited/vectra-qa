@@ -20,7 +20,6 @@ from mcp_server.task_queue import (
     get_task_queue,
 )
 
-
 # ──────────────────────────────────────────────
 # Task Dataclass
 # ──────────────────────────────────────────────
@@ -73,9 +72,9 @@ class TestTaskDataclass:
         parsed = datetime.strptime(task.created_at.rstrip("Z"), "%Y-%m-%dT%H:%M:%S").replace(
             tzinfo=timezone.utc
         )
-        assert before <= parsed <= after, (
-            f"created_at={task.created_at} should be between {before} and {after}"
-        )
+        assert (
+            before <= parsed <= after
+        ), f"created_at={task.created_at} should be between {before} and {after}"
 
     @pytest.mark.unit
     def test_task_with_explicit_created_at(self):
@@ -179,7 +178,9 @@ class TestInMemoryTaskQueueEnqueue:
         assert len(queue._queue) == 0
         queue.enqueue(role="ui_explorer", objective="Test", memory_node="Runs/A.md", params={})
         assert len(queue._queue) == 1
-        queue.enqueue(role="data_validator", objective="Validate", memory_node="Runs/B.md", params={})
+        queue.enqueue(
+            role="data_validator", objective="Validate", memory_node="Runs/B.md", params={}
+        )
         assert len(queue._queue) == 2
 
     @pytest.mark.unit
@@ -187,8 +188,16 @@ class TestInMemoryTaskQueueEnqueue:
         """Should insert higher-priority tasks before lower-priority ones."""
         queue = InMemoryTaskQueue()
         # Insert a low-priority task first, then a high-priority one
-        queue.enqueue(role="ui_explorer", objective="Low prio", memory_node="Runs/A.md", params={}, priority=1)
-        queue.enqueue(role="data_validator", objective="High prio", memory_node="Runs/B.md", params={}, priority=10)
+        queue.enqueue(
+            role="ui_explorer", objective="Low prio", memory_node="Runs/A.md", params={}, priority=1
+        )
+        queue.enqueue(
+            role="data_validator",
+            objective="High prio",
+            memory_node="Runs/B.md",
+            params={},
+            priority=10,
+        )
 
         assert queue._queue[0].priority == 10
         assert queue._queue[1].priority == 1
@@ -516,7 +525,6 @@ class TestGetTaskQueueFactory:
     def test_returns_in_memory_when_no_redis_url(self):
         """Should return an InMemoryTaskQueue when REDIS_URL is not set."""
         with patch("mcp_server.task_queue.os.getenv", return_value=None) as mock_getenv:
-            from mcp_server.task_queue import _queue_instance
 
             # Reset global for test isolation
             with patch("mcp_server.task_queue._queue_instance", None):
@@ -559,7 +567,7 @@ class TestGetTaskQueueFactory:
     @pytest.mark.unit
     def test_factory_returns_same_instance(self):
         """Should return the same instance on repeated calls (singleton)."""
-        saved = getattr(get_task_queue, "_cached", None)
+        _saved = getattr(get_task_queue, "_cached", None)
         try:
             with patch("mcp_server.task_queue._queue_instance", None):
                 q1 = get_task_queue()

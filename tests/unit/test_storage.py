@@ -6,13 +6,12 @@ and the get_storage() factory function using mocked dependencies.
 """
 
 import pytest
-from unittest.mock import MagicMock, patch, call
-from decimal import Decimal
-
+from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
 #  MarkdownBackend Tests
 # ---------------------------------------------------------------------------
+
 
 class TestMarkdownBackend:
     """Tests for the filesystem-based Markdown storage backend."""
@@ -29,6 +28,7 @@ class TestMarkdownBackend:
     def backend(self, mock_vault):
         """Create a MarkdownBackend with a mocked vault."""
         from mcp_server.storage import MarkdownBackend
+
         return MarkdownBackend()
 
     # -- CRUD operations ------------------------------------------------
@@ -45,9 +45,7 @@ class TestMarkdownBackend:
     def test_write_node_without_frontmatter(self, backend, mock_vault):
         """Should delegate write_node when frontmatter is omitted."""
         backend.write_node("Runs/plain.md", "# Plain content")
-        mock_vault.write_node.assert_called_once_with(
-            "Runs/plain.md", "# Plain content", None
-        )
+        mock_vault.write_node.assert_called_once_with("Runs/plain.md", "# Plain content", None)
 
     @pytest.mark.unit
     def test_read_node_returns_parsed_data(self, backend, mock_vault):
@@ -75,7 +73,9 @@ class TestMarkdownBackend:
     def test_list_nodes_delegates_to_vault(self, backend, mock_vault):
         """Should delegate list_nodes to vault and return results."""
         mock_vault.list_nodes.return_value = [
-            "Runs/a.md", "Runs/b.md", "Runs/sub/c.md",
+            "Runs/a.md",
+            "Runs/b.md",
+            "Runs/sub/c.md",
         ]
         result = backend.list_nodes("Runs")
         assert result == ["Runs/a.md", "Runs/b.md", "Runs/sub/c.md"]
@@ -87,7 +87,9 @@ class TestMarkdownBackend:
     def test_query_findings_filters_on_frontmatter(self, backend, mock_vault):
         """Should return only findings whose frontmatter matches all filters."""
         mock_vault.list_nodes.return_value = [
-            "Runs/a.md", "Runs/b.md", "Runs/c.md",
+            "Runs/a.md",
+            "Runs/b.md",
+            "Runs/c.md",
         ]
         mock_vault.read_node.side_effect = [
             {
@@ -160,7 +162,8 @@ class TestMarkdownBackend:
     def test_query_test_runs_ignores_nodes_without_test_run_id(self, backend, mock_vault):
         """Should skip nodes that lack a test_run_id frontmatter key."""
         mock_vault.list_nodes.return_value = [
-            "Runs/run1.md", "Runs/note.md",
+            "Runs/run1.md",
+            "Runs/note.md",
         ]
         mock_vault.read_node.side_effect = [
             {"frontmatter": {"test_run_id": "run-001", "status": "pass"}, "content": ""},
@@ -176,6 +179,7 @@ class TestMarkdownBackend:
 # ---------------------------------------------------------------------------
 #  PostgreSQLBackend Tests
 # ---------------------------------------------------------------------------
+
 
 class TestPostgreSQLBackend:
     """Tests for the PostgreSQL-backed storage backend."""
@@ -199,6 +203,7 @@ class TestPostgreSQLBackend:
     def backend(self, mock_db_manager):
         """Create a PostgreSQLBackend with mocked DB dependencies."""
         from mcp_server.storage import PostgreSQLBackend
+
         return PostgreSQLBackend()
 
     # -- CRUD operations ------------------------------------------------
@@ -251,7 +256,9 @@ class TestPostgreSQLBackend:
         """Should use WHERE TRUE when no filters provided."""
         mock_db, mock_loop = mock_db_manager
         mock_loop.run_until_complete.return_value = [
-            {"id": 1}, {"id": 2}, {"id": 3},
+            {"id": 1},
+            {"id": 2},
+            {"id": 3},
         ]
 
         results = backend.query_findings()
@@ -303,6 +310,7 @@ class TestPostgreSQLBackend:
 #  DualBackend Tests
 # ---------------------------------------------------------------------------
 
+
 class TestDualBackend:
     """Tests for the dual-write (Markdown + PostgreSQL) backend."""
 
@@ -323,6 +331,7 @@ class TestDualBackend:
     def backend(self, mock_backends):
         """Create a DualBackend with mocked Markdown + PostgreSQL."""
         from mcp_server.storage import DualBackend
+
         return DualBackend()
 
     # -- Dual writes ----------------------------------------------------
@@ -334,12 +343,8 @@ class TestDualBackend:
 
         backend.write_node("Runs/test.md", "# Content", {"key": "val"})
 
-        mock_md.write_node.assert_called_once_with(
-            "Runs/test.md", "# Content", {"key": "val"}
-        )
-        mock_pg.write_node.assert_called_once_with(
-            "Runs/test.md", "# Content", {"key": "val"}
-        )
+        mock_md.write_node.assert_called_once_with("Runs/test.md", "# Content", {"key": "val"})
+        mock_pg.write_node.assert_called_once_with("Runs/test.md", "# Content", {"key": "val"})
 
     @pytest.mark.unit
     def test_writes_to_markdown_even_when_pg_fails(self, backend, mock_backends):
@@ -403,17 +408,14 @@ class TestDualBackend:
 
         backend.update_frontmatter("Runs/test.md", {"status": "completed"})
 
-        mock_md.update_frontmatter.assert_called_once_with(
-            "Runs/test.md", {"status": "completed"}
-        )
-        mock_pg.update_frontmatter.assert_called_once_with(
-            "Runs/test.md", {"status": "completed"}
-        )
+        mock_md.update_frontmatter.assert_called_once_with("Runs/test.md", {"status": "completed"})
+        mock_pg.update_frontmatter.assert_called_once_with("Runs/test.md", {"status": "completed"})
 
 
 # ---------------------------------------------------------------------------
 #  get_storage() Factory Tests
 # ---------------------------------------------------------------------------
+
 
 class TestGetStorage:
     """Tests for the get_storage() factory singleton function."""
@@ -422,6 +424,7 @@ class TestGetStorage:
     def reset_singleton(self):
         """Reset the _storage_instance singleton before each test."""
         import mcp_server.storage as storage_mod
+
         storage_mod._storage_instance = None
         yield
         storage_mod._storage_instance = None
@@ -434,6 +437,7 @@ class TestGetStorage:
             patch("mcp_server.storage.ObsidianVault"),
         ):
             from mcp_server.storage import get_storage, MarkdownBackend
+
             storage = get_storage()
             assert isinstance(storage, MarkdownBackend)
 
@@ -445,6 +449,7 @@ class TestGetStorage:
             patch("mcp_server.storage.get_db_manager_sync"),
         ):
             from mcp_server.storage import get_storage, PostgreSQLBackend
+
             storage = get_storage()
             assert isinstance(storage, PostgreSQLBackend)
 
@@ -457,6 +462,7 @@ class TestGetStorage:
             patch("mcp_server.storage.get_db_manager_sync"),
         ):
             from mcp_server.storage import get_storage, DualBackend
+
             storage = get_storage()
             assert isinstance(storage, DualBackend)
 
@@ -468,6 +474,7 @@ class TestGetStorage:
             patch("mcp_server.storage.ObsidianVault"),
         ):
             from mcp_server.storage import get_storage
+
             s1 = get_storage()
             s2 = get_storage()
             assert s1 is s2

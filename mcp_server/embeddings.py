@@ -16,7 +16,7 @@ Usage:
 import os
 import asyncio
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Any, List, Optional
 from dataclasses import dataclass
 
 import structlog
@@ -61,7 +61,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
     def __init__(self, model: str = EMBEDDING_MODEL):
         self.model = model
         self.dimension = 1536 if "3-small" in model else 3072
-        self._client = None
+        self._client: Optional[Any] = None
 
     @property
     def dimension(self) -> int:

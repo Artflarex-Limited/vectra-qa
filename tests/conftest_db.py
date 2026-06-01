@@ -38,6 +38,7 @@ def mock_browser():
 def sample_llm_response():
     """Return a sample LLMResponse for testing."""
     from mcp_server.llm_router import LLMResponse
+
     return LLMResponse(
         content="Test response",
         model="gpt-4o",

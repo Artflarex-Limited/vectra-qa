@@ -77,8 +77,8 @@ jobs:
         run: |
           playwright install chromium
 
-      - name: Check migrations
-        run: python scripts/run_migrations.py --check
+      - name: Run migrations
+        run: python scripts/run_migrations.py
         env:
           DATABASE_URL: postgresql://vectra:vectra_dev_password_change_in_production@localhost:5432/vectra_qa
 

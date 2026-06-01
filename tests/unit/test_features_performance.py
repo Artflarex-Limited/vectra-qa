@@ -34,11 +34,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_success(self, tester, mock_browser):
         """Should measure performance metrics successfully."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 101, "requestStart": 1},
-            "metrics": {"lcp": 1200, "cls": 0.05},
-            "paint": [{"name": "first-contentful-paint", "startTime": 800}],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 101, "requestStart": 1},
+                "metrics": {"lcp": 1200, "cls": 0.05},
+                "paint": [{"name": "first-contentful-paint", "startTime": 800}],
+            }
+        )
         resources = {"transferSize": 1024000, "count": 15}
 
         async def mock_evaluate(script):
@@ -51,9 +53,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         assert result["status"] == "pass"
         assert result["metrics"]["ttfb_ms"] == 100
@@ -81,20 +81,20 @@ class TestPerformanceTester:
         mock_browser.visit = AsyncMock(return_value={"success": True, "status": 200})
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         assert result["status"] == "pass"
 
     @pytest.mark.asyncio
     async def test_test_performance_slow_ttfb(self, tester, mock_browser):
         """Should flag slow TTFB."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 1501, "requestStart": 1},
-            "metrics": {},
-            "paint": [],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 1501, "requestStart": 1},
+                "metrics": {},
+                "paint": [],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -106,9 +106,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         assert any("Slow TTFB" in f["title"] for f in result["findings"])
         assert result["metrics"]["ttfb_ms"] == 1500
@@ -116,11 +114,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_slow_ttfb_critical(self, tester, mock_browser):
         """Should flag critical TTFB over 1000ms."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 2001, "requestStart": 1},
-            "metrics": {},
-            "paint": [],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 2001, "requestStart": 1},
+                "metrics": {},
+                "paint": [],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -132,9 +132,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         ttfb_finding = next(f for f in result["findings"] if "Slow TTFB" in f["title"])
         assert ttfb_finding["severity"] == "high"
@@ -142,11 +140,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_slow_fcp(self, tester, mock_browser):
         """Should flag slow FCP."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 101, "requestStart": 1},
-            "metrics": {},
-            "paint": [{"name": "first-contentful-paint", "startTime": 2500}],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 101, "requestStart": 1},
+                "metrics": {},
+                "paint": [{"name": "first-contentful-paint", "startTime": 2500}],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -158,9 +158,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         assert any("Slow First Contentful Paint" in f["title"] for f in result["findings"])
         assert result["metrics"]["fcp_ms"] == 2500
@@ -168,11 +166,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_slow_fcp_critical(self, tester, mock_browser):
         """Should flag critical FCP over 3000ms."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 101, "requestStart": 1},
-            "metrics": {},
-            "paint": [{"name": "first-contentful-paint", "startTime": 3500}],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 101, "requestStart": 1},
+                "metrics": {},
+                "paint": [{"name": "first-contentful-paint", "startTime": 3500}],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -184,9 +184,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         fcp_finding = next(
             f for f in result["findings"] if "Slow First Contentful Paint" in f["title"]
@@ -196,11 +194,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_slow_lcp(self, tester, mock_browser):
         """Should flag slow LCP."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 101, "requestStart": 1},
-            "metrics": {"lcp": 3000},
-            "paint": [],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 101, "requestStart": 1},
+                "metrics": {"lcp": 3000},
+                "paint": [],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -212,9 +212,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         assert any("Slow Largest Contentful Paint" in f["title"] for f in result["findings"])
         assert result["metrics"]["lcp_ms"] == 3000
@@ -222,11 +220,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_slow_lcp_critical(self, tester, mock_browser):
         """Should flag critical LCP over 4000ms."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 101, "requestStart": 1},
-            "metrics": {"lcp": 4500},
-            "paint": [],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 101, "requestStart": 1},
+                "metrics": {"lcp": 4500},
+                "paint": [],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -238,9 +238,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         lcp_finding = next(
             f for f in result["findings"] if "Slow Largest Contentful Paint" in f["title"]
@@ -250,11 +248,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_high_cls(self, tester, mock_browser):
         """Should flag high CLS."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 101, "requestStart": 1},
-            "metrics": {"cls": 0.25},
-            "paint": [],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 101, "requestStart": 1},
+                "metrics": {"cls": 0.25},
+                "paint": [],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -266,9 +266,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         assert any("High Layout Shift" in f["title"] for f in result["findings"])
         assert result["metrics"]["cls"] == 0.25
@@ -276,11 +274,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_large_page(self, tester, mock_browser):
         """Should flag large page size."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 101, "requestStart": 1},
-            "metrics": {},
-            "paint": [],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 101, "requestStart": 1},
+                "metrics": {},
+                "paint": [],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -292,9 +292,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         assert any("Large Page Size" in f["title"] for f in result["findings"])
         assert result["metrics"]["total_transfer_size_bytes"] == 10 * 1024 * 1024
@@ -302,11 +300,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_custom_thresholds(self, tester, mock_browser):
         """Should use custom thresholds."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 301, "requestStart": 1},
-            "metrics": {},
-            "paint": [{"name": "first-contentful-paint", "startTime": 1200}],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 301, "requestStart": 1},
+                "metrics": {},
+                "paint": [{"name": "first-contentful-paint", "startTime": 1200}],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -330,11 +330,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_warning_status(self, tester, mock_browser):
         """Should return warning for high severity findings."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 1501, "requestStart": 1},  # slow TTFB = high
-            "metrics": {},
-            "paint": [],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 1501, "requestStart": 1},  # slow TTFB = high
+                "metrics": {},
+                "paint": [],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -346,9 +348,7 @@ class TestPerformanceTester:
         mock_browser.page.evaluate = AsyncMock(side_effect=mock_evaluate)
 
         with patch.object(tester, "_run_lighthouse", return_value=None):
-            result = await tester.test_performance(
-                mock_browser, "https://example.com"
-            )
+            result = await tester.test_performance(mock_browser, "https://example.com")
 
         assert result["status"] == "warning"
 
@@ -373,11 +373,13 @@ class TestPerformanceTester:
     @pytest.mark.asyncio
     async def test_test_performance_with_lighthouse(self, tester, mock_browser, tmp_path):
         """Should include lighthouse results when available."""
-        perf_json = json.dumps({
-            "timing": {"responseStart": 101, "requestStart": 1},
-            "metrics": {},
-            "paint": [],
-        })
+        perf_json = json.dumps(
+            {
+                "timing": {"responseStart": 101, "requestStart": 1},
+                "metrics": {},
+                "paint": [],
+            }
+        )
 
         async def mock_evaluate(script):
             if "performance.getEntriesByType('resource')" in script:
@@ -415,9 +417,7 @@ class TestPerformanceTester:
                 mock_open.return_value = mock_file
 
                 with patch("json.load", return_value=lighthouse_data):
-                    result = await tester.test_performance(
-                        mock_browser, "https://example.com"
-                    )
+                    result = await tester.test_performance(mock_browser, "https://example.com")
 
         assert "lighthouse" in result["metrics"]
 

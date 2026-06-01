@@ -7,8 +7,7 @@ locale detection, and error handling — without hitting real websites.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, call, patch
-from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
 
 from mcp_server.ecommerce import (
     EcommerceTester,
@@ -17,10 +16,10 @@ from mcp_server.ecommerce import (
     OptozonTester,
 )
 
-
 # =============================================================================
 # Helpers
 # =============================================================================
+
 
 def _mock_browser(page=None):
     """Create a mocked BrowserAutomation with a controllable page."""
@@ -42,6 +41,7 @@ def _mock_browser(page=None):
 # Selector Maps
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestEcommerceSelectorMaps:
     """Platform selector map resolution."""
@@ -49,8 +49,15 @@ class TestEcommerceSelectorMaps:
     def test_optozon_has_required_selectors(self):
         """Optozon selector map should include all core selectors."""
         selectors = ECOMMERCE_SELECTOR_MAPS["optozon"]
-        required = ["add_to_cart", "cart_count", "cart_icon", "checkout_button",
-                     "product_price", "product_name", "search_input"]
+        required = [
+            "add_to_cart",
+            "cart_count",
+            "cart_icon",
+            "checkout_button",
+            "product_price",
+            "product_name",
+            "search_input",
+        ]
         for key in required:
             assert key in selectors, f"Missing required selector: {key}"
             assert selectors[key], f"Empty selector for: {key}"
@@ -74,6 +81,7 @@ class TestEcommerceSelectorMaps:
 # =============================================================================
 # Safe click / fill helpers
 # =============================================================================
+
 
 @pytest.mark.unit
 class TestEcommerceSafeHelpers:
@@ -150,6 +158,7 @@ class TestEcommerceSafeHelpers:
 # Cart flow tests
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestEcommerceCartFlow:
     """Test the add-to-cart flow."""
@@ -160,9 +169,9 @@ class TestEcommerceCartFlow:
         browser = _mock_browser()
         browser.visit.return_value = {"success": True}
         browser.get_text.side_effect = [
-            {"success": True, "text": "$29.99"},   # product_price
+            {"success": True, "text": "$29.99"},  # product_price
             {"success": True, "text": "Cool Hat"},  # product_name
-            {"success": True, "text": "1"},          # cart_count
+            {"success": True, "text": "1"},  # cart_count
         ]
         browser.click.return_value = {"success": True}
 
@@ -215,8 +224,8 @@ class TestEcommerceCartFlow:
         browser = _mock_browser()
         browser.visit.return_value = {"success": True}
         browser.get_text.side_effect = [
-            {"success": False, "text": ""},   # product_price — missing
-            {"success": False, "text": ""},   # product_name — missing
+            {"success": False, "text": ""},  # product_price — missing
+            {"success": False, "text": ""},  # product_name — missing
         ]
         browser.click.return_value = {"success": True}
 
@@ -246,6 +255,7 @@ class TestEcommerceCartFlow:
 # Checkout flow tests
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestEcommerceCheckoutFlow:
     """Test the checkout flow."""
@@ -256,9 +266,9 @@ class TestEcommerceCheckoutFlow:
         browser = _mock_browser()
         browser.visit.return_value = {"success": True}
         browser.get_elements.side_effect = [
-            {"success": True, "count": 1},   # checkout_button exists
-            {"success": True, "count": 1},   # shipping_form exists
-            {"success": True, "count": 3},   # payment_methods exist
+            {"success": True, "count": 1},  # checkout_button exists
+            {"success": True, "count": 1},  # shipping_form exists
+            {"success": True, "count": 3},  # payment_methods exist
         ]
 
         tester = EcommerceTester("optozon")
@@ -273,9 +283,9 @@ class TestEcommerceCheckoutFlow:
         browser = _mock_browser()
         browser.visit.return_value = {"success": True}
         browser.get_elements.side_effect = [
-            {"success": True, "count": 0},   # checkout_button missing
-            {"success": True, "count": 1},   # shipping_form exists
-            {"success": True, "count": 2},   # payment_methods exist
+            {"success": True, "count": 0},  # checkout_button missing
+            {"success": True, "count": 1},  # shipping_form exists
+            {"success": True, "count": 2},  # payment_methods exist
         ]
 
         tester = EcommerceTester("optozon")
@@ -311,6 +321,7 @@ class TestEcommerceCheckoutFlow:
 # GDPR compliance tests
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestEcommerceGDPR:
     """Test GDPR compliance detection."""
@@ -321,8 +332,8 @@ class TestEcommerceGDPR:
         browser = _mock_browser()
         browser.visit.return_value = {"success": True}
         browser.get_elements.side_effect = [
-            {"success": True, "count": 1},   # cookie_banner
-            {"success": True, "count": 1},   # cookie_reject
+            {"success": True, "count": 1},  # cookie_banner
+            {"success": True, "count": 1},  # cookie_reject
         ]
 
         # Mock page methods for privacy link and tracking pixel checks
@@ -343,8 +354,8 @@ class TestEcommerceGDPR:
         browser = _mock_browser()
         browser.visit.return_value = {"success": True}
         browser.get_elements.side_effect = [
-            {"success": True, "count": 1},   # cookie_banner
-            {"success": True, "count": 0},   # cookie_reject — missing
+            {"success": True, "count": 1},  # cookie_banner
+            {"success": True, "count": 0},  # cookie_reject — missing
         ]
         browser.page.query_selector_all = AsyncMock(return_value=[])
         browser.page.content = AsyncMock(return_value="<html></html>")
@@ -371,6 +382,7 @@ class TestEcommerceGDPR:
 # Locale tests
 # =============================================================================
 
+
 @pytest.mark.unit
 class TestEcommerceLocale:
     """Test Turkish locale detection."""
@@ -382,8 +394,8 @@ class TestEcommerceLocale:
         browser.visit.return_value = {"success": True}
         browser.page.evaluate = AsyncMock()
         browser.page.evaluate.side_effect = [
-            "Sayfa İçeriği çğşıüö",       # body.innerText
-            "tr",                           # document.documentElement.lang
+            "Sayfa İçeriği çğşıüö",  # body.innerText
+            "tr",  # document.documentElement.lang
         ]
 
         tester = EcommerceTester("optozon")
@@ -401,8 +413,8 @@ class TestEcommerceLocale:
         browser.visit.return_value = {"success": True}
         browser.page.evaluate = AsyncMock()
         browser.page.evaluate.side_effect = [
-            "English Only Page",           # body.innerText
-            "en",                          # document.documentElement.lang
+            "English Only Page",  # body.innerText
+            "en",  # document.documentElement.lang
         ]
 
         tester = EcommerceTester("optozon")
@@ -416,6 +428,7 @@ class TestEcommerceLocale:
 # =============================================================================
 # OptozonTester
 # =============================================================================
+
 
 @pytest.mark.unit
 class TestOptozonTester:

@@ -7,12 +7,12 @@ No real network requests are made — all external calls are mocked.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
-
+from unittest.mock import AsyncMock, MagicMock, patch
 
 # ---------------------------------------------------------------------------
 #  OpenAIEmbeddingProvider Tests
 # ---------------------------------------------------------------------------
+
 
 class TestOpenAIEmbeddingProvider:
     """Tests for the OpenAI API embedding provider."""
@@ -90,6 +90,7 @@ class TestOpenAIEmbeddingProvider:
 #  SentenceTransformersProvider Tests
 # ---------------------------------------------------------------------------
 
+
 class TestSentenceTransformersProvider:
     """Tests for the local sentence-transformers embedding provider."""
 
@@ -150,6 +151,7 @@ class TestSentenceTransformersProvider:
 #  OllamaEmbeddingProvider Tests
 # ---------------------------------------------------------------------------
 
+
 class TestOllamaEmbeddingProvider:
     """Tests for the Ollama self-hosted embedding provider."""
 
@@ -194,9 +196,7 @@ class TestOllamaEmbeddingProvider:
         """Should raise when the Ollama API call fails."""
         mock_client = AsyncMock()
         mock_client.__aenter__.return_value = mock_client
-        mock_client.post = AsyncMock(
-            side_effect=RuntimeError("Ollama service unavailable")
-        )
+        mock_client.post = AsyncMock(side_effect=RuntimeError("Ollama service unavailable"))
 
         with patch("httpx.AsyncClient", return_value=mock_client):
             with pytest.raises(RuntimeError, match="Ollama service unavailable"):
@@ -220,6 +220,7 @@ class TestOllamaEmbeddingProvider:
 # ---------------------------------------------------------------------------
 #  Factory function tests
 # ---------------------------------------------------------------------------
+
 
 class TestGetEmbeddingProvider:
     """Tests for the get_embedding_provider() factory singleton."""

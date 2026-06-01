@@ -284,6 +284,7 @@ response = router.complete(
 ```
 
 Each agent role can be configured with a different provider via environment variables:
+
 - `ORCHESTRATOR_MODEL=openai/gpt-4o`
 - `UI_EXPLORER_MODEL=anthropic/claude-3-5-sonnet-20241022`
 - `DATA_VALIDATOR_MODEL=kimi/kimi-k2`  # Long context for large payloads

@@ -43,14 +43,17 @@ if "test" in message or "check" in message:
 When intent is `plan_tests`, the chatbot extracts:
 
 ### URL Extraction
+
 Uses regex to find URLs in the message:
+
 ```python
 url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
 ```
 
 ### Test Type Determination
 
-**Method 1: Keyword matching**
+#### Method 1: Keyword matching
+
 ```python
 test_keywords = {
     "contact": ["contact", "form", "email"],
@@ -60,6 +63,7 @@ test_keywords = {
 ```
 
 **Method 2: LLM reasoning** (fallback)
+
 ```python
 prompt = """Given this request, which tests are appropriate?
 Options: homepage, navigation, contact, api, accessibility, responsive, full
@@ -89,7 +93,7 @@ Request: {message}
 
 **User**: "Test the homepage of example.com"
 
-**Vectra**: "I'll run a homepage test on https://example.com. This will check page structure, navigation, CTAs, and console errors. Does this look correct? Say **yes** to proceed."
+**Vectra**: "I'll run a homepage test on <https://example.com>. This will check page structure, navigation, CTAs, and console errors. Does this look correct? Say **yes** to proceed."
 
 **User**: *clicks "Run" or types "yes"*
 
@@ -97,14 +101,14 @@ Request: {message}
 
 ### Example 2: Complex Plan
 
-**User**: "Check navigation and mobile layout on https://example.com"
+**User**: "Check navigation and mobile layout on <https://example.com>"
 
 **Vectra**: "I'll run two tests:
 
 1. **Navigation** — Link validation, page transitions
 2. **Responsive Design** — Desktop, tablet, mobile viewports
 
-On https://example.com. Does this look correct?"
+On <https://example.com>. Does this look correct?"
 
 ### Example 3: Result Interpretation
 
@@ -117,6 +121,7 @@ On https://example.com. Does this look correct?"
 **Good**: ✅ HTTPS enabled, no console errors
 
 **Fix for email validation:**
+
 ```html
 <input type="email" required>
 ```
@@ -149,13 +154,17 @@ Simple single-test requests execute immediately without confirmation.
 The chatbot can analyze test results and provide:
 
 ### Executive Summary
+
 Plain English overview of test status.
 
 ### Critical Issues
+
 High-severity findings requiring immediate attention.
 
 ### Actionable Recommendations
+
 Specific fixes with code examples:
+
 ```markdown
 **Fix for missing alt text:**
 ```html
@@ -163,6 +172,7 @@ Specific fixes with code examples:
 ```
 
 ### Follow-Up Suggestions
+
 Recommended additional tests based on findings.
 
 ## Context Management
@@ -170,17 +180,21 @@ Recommended additional tests based on findings.
 The chatbot maintains conversation context:
 
 ### Message History
+
 - Last 20 messages loaded for context
 - Full history stored in `Global/Chat_Log.md`
 - History survives page refreshes
 
 ### Cross-Test Memory
+
 Vectra remembers:
+
 - Recently tested URLs
 - Previously discussed issues
 - User preferences (e.g., always check accessibility)
 
 ### Context Window
+
 ```python
 MAX_HISTORY_MESSAGES = 50  # Total messages in vault
 CONTEXT_WINDOW = 10        # Messages sent to LLM
@@ -207,12 +221,15 @@ eventSource.onmessage = (event) => {
 ## Error Handling
 
 ### Invalid URL
+
 **User**: "Test the homepage"
 **Vectra**: "I'd be happy to run tests! Could you provide the URL you'd like me to test?"
 
 ### Unsupported Test Type
+
 **User**: "Test the database on example.com"
 **Vectra**: "I don't currently support database testing. I can help with:
+
 - Homepage tests
 - Navigation tests
 - Contact form tests
@@ -221,17 +238,20 @@ eventSource.onmessage = (event) => {
 - Responsive design tests"
 
 ### LLM Failure
+
 **User**: "Run a test"
 **Vectra**: "I apologize, but I'm having trouble processing your request right now. Please try again or use the test launcher form."
 
 ## Configuration
 
 ### Model Selection
+
 ```bash
 CHATBOT_MODEL=anthropic/claude-3-5-sonnet-20241022
 ```
 
 Supported providers:
+
 - `anthropic/claude-3-5-sonnet-20241022`
 - `openai/gpt-4o`
 - `openai/gpt-4o-mini`
@@ -241,11 +261,13 @@ Supported providers:
 - `local/llama3.1:70b`
 
 ### History Limits
+
 ```bash
 CHATBOT_MAX_HISTORY=50  # Messages to retain
 ```
 
 ### Streaming
+
 ```bash
 CHATBOT_ENABLE_STREAMING=true
 ```
@@ -272,6 +294,7 @@ class ChatEngine:
 ### Frontend (Dashboard)
 
 The chat widget is a floating panel in the bottom-right corner:
+
 - Collapsed: Shows header bar with 🤖 Vectra + unread badge
 - Expanded: Full chat interface with messages and input
 - Auto-expands when receiving new messages
@@ -279,12 +302,14 @@ The chat widget is a floating panel in the bottom-right corner:
 ## Best Practices
 
 ### For Users
-- **Be specific**: "Test the contact form on https://example.com" > "Run a test"
+
+- **Be specific**: "Test the contact form on <https://example.com>" > "Run a test"
 - **Mention URLs**: Always include the target URL
 - **Use keywords**: "navigation", "contact", "accessibility" help Vectra understand intent
 - **Confirm plans**: Review multi-test plans before confirming
 
 ### For Developers
+
 - **Add new test types**: Update `TEST_TYPES` dict in `chatbot.py`
 - **Customize persona**: Modify `system_prompt` in `ChatEngine`
 - **Extend intent classification**: Add new intents and handlers

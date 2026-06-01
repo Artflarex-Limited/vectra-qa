@@ -39,12 +39,8 @@ class TestAccessibilityTester:
         mock_path.read_text.return_value = "axe.min.js content"
 
         with patch("mcp_server.features.accessibility.Path", return_value=mock_path):
-            with patch.object(
-                Path, "exists", return_value=True
-            ):
-                with patch.object(
-                    Path, "read_text", return_value="axe.min.js content"
-                ):
+            with patch.object(Path, "exists", return_value=True):
+                with patch.object(Path, "read_text", return_value="axe.min.js content"):
                     page = AsyncMock()
                     result = await tester._load_axe(page)
 
@@ -58,14 +54,10 @@ class TestAccessibilityTester:
         page = AsyncMock()
 
         with patch.object(Path, "exists", return_value=False):
-            with patch(
-                "urllib.request.urlopen"
-            ) as mock_urlopen:
+            with patch("urllib.request.urlopen") as mock_urlopen:
                 mock_response = Mock()
                 mock_response.read.return_value = b"cdn axe content"
-                mock_urlopen.return_value.__enter__ = Mock(
-                    return_value=mock_response
-                )
+                mock_urlopen.return_value.__enter__ = Mock(return_value=mock_response)
                 mock_urlopen.return_value.__exit__ = Mock(return_value=False)
 
                 result = await tester._load_axe(page)
@@ -80,9 +72,7 @@ class TestAccessibilityTester:
         page = AsyncMock()
 
         with patch.object(Path, "exists", return_value=False):
-            with patch(
-                "urllib.request.urlopen", side_effect=Exception("Network error")
-            ):
+            with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
                 result = await tester._load_axe(page)
 
         assert result is False
@@ -259,9 +249,7 @@ class TestAccessibilityTester:
                 "_manual_accessibility_check",
                 return_value={"status": "pass", "findings": []},
             ) as mock_manual:
-                await tester.test_accessibility(
-                    mock_browser, "https://example.com"
-                )
+                await tester.test_accessibility(mock_browser, "https://example.com")
 
         mock_manual.assert_awaited_once()
 
@@ -303,25 +291,20 @@ class TestAccessibilityTester:
         mock_img_no_alt = AsyncMock()
         mock_img_no_alt.get_attribute.return_value = None
 
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [mock_img_with_alt, mock_img_no_alt, mock_img_no_alt],  # images
-            [],  # inputs
-            [Mock()],  # h1
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [mock_img_with_alt, mock_img_no_alt, mock_img_no_alt],  # images
+                [],  # inputs
+                [Mock()],  # h1
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=None)
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
-        assert any(
-            "Images Without Alt Text" in f["title"] for f in result["findings"]
-        )
-        assert any(
-            "2 image(s) missing alt text" in f["description"]
-            for f in result["findings"]
-        )
+        assert any("Images Without Alt Text" in f["title"] for f in result["findings"])
+        assert any("2 image(s) missing alt text" in f["description"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_manual_accessibility_check_inputs(self, tester, mock_browser):
@@ -331,36 +314,34 @@ class TestAccessibilityTester:
         mock_input_no_label = AsyncMock()
         mock_input_no_label.get_attribute.side_effect = [None, None, None, None, None]
 
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [mock_input_with_label, mock_input_no_label],  # inputs
-            [Mock()],  # h1
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [mock_input_with_label, mock_input_no_label],  # inputs
+                [Mock()],  # h1
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=Mock())
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
-        assert any(
-            "Form Inputs Without Labels" in f["title"] for f in result["findings"]
-        )
+        assert any("Form Inputs Without Labels" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_manual_accessibility_check_headings(self, tester, mock_browser):
         """Should detect missing or multiple h1 headings."""
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [],  # inputs
-            [],  # h1 - none
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [],  # inputs
+                [],  # h1 - none
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=None)
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
         assert any("Missing H1" in f["title"] for f in result["findings"])
         assert any("medium" == f["severity"] for f in result["findings"])
@@ -368,17 +349,17 @@ class TestAccessibilityTester:
     @pytest.mark.asyncio
     async def test_manual_accessibility_check_multiple_h1(self, tester, mock_browser):
         """Should detect multiple h1 headings."""
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [],  # inputs
-            [Mock(), Mock(), Mock()],  # h1 - 3
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [],  # inputs
+                [Mock(), Mock(), Mock()],  # h1 - 3
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=None)
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
         assert any("Multiple H1s" in f["title"] for f in result["findings"])
         assert any("low" == f["severity"] for f in result["findings"])
@@ -386,36 +367,34 @@ class TestAccessibilityTester:
     @pytest.mark.asyncio
     async def test_manual_accessibility_check_lang(self, tester, mock_browser):
         """Should detect missing lang attribute."""
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [],  # inputs
-            [Mock()],  # h1
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [],  # inputs
+                [Mock()],  # h1
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=None)
         mock_browser.page.evaluate = AsyncMock(return_value="")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
-        assert any(
-            "Missing Lang Attribute" in f["title"] for f in result["findings"]
-        )
+        assert any("Missing Lang Attribute" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_manual_accessibility_check_skip_link(self, tester, mock_browser):
         """Should detect missing skip link."""
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [],  # inputs
-            [Mock()],  # h1
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [],  # inputs
+                [Mock()],  # h1
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=None)
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
         assert any("No Skip Link" in f["title"] for f in result["findings"])
         assert any("low" == f["severity"] for f in result["findings"])
@@ -423,28 +402,30 @@ class TestAccessibilityTester:
     @pytest.mark.asyncio
     async def test_manual_accessibility_check_skip_link_present(self, tester, mock_browser):
         """Should not flag skip link when present."""
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [],  # inputs
-            [Mock()],  # h1
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [],  # inputs
+                [Mock()],  # h1
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=Mock())
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
         assert not any("No Skip Link" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_manual_accessibility_check_status_fail(self, tester, mock_browser):
         """Should return fail status for critical findings."""
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [],  # inputs
-            [Mock()],  # h1
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [],  # inputs
+                [Mock()],  # h1
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=None)
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
@@ -453,22 +434,16 @@ class TestAccessibilityTester:
             {"title": "Critical", "description": "Something", "severity": "critical"}
         ]
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
         assert result["status"] == "fail"
 
     @pytest.mark.asyncio
     async def test_manual_accessibility_check_exception(self, tester, mock_browser):
         """Should handle exceptions during manual checks."""
-        mock_browser.page.query_selector_all = AsyncMock(
-            side_effect=Exception("DOM error")
-        )
+        mock_browser.page.query_selector_all = AsyncMock(side_effect=Exception("DOM error"))
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
         assert result["status"] == "fail"
         assert any("Manual Check Error" in f["title"] for f in result["findings"])
@@ -498,21 +473,19 @@ class TestAccessibilityTester:
         mock_input = AsyncMock()
         mock_input.get_attribute.side_effect = ["email", None, None, None, None]
 
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [mock_input],  # inputs
-            [Mock()],  # h1
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [mock_input],  # inputs
+                [Mock()],  # h1
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=None)
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
-        assert any(
-            "Form Inputs Without Labels" in f["title"] for f in result["findings"]
-        )
+        assert any("Form Inputs Without Labels" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_manual_accessibility_input_aria_label(self, tester, mock_browser):
@@ -520,21 +493,19 @@ class TestAccessibilityTester:
         mock_input = AsyncMock()
         mock_input.get_attribute.side_effect = [None, "Search", None, None, None]
 
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [mock_input],  # inputs
-            [Mock()],  # h1
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [mock_input],  # inputs
+                [Mock()],  # h1
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=None)
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
-        assert not any(
-            "Form Inputs Without Labels" in f["title"] for f in result["findings"]
-        )
+        assert not any("Form Inputs Without Labels" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_manual_accessibility_input_placeholder(self, tester, mock_browser):
@@ -542,18 +513,16 @@ class TestAccessibilityTester:
         mock_input = AsyncMock()
         mock_input.get_attribute.side_effect = [None, None, None, "Enter name", None]
 
-        mock_browser.page.query_selector_all = AsyncMock(side_effect=[
-            [],  # images
-            [mock_input],  # inputs
-            [Mock()],  # h1
-        ])
+        mock_browser.page.query_selector_all = AsyncMock(
+            side_effect=[
+                [],  # images
+                [mock_input],  # inputs
+                [Mock()],  # h1
+            ]
+        )
         mock_browser.page.query_selector = AsyncMock(return_value=None)
         mock_browser.page.evaluate = AsyncMock(return_value="en")
 
-        result = await tester._manual_accessibility_check(
-            mock_browser, datetime.now(timezone.utc)
-        )
+        result = await tester._manual_accessibility_check(mock_browser, datetime.now(timezone.utc))
 
-        assert not any(
-            "Form Inputs Without Labels" in f["title"] for f in result["findings"]
-        )
+        assert not any("Form Inputs Without Labels" in f["title"] for f in result["findings"])

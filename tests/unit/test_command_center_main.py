@@ -22,19 +22,16 @@ os.environ["OBSIDIAN_VAULT_PATH"] = _VAULT_TMPDIR
 
 pytest.importorskip("fastapi")
 
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # noqa: E402
 
-from command_center.main import (
+from command_center.main import (  # noqa: E402
     agents_sse,
     app,
     call_mcp_tool,
     chat_sse,
-    dashboard,
     event_generator,
-    health_check,
     json_serialize,
     orchestrator_sse,
-    readiness_check,
     result_sse,
     sse_stream,
     _extract_findings,
@@ -47,9 +44,10 @@ from command_center.main import (
 @pytest.fixture
 def client():
     """Return a FastAPI TestClient with mocked dependencies."""
-    with patch("command_center.main.reader") as mock_reader, patch(
-        "command_center.main.chat_engine"
-    ) as mock_chat:
+    with (
+        patch("command_center.main.reader") as mock_reader,
+        patch("command_center.main.chat_engine") as mock_chat,
+    ):
         # Default mock returns
         mock_reader.get_orchestrator_status = MagicMock(return_value={"status": "running"})
         mock_reader.get_active_agents = MagicMock(return_value=[])
@@ -372,7 +370,9 @@ class TestTestTypesApi:
     def test_run_test_unknown_type(self, client):
         """POST /api/tests/run should reject unknown test types."""
         c, _, _ = client
-        response = c.post("/api/tests/run", data={"url": "https://example.com", "test_type": "unknown"})
+        response = c.post(
+            "/api/tests/run", data={"url": "https://example.com", "test_type": "unknown"}
+        )
         assert response.status_code == 400
         assert "error" in response.json()
 
@@ -383,7 +383,9 @@ class TestTestTypesApi:
         with patch("command_center.main.call_mcp_tool", new_callable=AsyncMock) as mock_mcp:
             mock_mcp.return_value = {"status": "success", "result": {"agent_id": "agent-123"}}
 
-            response = c.post("/api/tests/run", data={"url": "https://example.com", "test_type": "homepage"})
+            response = c.post(
+                "/api/tests/run", data={"url": "https://example.com", "test_type": "homepage"}
+            )
 
         assert response.status_code == 200
         data = response.json()
@@ -397,7 +399,9 @@ class TestTestTypesApi:
         with patch("command_center.main.call_mcp_tool", new_callable=AsyncMock) as mock_mcp:
             mock_mcp.return_value = {"status": "error", "error": "MCP down"}
 
-            response = c.post("/api/tests/run", data={"url": "https://example.com", "test_type": "homepage"})
+            response = c.post(
+                "/api/tests/run", data={"url": "https://example.com", "test_type": "homepage"}
+            )
 
         assert response.status_code == 500
         assert "MCP down" in response.json()["error"]
@@ -409,7 +413,9 @@ class TestTestTypesApi:
         with patch("command_center.main.call_mcp_tool", new_callable=AsyncMock) as mock_mcp:
             mock_mcp.side_effect = RuntimeError("boom")
 
-            response = c.post("/api/tests/run", data={"url": "https://example.com", "test_type": "homepage"})
+            response = c.post(
+                "/api/tests/run", data={"url": "https://example.com", "test_type": "homepage"}
+            )
 
         assert response.status_code == 500
         assert "boom" in response.json()["error"]
@@ -523,6 +529,7 @@ class TestSseEndpoints:
 
         async def _call():
             from fastapi import Request
+
             request = MagicMock(spec=Request)
             return await sse_stream(request)
 
@@ -538,6 +545,7 @@ class TestSseEndpoints:
 
         async def _call():
             from fastapi import Request
+
             request = MagicMock(spec=Request)
             return await agents_sse(request)
 
@@ -552,6 +560,7 @@ class TestSseEndpoints:
 
         async def _call():
             from fastapi import Request
+
             request = MagicMock(spec=Request)
             return await orchestrator_sse(request)
 
@@ -566,6 +575,7 @@ class TestSseEndpoints:
 
         async def _call():
             from fastapi import Request
+
             request = MagicMock(spec=Request)
             return await result_sse(request, "agent-123")
 
@@ -581,6 +591,7 @@ class TestSseEndpoints:
 
         async def _call():
             from fastapi import Request
+
             request = MagicMock(spec=Request)
             return await chat_sse(request, "hello")
 

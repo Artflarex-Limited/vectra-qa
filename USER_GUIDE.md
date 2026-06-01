@@ -1,11 +1,12 @@
 # User Guide: Testing Your Project with Vectra QA
 
 ## Table of Contents
+
 1. [Quick Overview](#quick-overview)
 2. [Prerequisites](#prerequisites)
 3. [Configuration](#configuration)
 4. [Writing Your First Test](#writing-your-first-test)
-5. [Running Tests](#running-tests)
+5. [Run Your Test](#step-3-run-your-test)
 6. [Understanding Results](#understanding-results)
 7. [Advanced Usage](#advanced-usage)
 
@@ -26,10 +27,12 @@ You don't write test scripts. You describe what to test, and agents figure out h
 ## Prerequisites
 
 ### Your Application
+
 - A web application with a URL (local or deployed)
 - Common examples: React app, Vue app, Django, Rails, static site
 
 ### Vectra QA Setup
+
 ```bash
 # Clone and start the framework
 git clone https://github.com/your-org/vectra-qa.git
@@ -40,7 +43,8 @@ docker compose up --build
 ```
 
 ### Verify It's Working
-Open http://localhost:3000 — you should see the dark mode Command Center dashboard.
+
+Open <http://localhost:3000> — you should see the dark mode Command Center dashboard.
 
 ---
 
@@ -201,6 +205,7 @@ if __name__ == "__main__":
 The key is writing clear **objectives** for each agent. Be specific:
 
 **Good Objective:**
+
 ```
 "Test the checkout flow: 1) Add item to cart, 2) Click checkout, 
 3) Fill shipping form with test data, 4) Select payment method,
@@ -208,6 +213,7 @@ The key is writing clear **objectives** for each agent. Be specific:
 ```
 
 **Bad Objective:**
+
 ```
 "Test the app"
 ```
@@ -225,7 +231,8 @@ python examples/my_app_test.py
 
 ### Step 4: Watch Results in Real-Time
 
-Open http://localhost:3000 and watch:
+Open <http://localhost:3000> and watch:
+
 - **Orchestrator Feed** — See what agents are doing
 - **Active Spawns** — Watch agents start and complete
 - **Obsidian Nodes** — View detailed findings
@@ -355,16 +362,19 @@ execute_tool("spawn_agent", {
 ## Troubleshooting
 
 ### Agents Not Spawning
+
 - Check MCP Server is running: `docker compose ps`
 - Verify API keys in `.env`
 - Check logs: `docker compose logs mcp-server`
 
 ### Tests Taking Too Long
+
 - Reduce test scope in objectives
 - Set timeout in spawn parameters
 - Use `PLAYWRIGHT_SLOW_MO=0` for faster execution
 
 ### False Positives/Negatives
+
 - Refine objectives to be more specific
 - Add more context about expected behavior
 - Check if app requires specific state (e.g., seeded database)
@@ -381,6 +391,7 @@ execute_tool("spawn_agent", {
 ## Example: Complete E-Commerce Test Suite
 
 See `examples/ecommerce_test.py` for a full example testing:
+
 - Product browsing
 - Cart management
 - Checkout flow
@@ -389,4 +400,4 @@ See `examples/ecommerce_test.py` for a full example testing:
 
 ---
 
-**Questions?** Open an issue at https://github.com/your-org/vectra-qa/issues
+**Questions?** Open an issue at <https://github.com/your-org/vectra-qa/issues>

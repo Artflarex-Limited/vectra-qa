@@ -55,23 +55,17 @@ class TestMultiBrowserTester:
         async def mock_test_func(browser, url):
             return {"status": "pass", "findings": []}
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             mock_browser_auto = Mock()
             mock_browser_auto.playwright = None
             MockBrowserAuto.return_value = mock_browser_auto
 
-            with patch(
-                "playwright.async_api.async_playwright"
-            ) as mock_async_pw:
+            with patch("playwright.async_api.async_playwright") as mock_async_pw:
                 mock_pw_mgr = AsyncMock()
                 mock_pw_mgr.start = AsyncMock(return_value=pw)
                 mock_async_pw.return_value = mock_pw_mgr
 
-                result = await tester.test_all_browsers(
-                    mock_test_func, "https://example.com"
-                )
+                result = await tester.test_all_browsers(mock_test_func, "https://example.com")
 
         assert result["status"] == "pass"
         assert "chromium" in result["results"]
@@ -97,23 +91,17 @@ class TestMultiBrowserTester:
                 return {"status": "pass", "findings": []}
             return {"status": "fail", "findings": []}
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             mock_browser_auto = Mock()
             mock_browser_auto.playwright = None
             MockBrowserAuto.return_value = mock_browser_auto
 
-            with patch(
-                "playwright.async_api.async_playwright"
-            ) as mock_async_pw:
+            with patch("playwright.async_api.async_playwright") as mock_async_pw:
                 mock_pw_mgr = AsyncMock()
                 mock_pw_mgr.start = AsyncMock(return_value=pw)
                 mock_async_pw.return_value = mock_pw_mgr
 
-                result = await tester.test_all_browsers(
-                    mock_test_func, "https://example.com"
-                )
+                result = await tester.test_all_browsers(mock_test_func, "https://example.com")
 
         assert result["status"] == "fail"
         divergence = [f for f in result["findings"] if "Divergence" in f["title"]]
@@ -127,16 +115,12 @@ class TestMultiBrowserTester:
         async def mock_test_func(browser, url):
             return {"status": "pass", "findings": []}
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             mock_browser_auto = Mock()
             mock_browser_auto.playwright = None
             MockBrowserAuto.return_value = mock_browser_auto
 
-            with patch(
-                "playwright.async_api.async_playwright"
-            ) as mock_async_pw:
+            with patch("playwright.async_api.async_playwright") as mock_async_pw:
                 mock_pw_mgr = AsyncMock()
                 mock_pw_mgr.start = AsyncMock(return_value=pw)
                 mock_async_pw.return_value = mock_pw_mgr
@@ -164,23 +148,17 @@ class TestMultiBrowserTester:
         async def mock_test_func(browser, url):
             return {"status": "pass", "findings": []}
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             mock_browser_auto = Mock()
             mock_browser_auto.playwright = None
             MockBrowserAuto.return_value = mock_browser_auto
 
-            with patch(
-                "playwright.async_api.async_playwright"
-            ) as mock_async_pw:
+            with patch("playwright.async_api.async_playwright") as mock_async_pw:
                 mock_pw_mgr = AsyncMock()
                 mock_pw_mgr.start = AsyncMock(return_value=pw)
                 mock_async_pw.return_value = mock_pw_mgr
 
-                result = await tester.test_all_browsers(
-                    mock_test_func, "https://example.com"
-                )
+                result = await tester.test_all_browsers(mock_test_func, "https://example.com")
 
         assert result["status"] == "warning"
         for browser_name in tester.BROWSERS:
@@ -201,23 +179,17 @@ class TestMultiBrowserTester:
                 return {"status": "pass", "findings": []}
             return {"status": "warning", "findings": []}
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             mock_browser_auto = Mock()
             mock_browser_auto.playwright = None
             MockBrowserAuto.return_value = mock_browser_auto
 
-            with patch(
-                "playwright.async_api.async_playwright"
-            ) as mock_async_pw:
+            with patch("playwright.async_api.async_playwright") as mock_async_pw:
                 mock_pw_mgr = AsyncMock()
                 mock_pw_mgr.start = AsyncMock(return_value=pw)
                 mock_async_pw.return_value = mock_pw_mgr
 
-                result = await tester.test_all_browsers(
-                    mock_test_func, "https://example.com"
-                )
+                result = await tester.test_all_browsers(mock_test_func, "https://example.com")
 
         assert result["status"] == "warning"
 
@@ -229,9 +201,7 @@ class TestMultiBrowserTester:
         async def mock_test_func(browser, url):
             return {"status": "pass", "findings": []}
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             mock_browser_auto = Mock()
             mock_pw = Mock()
             mock_pw.start = AsyncMock(return_value=pw)
@@ -250,21 +220,15 @@ class TestMultiBrowserTester:
         """Should capture screenshots across browsers."""
         pw, mock_browser_instance, mock_context, mock_page = mock_playwright
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             mock_browser_auto = Mock()
             mock_browser_auto.playwright = None
             mock_browser_auto.visit = AsyncMock(return_value={"success": True})
-            mock_browser_auto.screenshot = AsyncMock(
-                return_value={"success": True}
-            )
+            mock_browser_auto.screenshot = AsyncMock(return_value={"success": True})
             mock_browser_auto.page = mock_page
             MockBrowserAuto.return_value = mock_browser_auto
 
-            with patch(
-                "playwright.async_api.async_playwright"
-            ) as mock_async_pw:
+            with patch("playwright.async_api.async_playwright") as mock_async_pw:
                 mock_pw_mgr = AsyncMock()
                 mock_pw_mgr.start = AsyncMock(return_value=pw)
                 mock_async_pw.return_value = mock_pw_mgr
@@ -283,21 +247,15 @@ class TestMultiBrowserTester:
         """Should handle screenshot failures."""
         pw, mock_browser_instance, mock_context, mock_page = mock_playwright
 
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             mock_browser_auto = Mock()
             mock_browser_auto.playwright = None
             mock_browser_auto.visit = AsyncMock(return_value={"success": True})
-            mock_browser_auto.screenshot = AsyncMock(
-                return_value={"success": False}
-            )
+            mock_browser_auto.screenshot = AsyncMock(return_value={"success": False})
             mock_browser_auto.page = mock_page
             MockBrowserAuto.return_value = mock_browser_auto
 
-            with patch(
-                "playwright.async_api.async_playwright"
-            ) as mock_async_pw:
+            with patch("playwright.async_api.async_playwright") as mock_async_pw:
                 mock_pw_mgr = AsyncMock()
                 mock_pw_mgr.start = AsyncMock(return_value=pw)
                 mock_async_pw.return_value = mock_pw_mgr
@@ -311,22 +269,19 @@ class TestMultiBrowserTester:
     @pytest.mark.asyncio
     async def test_test_all_browsers_empty_browser_list(self, tester):
         """Should fall back to default browsers when empty list provided."""
+
         async def mock_test_func(browser, url):
             return {"status": "pass", "findings": []}
 
         # Since [] is falsy, code falls back to self.BROWSERS
         # We just verify the method handles it without error
         # by checking it doesn't crash and uses defaults
-        with patch(
-            "mcp_server.browser_tools.BrowserAutomation"
-        ) as MockBrowserAuto:
+        with patch("mcp_server.browser_tools.BrowserAutomation") as MockBrowserAuto:
             mock_browser_auto = Mock()
             mock_browser_auto.playwright = None
             MockBrowserAuto.return_value = mock_browser_auto
 
-            with patch(
-                "playwright.async_api.async_playwright"
-            ) as mock_async_pw:
+            with patch("playwright.async_api.async_playwright") as mock_async_pw:
                 mock_pw = AsyncMock()
                 mock_pw.start = AsyncMock(return_value=AsyncMock())
                 mock_async_pw.return_value = mock_pw

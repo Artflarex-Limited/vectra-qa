@@ -121,9 +121,7 @@ class TestAuthFlowTester:
             password="pass",
         )
 
-        assert any(
-            "Password Field Not Masked" in f["title"] for f in result["findings"]
-        )
+        assert any("Password Field Not Masked" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_login_flow_weak_autocomplete(self, tester, mock_browser):
@@ -143,9 +141,7 @@ class TestAuthFlowTester:
             password="pass",
         )
 
-        assert any(
-            "Password Autocomplete" in f["title"] for f in result["findings"]
-        )
+        assert any("Password Autocomplete" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
     async def test_login_flow_no_username_field(self, tester, mock_browser):
@@ -180,9 +176,7 @@ class TestAuthFlowTester:
     async def test_login_flow_no_submit_button(self, tester, mock_browser):
         """Should fail when submit button not found."""
         mock_element = AsyncMock()
-        mock_browser.page.query_selector = AsyncMock(
-            side_effect=[mock_element, mock_element, None]
-        )
+        mock_browser.page.query_selector = AsyncMock(side_effect=[mock_element, mock_element, None])
 
         result = await tester.test_login_flow(
             login_url="https://example.com/login",
@@ -220,12 +214,8 @@ class TestAuthFlowTester:
             password="pass",
         )
 
-        assert any(
-            "Session Cookie Not HttpOnly" in f["title"] for f in result["findings"]
-        )
-        assert any(
-            "Session Cookie Not Secure" in f["title"] for f in result["findings"]
-        )
+        assert any("Session Cookie Not HttpOnly" in f["title"] for f in result["findings"])
+        assert any("Session Cookie Not Secure" in f["title"] for f in result["findings"])
         assert any("Session Cookie SameSite" in f["title"] for f in result["findings"])
 
     @pytest.mark.asyncio
@@ -352,9 +342,7 @@ class TestAuthFlowTester:
     @pytest.mark.asyncio
     async def test_logout_flow_session_still_active(self, tester, mock_browser):
         """Should flag session still active after logout."""
-        mock_browser.page.context.cookies = AsyncMock(
-            return_value=[{"name": "session_id"}]
-        )
+        mock_browser.page.context.cookies = AsyncMock(return_value=[{"name": "session_id"}])
 
         result = await tester.test_logout_flow(logout_url="https://example.com/logout")
 

@@ -1,6 +1,7 @@
 # Configuration
 
 Vectra QA is configured through environment variables. You can set them in:
+
 - `.env` file (recommended)
 - Docker Compose environment section
 - Shell exports
@@ -83,6 +84,7 @@ You can configure multiple providers simultaneously. The system will use them in
 6. **Local** (Ollama) — Privacy-first
 
 Example with multiple providers:
+
 ```bash
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
@@ -106,6 +108,7 @@ services:
 ## Environment-Specific Configurations
 
 ### Development
+
 ```bash
 HEADLESS=false  # See browser windows
 LOG_LEVEL=DEBUG
@@ -113,6 +116,7 @@ CHATBOT_ENABLE_STREAMING=true
 ```
 
 ### Production
+
 ```bash
 HEADLESS=true
 LOG_LEVEL=INFO
@@ -122,6 +126,7 @@ CORS_ORIGINS=https://yourdomain.com
 ```
 
 ### CI/CD
+
 ```bash
 HEADLESS=true
 LOG_LEVEL=WARNING

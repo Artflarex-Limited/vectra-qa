@@ -264,7 +264,7 @@ class RedisTaskQueue(TaskQueue):
         task_ids = self._redis.zrange(self._key("pending"), 0, -1)
         tasks = []
         for task_id in task_ids:
-            task_data = self._redis.hget(self._key("tasks"), task_id)
+            task_data = self._redis.hget(self._key("tasks"), task_id)  # type: ignore[arg-type]
             if task_data:
                 tasks.append(Task(**json.loads(task_data)))
         return tasks

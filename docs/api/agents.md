@@ -11,6 +11,7 @@ Agents are spawned as subprocess workers that communicate through the Obsidian V
 Specializes in browser automation and UI testing using Playwright.
 
 **Capabilities:**
+
 - Homepage structure testing
 - Navigation link validation
 - Contact form testing
@@ -22,6 +23,7 @@ Specializes in browser automation and UI testing using Playwright.
 **Worker Script**: `agents/ui_explorer/worker.py`
 
 **Spawn Example:**
+
 ```json
 {
   "role": "ui_explorer",
@@ -42,6 +44,7 @@ Specializes in browser automation and UI testing using Playwright.
 | `test_full_suite()` | All tests sequentially | ~3min |
 
 **Report Format:**
+
 ```markdown
 # Test Report: Homepage
 
@@ -68,6 +71,7 @@ Specializes in browser automation and UI testing using Playwright.
 Specializes in API monitoring and data validation.
 
 **Capabilities:**
+
 - Network request interception
 - API response validation
 - Payload verification
@@ -77,6 +81,7 @@ Specializes in API monitoring and data validation.
 **Worker Script**: `agents/data_validator/worker.py`
 
 **Spawn Example:**
+
 ```json
 {
   "role": "data_validator",
@@ -93,6 +98,7 @@ Specializes in API monitoring and data validation.
 | `validate_api_endpoint()` | Specific endpoint validation | ~30s |
 
 **Report Format:**
+
 ```markdown
 # API Monitoring Report
 
@@ -163,6 +169,7 @@ await update_progress(
 ```
 
 This writes to the vault:
+
 ```yaml
 ---
 status: active
@@ -241,6 +248,7 @@ Agents receive these environment variables on spawn:
 To add a new agent role:
 
 1. **Create worker script**:
+
 ```python
 # agents/my_agent/worker.py
 async def run_agent(agent_id, memory_node):
@@ -250,7 +258,8 @@ async def run_agent(agent_id, memory_node):
     pass
 ```
 
-2. **Add to spawner**:
+1. **Add to spawner**:
+
 ```python
 # mcp_server/tools.py
 worker_scripts = {
@@ -260,7 +269,8 @@ worker_scripts = {
 }
 ```
 
-3. **Update chatbot**:
+1. **Update chatbot**:
+
 ```python
 # command_center/chatbot.py
 TEST_TYPES = {
@@ -272,7 +282,8 @@ TEST_TYPES = {
 }
 ```
 
-4. **Create soul file**:
+1. **Create soul file**:
+
 ```markdown
 # My Agent Soul
 
@@ -313,6 +324,7 @@ When encountering ambiguity:
 ```
 
 The soul influences:
+
 - How agents prioritize tests
 - What they consider important
 - How they report findings
@@ -321,6 +333,7 @@ The soul influences:
 ## Monitoring
 
 ### Agent Logs
+
 ```bash
 # View worker log
 cat obsidian_vault/Runs/ui_explorer-20260115-120000-abc123_worker.log
@@ -330,6 +343,7 @@ tail -f obsidian_vault/Runs/*_worker.log
 ```
 
 ### Process Status
+
 ```bash
 # List agent processes
 ps aux | grep "agents/"
@@ -339,6 +353,7 @@ pgrep -f "ui_explorer-20260115"
 ```
 
 ### Resource Usage
+
 ```bash
 # Memory usage
 ps -o pid,ppid,%mem,%cpu,cmd -p $(pgrep -f "ui_explorer")

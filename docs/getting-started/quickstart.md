@@ -9,6 +9,7 @@ docker compose up --build
 ```
 
 Wait for all services to start (you'll see health checks passing in the logs):
+
 - `mcp-server` on port 8080
 - `command-center` on port 3000
 - `redis` on port 6379
@@ -19,6 +20,7 @@ Wait for all services to start (you'll see health checks passing in the logs):
 Navigate to `http://localhost:3000` in your browser.
 
 You'll see the **Mission Control** dashboard with:
+
 - Live agent count and status
 - Test launcher form
 - Real-time metrics via Server-Sent Events
@@ -46,11 +48,12 @@ print(f"Status: {result['status']}")
 ### Method B: Feature Test via Dashboard
 
 1. In the **Launch Test** panel, enter a URL:
+
    ```
    https://example.com
    ```
 
-2. Select **Test Type**: 
+2. Select **Test Type**:
    - `Performance` — Core Web Vitals
    - `Accessibility` — WCAG compliance
    - `Auth Flow` — Login/logout security
@@ -64,9 +67,11 @@ print(f"Status: {result['status']}")
 
 1. Click the 🤖 **Vectra** chat widget (bottom-right corner)
 2. Type:
+
    ```
    Test the homepage of https://example.com for performance and accessibility
    ```
+
 3. Vectra will confirm the plan — click **✓ Run**
 
 ### Method D: Spawn an Agent (Full Exploration)
@@ -84,6 +89,7 @@ result = execute_tool("spawn_agent", {
 ## Step 4: Monitor Progress
 
 Watch the dashboard update in real-time:
+
 - Agent appears in the **Active Agents** grid
 - Progress bar fills as tests run
 - Console log shows live output
@@ -92,6 +98,7 @@ Watch the dashboard update in real-time:
 ## Step 5: View Results
 
 When the test completes:
+
 1. The agent card turns green (pass), yellow (warning), or red (fail)
 2. Click **View Result** to see detailed findings
 3. Or ask Vectra: "What did the last test find?"

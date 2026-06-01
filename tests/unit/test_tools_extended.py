@@ -7,11 +7,9 @@ Tests cover:
 - Agent lifecycle edge cases
 """
 
-import os
 import pytest
-import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
 
 import subprocess
 
@@ -23,7 +21,6 @@ from mcp_server.tools import (
     _run_browser_tool,
     _run_feature_tool,
 )
-
 
 # ──────────────────────────────────────────────
 # ObsidianVault Error Paths
@@ -96,7 +93,7 @@ class TestObsidianVaultWriteNodeErrors:
     @pytest.mark.unit
     def test_write_verification_failure(self, vault):
         """Should raise VaultCorruptionError when verification fails."""
-        with patch.object(vault, "_atomic_write") as mock_write:
+        with patch.object(vault, "_atomic_write") as _mock_write:
             with patch.object(Path, "read_text", return_value="different content"):
                 with pytest.raises(Exception):
                     vault.write_node("test.md", "content")
@@ -111,6 +108,7 @@ class TestObsidianVaultUpdateFrontmatterErrors:
         vault.write_node("bad_frontmatter.md", "---\ninvalid yaml : [ : ]\n---\nBody")
 
         from mcp_server.tools import VaultError
+
         with pytest.raises(VaultError):
             vault.update_frontmatter("bad_frontmatter.md", {"status": "updated"})
 
@@ -231,11 +229,17 @@ class TestExecuteToolErrors:
     @pytest.mark.unit
     def test_tool_handler_exception(self):
         """Should catch and return handler exceptions."""
-        with patch.dict(TOOLS, {"bad_tool": {
-            "description": "A bad tool",
-            "parameters": {},
-            "handler": lambda params: (_ for _ in ()).throw(RuntimeError("Handler failed"))
-        }}, clear=False):
+        with patch.dict(
+            TOOLS,
+            {
+                "bad_tool": {
+                    "description": "A bad tool",
+                    "parameters": {},
+                    "handler": lambda params: (_ for _ in ()).throw(RuntimeError("Handler failed")),
+                }
+            },
+            clear=False,
+        ):
             result = execute_tool("bad_tool", {})
             assert result["status"] == "error"
             assert "Handler failed" in result["error"]
@@ -276,9 +280,9 @@ class TestBrowserToolErrors:
             asyncio.set_event_loop(loop)
             try:
                 result = loop.run_until_complete(
-                    __import__("mcp_server.tools", fromlist=["_async_browser_tool"])._async_browser_tool(
-                        "unknown_tool", {}
-                    )
+                    __import__(
+                        "mcp_server.tools", fromlist=["_async_browser_tool"]
+                    )._async_browser_tool("unknown_tool", {})
                 )
                 assert "error" in result
             finally:
@@ -310,9 +314,9 @@ class TestFeatureToolErrors:
         asyncio.set_event_loop(loop)
         try:
             result = loop.run_until_complete(
-                __import__("mcp_server.tools", fromlist=["_async_feature_tool"])._async_feature_tool(
-                    "unknown_feature", {}
-                )
+                __import__(
+                    "mcp_server.tools", fromlist=["_async_feature_tool"]
+                )._async_feature_tool("unknown_feature", {})
             )
             assert "error" in result
             assert "Unknown feature type" in result["error"]

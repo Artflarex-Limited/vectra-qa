@@ -5,19 +5,25 @@ Vectra QA uses an **Agent-to-Agent (A2A)** communication protocol based on the O
 ## Why File-Based Communication?
 
 ### 1. Decoupling
+
 Agents don't know about each other. They only know about the vault:
+
 - **No direct dependencies** — Agent A doesn't import Agent B
 - **No network failures** — Communication is local filesystem I/O
 - **No service discovery** — Agents don't need to find each other
 
 ### 2. Persistence
+
 Every message is automatically saved:
+
 - **Crash recovery** — If an agent crashes, its state is in the vault
 - **Audit trail** — Complete history of all communication
 - **Replay capability** — Re-run tests from saved state
 
 ### 3. Observability
+
 Humans can read agent conversations:
+
 ```bash
 cat obsidian_vault/Runs/Test_20260115.md
 ```
@@ -38,6 +44,7 @@ vault.update_frontmatter(memory_node, {
 ```
 
 Command Center reads and broadcasts:
+
 ```python
 # Dashboard reads via obsidian_reader
 agent = reader.get_active_agents()[0]
@@ -205,10 +212,12 @@ If an agent process crashes:
 
 1. **Process monitor** detects exit
 2. **MCP Server** updates node status:
+
    ```yaml
    status: failed
    error: "Process exited with code 1"
    ```
+
 3. **Command Center** broadcasts failure
 4. **Dashboard** shows red status badge
 
@@ -242,7 +251,9 @@ sections_failed: 2
 ## Best Practices
 
 ### 1. Atomic Updates
+
 Update frontmatter in one operation:
+
 ```python
 # Good
 vault.update_frontmatter(node, {
@@ -257,7 +268,9 @@ vault.update_frontmatter(node, {"result": "pass"})
 ```
 
 ### 2. Idempotent Messages
+
 Agents should handle duplicate reads:
+
 ```python
 # Check if already processed
 if node["frontmatter"].get("status") == "completed":
@@ -265,7 +278,9 @@ if node["frontmatter"].get("status") == "completed":
 ```
 
 ### 3. Graceful Degradation
+
 If vault is unavailable:
+
 ```python
 try:
     vault.update_frontmatter(node, updates)
@@ -275,7 +290,9 @@ except FileNotFoundError:
 ```
 
 ### 4. Content Size Limits
+
 Keep messages concise:
+
 - **Frontmatter**: < 1KB (structured data only)
 - **Content**: < 100KB (use screenshots for visual data)
 - **Screenshots**: Store paths, not base64

@@ -434,8 +434,8 @@ After setup:
 
 - **GitHub Issues**: Bug reports and feature requests
 - **GitHub Discussions**: Questions and ideas
-- **Documentation**: https://vectra-qa.artflarex.com
-- **Wiki**: https://github.com/Artflarex-Limited/vectra-qa/wiki
+- **Documentation**: <https://vectra-qa.artflarex.com>
+- **Wiki**: <https://github.com/Artflarex-Limited/vectra-qa/wiki>
 
 ## Verification Checklist
 

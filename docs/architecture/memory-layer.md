@@ -5,6 +5,7 @@ The Obsidian Vault serves as the shared memory system for all agents. Unlike tra
 ## Why Markdown?
 
 ### Human Readable
+
 ```markdown
 ## [10:30:15] Page Load Complete
 
@@ -14,25 +15,31 @@ The Obsidian Vault serves as the shared memory system for all agents. Unlike tra
 ```
 
 ### LLM Native
+
 Large language models are trained on vast amounts of Markdown. The format is their "native language":
+
 - Headers structure context
 - Bullet points organize findings
 - Code blocks contain examples
 - Bold text emphasizes importance
 
 ### Version Control Friendly
+
 ```bash
 git diff obsidian_vault/Runs/Homepage_Test_20260115.md
 ```
 
 Diffs show exactly what changed:
+
 ```diff
 - progress_percent: 50
 + progress_percent: 75
 ```
 
 ### No Dependencies
+
 No database server, no connection pool, no ORM. Just the filesystem:
+
 - Works offline
 - Survives container restarts
 - Easy to back up (rsync, tar)
@@ -74,6 +81,7 @@ compute_pid: 12345
 ### Custom Fields
 
 Agents can add any additional fields:
+
 ```yaml
 ---
 browser_engine: chromium
@@ -89,7 +97,8 @@ console_errors: 0
 
 System-wide state that persists across test runs.
 
-**Test_Run_Master.md**
+#### Test_Run_Master.md
+
 ```yaml
 ---
 status: active
@@ -103,7 +112,8 @@ completed_agents: ["ui_explorer-..."]
 ---
 ```
 
-**Chat_Log.md**
+#### Chat_Log.md
+
 ```yaml
 ---
 chat_id: global
@@ -177,6 +187,7 @@ Related screenshots: [[Screenshot_Homepage]]
 ```
 
 ### Benefits
+
 - **Knowledge Graph**: Obsidian visualizes connections
 - **Context Preservation**: Related tests are linked
 - **Human Exploration**: Browse findings like a wiki
@@ -184,6 +195,7 @@ Related screenshots: [[Screenshot_Homepage]]
 ## File Operations
 
 ### Reading a Node
+
 ```python
 from mcp_server.tools import vault
 
@@ -193,6 +205,7 @@ print(node["content"])  # Markdown body
 ```
 
 ### Writing a Node
+
 ```python
 vault.write_node(
     "Runs/My_Test.md",
@@ -202,6 +215,7 @@ vault.write_node(
 ```
 
 ### Updating Frontmatter
+
 ```python
 vault.update_frontmatter(
     "Runs/My_Test.md",
@@ -212,11 +226,13 @@ vault.update_frontmatter(
 ## Storage Considerations
 
 ### Performance
+
 - **SSD recommended** — Vault files are read/written frequently
 - **Inode limits** — Each test run creates 1-3 files
 - **Screenshot size** — PNGs can be 100KB-2MB each
 
 ### Cleanup
+
 ```bash
 # Archive old test runs
 tar -czf runs-$(date +%Y%m%d).tar.gz obsidian_vault/Runs/
@@ -227,6 +243,7 @@ find obsidian_vault/Runs/ -mtime +30 -delete
 ```
 
 ### Backup
+
 ```bash
 # Real-time sync to S3
 aws s3 sync obsidian_vault/ s3://my-bucket/vectra-qa/
@@ -238,6 +255,7 @@ rsync -avz obsidian_vault/ backup-server:/backups/vectra-qa/
 ## Security
 
 ### File Permissions
+
 ```bash
 # Restrict vault access
 chmod 700 obsidian_vault/
@@ -245,14 +263,18 @@ chown vectra:vectra obsidian_vault/
 ```
 
 ### Sensitive Data
+
 Never store in vault:
+
 - API keys (use `.env`)
 - Passwords
 - Session tokens
 - Personal data
 
 ### Audit Trail
+
 Every file change is logged by the Vault Watcher:
+
 ```python
 # obsidian_reader.py logs:
 # "File modified: Runs/Test_20260115.md"

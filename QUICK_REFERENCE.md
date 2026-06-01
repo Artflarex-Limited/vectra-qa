@@ -1,6 +1,7 @@
 # Vectra QA Quick Reference Card
 
 ## 🚀 Start Everything
+
 ```bash
 cd vectra-qa
 docker compose up --build
@@ -10,12 +11,14 @@ docker compose up --build
 ## 📝 Test Your App (3 Steps)
 
 ### Step 1: Set Your App URL
+
 ```bash
 # In .env
 TARGET_URL=http://localhost:3001
 ```
 
 ### Step 2: Write a Test
+
 ```python
 from mcp_server.tools import execute_tool
 
@@ -35,6 +38,7 @@ execute_tool("spawn_agent", {
 ```
 
 ### Step 3: Run It
+
 ```bash
 python examples/test_real_app.py
 ```
@@ -42,6 +46,7 @@ python examples/test_real_app.py
 ## 🎯 Common Test Patterns
 
 ### Login Flow
+
 ```python
 {
     "role": "ui_explorer",
@@ -53,6 +58,7 @@ python examples/test_real_app.py
 ```
 
 ### Form Validation
+
 ```python
 {
     "role": "ui_explorer",
@@ -64,6 +70,7 @@ python examples/test_real_app.py
 ```
 
 ### API Monitoring
+
 ```python
 {
     "role": "data_validator",
@@ -76,6 +83,7 @@ python examples/test_real_app.py
 ```
 
 ### Accessibility
+
 ```python
 {
     "role": "ui_explorer",
@@ -90,7 +98,7 @@ python examples/test_real_app.py
 
 | What | Where |
 |------|-------|
-| Live dashboard | http://localhost:3000 |
+| Live dashboard | <http://localhost:3000> |
 | UI test details | `obsidian_vault/Runs/*_UI.md` |
 | API test details | `obsidian_vault/Runs/*_API.md` |
 | Summary | `obsidian_vault/Global/Test_Run_Master.md` |

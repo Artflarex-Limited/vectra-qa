@@ -107,6 +107,7 @@ COMMAND_CENTER_PORT=3000
 ```
 
 **Supported Providers:**
+
 - **OpenAI** — GPT-4o, GPT-4o-mini (general purpose)
 - **Anthropic** — Claude 3.5 Sonnet (UI analysis, reasoning)
 - **MiniMax** — minimax-text-01 (Chinese/English, structured output)
@@ -149,6 +150,7 @@ mkdir -p ~/Documents/vectra-qa-vault/{Global,Runs,Templates,Baselines}
 ```
 
 **Important:** The vault path must be:
+
 - **Absolute** (not relative like `./vault`)
 - **Writable** by the user running the agents
 - **Outside version control** (add it to `.gitignore`)
@@ -282,7 +284,7 @@ python examples/my_app_test.py
 
 #### 4. View Results
 
-- **Live Dashboard**: http://localhost:3000
+- **Live Dashboard**: <http://localhost:3000>
 - **Detailed Reports**: `obsidian_vault/Runs/MyApp_Login_Test.md`
 
 For a complete guide, see [USER_GUIDE.md](USER_GUIDE.md).

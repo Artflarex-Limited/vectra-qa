@@ -100,28 +100,34 @@ Findings are categorized by severity:
 The `/results/{agent_id}` page shows:
 
 ### Status Panel
+
 - Overall status badge (pass/warning/fail)
 - Progress bar
 - Test metadata (URL, type, duration)
 
 ### Summary Stats
+
 - Passed / Failed / Warning counts
 - Total sections checked
 
 ### Detailed Sections
+
 - Collapsible sections for each check
 - Metrics tables
 - Findings with severity icons
 
 ### Recommendations
+
 - Numbered list of suggested fixes
 - Code examples where applicable
 
 ### Screenshots
+
 - Grid of captured screenshots
 - Click to view full size
 
 ### Raw Log
+
 - Toggle-able raw markdown content
 - Full execution details
 
@@ -130,6 +136,7 @@ The `/results/{agent_id}` page shows:
 Vectra provides plain-English summaries:
 
 ### Example: Pass
+
 ```
 The homepage test passed! Here's what I found:
 
@@ -145,6 +152,7 @@ Overall: Great job! The homepage is in good shape.
 ```
 
 ### Example: Fail
+
 ```
 The contact form test found some issues:
 
@@ -167,6 +175,7 @@ Recommendations:
 ```
 
 ### Example: Warning
+
 ```
 The accessibility audit completed with warnings:
 
@@ -185,8 +194,9 @@ Fixes needed:
 <a href="#main" class="skip-link">Skip to content</a>
 ```
 
-The site is mostly accessible but needs these 
+The site is mostly accessible but needs these
 improvements for full WCAG compliance.
+
 ```
 
 ## Reading Raw Results
@@ -219,14 +229,17 @@ grep -r "Pass rate" obsidian_vault/Runs/ | sort
 ## Exporting Results
 
 ### JSON API
+
 ```bash
 curl http://localhost:3000/api/results/{agent_id} > result.json
 ```
 
 ### Markdown
+
 Results are already in Markdown format in the vault.
 
 ### Screenshot Downloads
+
 ```bash
 # Download all screenshots
 cp obsidian_vault/Screenshots/*.png ./downloads/
@@ -255,6 +268,7 @@ After reviewing results:
 5. **Info items**: No action needed
 
 Create GitHub issues from findings:
+
 ```markdown
 ## Test Finding: Missing Email Validation
 
@@ -268,4 +282,5 @@ Create GitHub issues from findings:
 ```
 
 **Reference**: [[Contact_Test_20260115]]
+
 ```

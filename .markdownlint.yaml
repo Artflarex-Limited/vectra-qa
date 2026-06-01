@@ -18,3 +18,9 @@ no-inline-html: false
 # Allow duplicate headings in different sections
 no-duplicate-heading:
   siblings_only: true
+
+# Table column style: too noisy for compact tables
+table-column-style: false
+
+# Fenced code language: many output blocks don't need language tags
+fenced-code-language: false

@@ -9,6 +9,7 @@ The easiest way to run tests is through the chatbot.
 ### Basic Test Request
 
 **Vectra Chat:**
+
 ```
 Test the homepage of https://example.com
 ```
@@ -22,6 +23,7 @@ Check navigation and contact form on https://example.com
 ```
 
 **Result:** Vectra plans two tests:
+
 1. Navigation test
 2. Contact form test
 
@@ -32,6 +34,7 @@ Run a full accessibility audit on https://example.com and check if it works on m
 ```
 
 **Result:** Vectra plans:
+
 1. Accessibility test
 2. Responsive design test
 
@@ -117,11 +120,13 @@ console.log('Agent ID:', result.agent_id);
 ### Be Specific
 
 **Good:**
+
 ```
 Test the contact form on https://example.com/contact
 ```
 
 **Vague:**
+
 ```
 Test my website
 ```
@@ -135,6 +140,7 @@ https://example.com/page
 ```
 
 Not:
+
 ```
 example.com/page
 ```
@@ -180,6 +186,7 @@ Run tests one after another:
 ```
 
 Or simply:
+
 ```
 Run a full test suite on https://example.com
 ```
@@ -231,6 +238,7 @@ Check for 4xx and 5xx errors
 ## Understanding Test Coverage
 
 ### Homepage Test Covers:
+
 - Page load success/failure
 - Title and meta tags
 - Navigation structure
@@ -241,6 +249,7 @@ Check for 4xx and 5xx errors
 - Total link count
 
 ### Navigation Test Covers:
+
 - Internal link validation
 - External link count
 - Broken link detection
@@ -248,6 +257,7 @@ Check for 4xx and 5xx errors
 - Mobile menu functionality
 
 ### Contact Form Test Covers:
+
 - Form field discovery
 - Required field validation
 - Email format validation
@@ -255,6 +265,7 @@ Check for 4xx and 5xx errors
 - Accessibility attributes
 
 ### Accessibility Test Covers:
+
 - Image alt text
 - Heading hierarchy (H1-H6)
 - ARIA labels
@@ -263,6 +274,7 @@ Check for 4xx and 5xx errors
 - Color contrast (basic)
 
 ### Responsive Test Covers:
+
 - Desktop (1920x1080)
 - Tablet (768x1024)
 - Mobile (375x667)
@@ -271,19 +283,25 @@ Check for 4xx and 5xx errors
 ## Best Practices
 
 ### 1. Start Simple
+
 Begin with a homepage test before running full suites:
+
 ```
 Test the homepage first
 ```
 
 ### 2. Iterate Based on Results
+
 Fix critical issues before running comprehensive tests:
+
 ```
 The homepage has errors. Let me fix those first.
 ```
 
 ### 3. Use Chat for Complex Workflows
+
 For multi-step testing, chat with Vectra:
+
 ```
 I need to test a user registration flow:
 1. Homepage
@@ -293,7 +311,9 @@ I need to test a user registration flow:
 ```
 
 ### 4. Save Test Plans
+
 Document your testing strategy:
+
 ```markdown
 # Test Plan: Example.com
 
@@ -313,16 +333,19 @@ Document your testing strategy:
 ## Troubleshooting Tests
 
 ### Test Won't Start
+
 - Check if URL is accessible: `curl -I https://example.com`
 - Verify Docker services are running: `docker compose ps`
 - Check agent logs: `docker logs vectra-mcp-server`
 
 ### Test Hangs
+
 - Some tests wait for page load (30s timeout)
 - Check if site blocks automated browsers
 - Try headless=false to see the browser
 
 ### False Positives
+
 - Dynamic content may cause intermittent failures
 - Run test multiple times to confirm
 - Check screenshots for visual verification
