@@ -1,7 +1,6 @@
 # Vectra QA
 
 ![Tests](https://img.shields.io/github/actions/workflow/status/Artflarex-Limited/vectra-qa/ci.yml?label=tests)
-![Coverage](https://img.shields.io/codecov/c/github/Artflarex-Limited/vectra-qa)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
