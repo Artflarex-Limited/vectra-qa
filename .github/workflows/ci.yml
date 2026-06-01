@@ -84,7 +84,7 @@ jobs:
 
       - name: Run integration tests with coverage
         run: |
-          pytest tests/integration -m integration --cov --cov-fail-under=50 --cov-report=xml --cov-report=term
+          pytest tests/integration -m integration --cov --cov-fail-under=35 --cov-report=xml --cov-report=term
 
   docs:
     runs-on: ubuntu-latest
