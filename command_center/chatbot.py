@@ -78,7 +78,13 @@ TEST_TYPES = {
 class ChatMessage:
     """Represents a single chat message."""
 
-    def __init__(self, role: str, content: str, timestamp: str = None, metadata: Dict = None):
+    def __init__(
+        self,
+        role: str,
+        content: str,
+        timestamp: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+    ):
         self.role = role
         self.content = content
         self.timestamp = timestamp or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z"
@@ -97,7 +103,7 @@ class ChatEngine:
     """Core chatbot engine for Vectra QA."""
 
     def __init__(self):
-        self.llm = LLMRouter()
+        self.llm: LLMRouter = LLMRouter()
         self._ensure_chat_log_exists()
 
     def _ensure_chat_log_exists(self):
@@ -123,7 +129,7 @@ class ChatEngine:
         content = CHAT_LOG_PATH.read_text(encoding="utf-8")
 
         # Parse frontmatter
-        frontmatter = {}
+        frontmatter: Dict[str, Any] = {}
         body = content
         if content.startswith("---"):
             parts = content.split("---", 2)
@@ -147,10 +153,10 @@ class ChatEngine:
         """Parse chat messages from markdown body."""
         messages = []
         lines = body.split("\n")
-        current_role = None
-        current_content = []
-        current_timestamp = None
-        current_metadata = {}
+        current_role: Optional[str] = None
+        current_content: List[str] = []
+        current_timestamp: Optional[str] = None
+        current_metadata: Dict[str, Any] = {}
 
         for line in lines:
             line_stripped = line.strip()
@@ -211,7 +217,7 @@ class ChatEngine:
 
         return messages
 
-    def get_history(self, limit: int = None) -> List[Dict[str, Any]]:
+    def get_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Get conversation history."""
         log = self._read_chat_log()
         messages = self._parse_messages(log["body"])
@@ -221,7 +227,7 @@ class ChatEngine:
 
         return [msg.to_dict() for msg in messages]
 
-    def add_message(self, role: str, content: str, metadata: Dict = None):
+    def add_message(self, role: str, content: str, metadata: Optional[Dict] = None):
         """Add a message to the chat log."""
         log = self._read_chat_log()
 
@@ -261,7 +267,7 @@ class ChatEngine:
             return url
         return None
 
-    def _classify_intent(self, message: str, context: List[Dict] = None) -> str:
+    def _classify_intent(self, message: str, context: Optional[List[Dict]] = None) -> str:
         """Classify user intent using LLM."""
         prompt = f"""Classify the user's intent. Respond with ONLY ONE word:
 - "chat" — General conversation, questions, greetings
@@ -392,7 +398,7 @@ When interpreting results:
 
 Always be concise but thorough. Use formatting for readability."""
 
-    def generate_response(self, message: str, history: List[Dict] = None) -> str:
+    def generate_response(self, message: str, history: Optional[List[Dict]] = None) -> str:
         """Generate a conversational response."""
         messages = [{"role": "system", "content": self._build_system_prompt()}]
 
@@ -484,7 +490,7 @@ Format with markdown for readability."""
             return f"I encountered an error interpreting the results: {str(e)}"
 
     async def stream_response(
-        self, message: str, history: List[Dict] = None
+        self, message: str, history: Optional[List[Dict]] = None
     ) -> AsyncGenerator[str, None]:
         """Stream LLM response token by token."""
         messages = [{"role": "system", "content": self._build_system_prompt()}]

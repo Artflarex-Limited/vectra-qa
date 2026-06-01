@@ -10,7 +10,7 @@ import signal
 import atexit
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 
@@ -210,7 +210,7 @@ class StateManager:
                 try:
                     node = self.vault.read_node(node_path)
                     if node["frontmatter"].get("agent_id") == agent_id:
-                        return node_path
+                        return cast(str, node_path)
                 except Exception:
                     continue
         except Exception:

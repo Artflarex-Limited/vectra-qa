@@ -18,7 +18,8 @@ from datetime import datetime, timezone
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from mcp_server.tools import vault
+from typing import Dict, Any
+from mcp_server.tools import get_vault
 from mcp_server.browser_tools import BrowserAutomation
 
 
@@ -35,15 +36,15 @@ async def update_progress(
         }
 
         if findings:
-            node = vault.read_node(memory_node)
+            node = get_vault().read_node(memory_node)
             current_content = node["content"]
             new_content = (
                 current_content
                 + f"\n\n## [{datetime.now(timezone.utc).strftime('%H:%M:%S')}] {step}\n{findings}"
             )
-            vault.write_node(memory_node, new_content, node["frontmatter"])
+            get_vault().write_node(memory_node, new_content, node["frontmatter"])
 
-        vault.update_frontmatter(memory_node, updates)
+        get_vault().update_frontmatter(memory_node, updates)
     except Exception as e:
         print(f"[ERROR] Failed to update progress: {e}", file=sys.stderr)
 
@@ -68,6 +69,15 @@ async def monitor_api_calls(browser: BrowserAutomation, url: str, agent_id: str,
         await route.continue_()
 
     # Intercept all requests
+    if not browser.page:
+        await update_progress(
+            agent_id,
+            memory_node,
+            "Browser not started",
+            0,
+            "**ERROR**: Browser page not initialized",
+        )
+        return False
     await browser.page.route("**/*", handle_route)
 
     await update_progress(agent_id, memory_node, "Starting page navigation", 20)
@@ -145,7 +155,7 @@ async def monitor_api_calls(browser: BrowserAutomation, url: str, agent_id: str,
 
     # Check response statuses from browser logs
     if browser.network_logs:
-        statuses = {}
+        statuses: Dict[str, Any] = {}
         for log in browser.network_logs:
             status = log.get("status", 0)
             statuses[status] = statuses.get(status, 0) + 1
@@ -222,7 +232,7 @@ async def run_agent(agent_id: str, memory_node: str):
 
     # Read objective from memory node
     try:
-        node = vault.read_node(memory_node)
+        node = get_vault().read_node(memory_node)
         objective = node["frontmatter"].get("objective", "")
         print(f"[DATA VALIDATOR {agent_id}] Objective: {objective[:100]}...")
     except Exception as e:
@@ -278,7 +288,7 @@ async def run_agent(agent_id: str, memory_node: str):
                 "## ✅ Test Complete\n\nAll API validation checks finished successfully.",
             )
 
-            vault.update_frontmatter(
+            get_vault().update_frontmatter(
                 memory_node,
                 {
                     "status": "completed",
@@ -290,7 +300,7 @@ async def run_agent(agent_id: str, memory_node: str):
             )
             print(f"[DATA VALIDATOR {agent_id}] Test completed successfully")
         else:
-            vault.update_frontmatter(
+            get_vault().update_frontmatter(
                 memory_node,
                 {
                     "status": "failed",
@@ -306,7 +316,7 @@ async def run_agent(agent_id: str, memory_node: str):
 
         traceback.print_exc()
 
-        vault.update_frontmatter(
+        get_vault().update_frontmatter(
             memory_node,
             {
                 "status": "failed",

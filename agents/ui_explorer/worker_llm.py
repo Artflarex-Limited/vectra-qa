@@ -15,7 +15,7 @@ import asyncio
 import json
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 
@@ -111,15 +111,24 @@ Rules:
 
     async def _observe(self) -> Dict[str, Any]:
         """Observe current page state."""
+        page = self.browser.page
+        if not page:
+            return {
+                "url": "",
+                "title": "",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+                "error": "Browser page not initialized",
+            }
+
         observation = {
-            "url": self.browser.page.url if self.browser.page else "",
-            "title": await self.browser.page.title() if self.browser.page else "",
+            "url": page.url,
+            "title": await page.title(),
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
         }
 
         # Get visible interactive elements
         try:
-            elements = await self.browser.page.query_selector_all(
+            elements = await page.query_selector_all(
                 'button, a, input, select, textarea, [role="button"], [role="link"]'
             )
             observation["interactive_elements"] = []
@@ -153,7 +162,7 @@ Rules:
 
         # Get current viewport
         try:
-            viewport = await self.browser.page.viewport_size()
+            viewport = await page.viewport_size()
             observation["viewport"] = viewport
         except Exception:
             pass
@@ -201,7 +210,7 @@ Respond with a JSON object containing your chosen action.
             elif "```" in content:
                 content = content.split("```")[1].split("```")[0].strip()
 
-            action = json.loads(content)
+            action = cast(Dict[str, Any], json.loads(content))
             logger.info(
                 "llm_action_decided",
                 action=action.get("action"),
@@ -253,8 +262,11 @@ Respond with a JSON object containing your chosen action.
                 if result["success"]:
                     self.screenshots.append(path)
             elif action_type == "hover":
-                await self.browser.page.hover(action.get("selector", ""))
-                result = {"success": True, "action": "hover"}
+                if self.browser.page:
+                    await self.browser.page.hover(action.get("selector", ""))
+                    result = {"success": True, "action": "hover"}
+                else:
+                    result = {"success": False, "error": "Browser page not initialized"}
             elif action_type == "scroll":
                 result = await self.browser.scroll_to_bottom()
             elif action_type == "complete":

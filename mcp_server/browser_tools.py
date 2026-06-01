@@ -109,6 +109,13 @@ class BrowserAutomation:
 
     async def click(self, selector: str, timeout: int = 5000) -> Dict[str, Any]:
         """Click element by selector."""
+        if not self.page:
+            return {
+                "success": False,
+                "selector": selector,
+                "error": "Browser not started. Call start() first.",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
         try:
             await self.page.click(selector, timeout=timeout)
             await self.page.wait_for_load_state("networkidle", timeout=10000)
@@ -128,6 +135,13 @@ class BrowserAutomation:
 
     async def fill(self, selector: str, text: str) -> Dict[str, Any]:
         """Fill input field."""
+        if not self.page:
+            return {
+                "success": False,
+                "selector": selector,
+                "error": "Browser not started. Call start() first.",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
         try:
             await self.page.fill(selector, text)
             return {
@@ -146,6 +160,13 @@ class BrowserAutomation:
 
     async def get_text(self, selector: str) -> Dict[str, Any]:
         """Get text content of element."""
+        if not self.page:
+            return {
+                "success": False,
+                "selector": selector,
+                "error": "Browser not started. Call start() first.",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
         try:
             element = await self.page.query_selector(selector)
             if element:
@@ -173,6 +194,13 @@ class BrowserAutomation:
 
     async def get_elements(self, selector: str) -> Dict[str, Any]:
         """Count elements matching selector."""
+        if not self.page:
+            return {
+                "success": False,
+                "selector": selector,
+                "error": "Browser not started. Call start() first.",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
         try:
             elements = await self.page.query_selector_all(selector)
             return {
@@ -191,6 +219,13 @@ class BrowserAutomation:
 
     async def screenshot(self, path: str, full_page: bool = True) -> Dict[str, Any]:
         """Take screenshot."""
+        if not self.page:
+            return {
+                "success": False,
+                "path": path,
+                "error": "Browser not started. Call start() first.",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
         try:
             # Ensure directory exists
             os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -211,6 +246,12 @@ class BrowserAutomation:
 
     async def scroll_to_bottom(self) -> Dict[str, Any]:
         """Scroll to bottom of page."""
+        if not self.page:
+            return {
+                "success": False,
+                "error": "Browser not started. Call start() first.",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
         try:
             await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             await asyncio.sleep(0.5)
@@ -227,6 +268,12 @@ class BrowserAutomation:
 
     async def check_responsive(self, width: int, height: int) -> Dict[str, Any]:
         """Test viewport size."""
+        if not self.page:
+            return {
+                "success": False,
+                "error": "Browser not started. Call start() first.",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
         try:
             await self.page.set_viewport_size({"width": width, "height": height})
             await asyncio.sleep(1)
@@ -249,6 +296,12 @@ class BrowserAutomation:
 
     async def get_all_links(self) -> Dict[str, Any]:
         """Get all links on page."""
+        if not self.page:
+            return {
+                "success": False,
+                "error": "Browser not started. Call start() first.",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
         try:
             links = await self.page.query_selector_all("a")
             results = []
@@ -278,6 +331,12 @@ class BrowserAutomation:
 
     async def check_form(self, form_selector: str = "form") -> Dict[str, Any]:
         """Check form fields."""
+        if not self.page:
+            return {
+                "success": False,
+                "error": "Browser not started. Call start() first.",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
         try:
             form = await self.page.query_selector(form_selector)
             if not form:

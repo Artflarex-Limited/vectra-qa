@@ -149,8 +149,8 @@ class ReportBuilder:
         self,
         title: str,
         status: str,
-        findings: List[Dict] = None,
-        metrics: Dict = None,
+        findings: Optional[List[Dict]] = None,
+        metrics: Optional[Dict] = None,
         details: str = "",
     ):
         """Add a section to the report."""

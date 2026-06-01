@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 from filelock import FileLock, Timeout
@@ -110,7 +110,7 @@ class ObsidianVault:
                 content = file_path.read_text(encoding="utf-8")
 
                 # Parse YAML frontmatter
-                frontmatter = {}
+                frontmatter: Dict[str, Any] = {}
                 body = content
 
                 if content.startswith("---"):
@@ -199,7 +199,7 @@ class ObsidianVault:
                 content = file_path.read_text(encoding="utf-8")
 
                 # Parse YAML frontmatter
-                frontmatter = {}
+                frontmatter: Dict[str, Any] = {}
                 body = content
 
                 if content.startswith("---"):
@@ -874,33 +874,33 @@ async def _async_feature_tool(feature_type: str, params: Dict[str, Any]) -> Dict
         elif feature_type == "visual_regression":
             browser = BrowserAutomation()
             await browser.start()
-            tester = VisualRegressionTester(str(VAULT_PATH / "Baselines"))
-            return await tester.test_visual_regression(browser, params["url"])
+            vr_tester = VisualRegressionTester(VAULT_PATH / "Baselines")
+            return await vr_tester.test_visual_regression(browser, params["url"])
 
         elif feature_type == "performance":
             browser = BrowserAutomation()
             await browser.start()
-            tester = PerformanceTester()
+            perf_tester = PerformanceTester()
             thresholds = params.get("thresholds")
-            return await tester.test_performance(browser, params["url"], thresholds)
+            return await perf_tester.test_performance(browser, params["url"], thresholds)
 
         elif feature_type == "api_contract":
-            tester = APIContractTester()
+            api_tester = APIContractTester()
             schema_path = params.get("schema_path")
             if schema_path and os.path.exists(schema_path):
-                tester.load_schema(schema_path)
-            return await tester.test_endpoint(
+                api_tester.load_schema(schema_path)
+            return await api_tester.test_endpoint(
                 params["base_url"], params["endpoint"], params["method"], params.get("body")
             )
 
         elif feature_type == "accessibility":
             browser = BrowserAutomation()
             await browser.start()
-            tester = AccessibilityTester()
-            return await tester.test_accessibility(browser, params["url"])
+            a11y_tester = AccessibilityTester()
+            return await a11y_tester.test_accessibility(browser, params["url"])
 
         elif feature_type == "multi_browser":
-            tester = MultiBrowserTester()
+            mb_tester = MultiBrowserTester()
 
             async def test_fn(browser, url):
                 result = await browser.visit(url)
@@ -910,7 +910,7 @@ async def _async_feature_tool(feature_type: str, params: Dict[str, Any]) -> Dict
                     "metrics": {"http_status": result.get("status")},
                 }
 
-            return await tester.test_all_browsers(params["url"], test_fn)
+            return await mb_tester.test_all_browsers(test_fn, params["url"])
 
         return {"error": f"Unknown feature type: {feature_type}"}
 
@@ -925,9 +925,11 @@ def execute_tool(tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": f"Unknown tool: {tool_name}"}
 
     tool = TOOLS[tool_name]
+    tool_params = cast(Dict[str, Any], tool["parameters"])
+    tool_handler = cast(Any, tool["handler"])
 
     # Validate required parameters
-    for param_name, param_spec in tool["parameters"].items():
+    for param_name, param_spec in tool_params.items():
         if not param_spec.get("optional", False) and param_name not in parameters:
             return {"error": f"Missing required parameter: {param_name}"}
 
@@ -944,7 +946,7 @@ def execute_tool(tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
         return {"tool": tool_name, "status": "error", "error": f"Validation error: {str(e)}"}
 
     try:
-        result = tool["handler"](parameters)
+        result = tool_handler(parameters)
         return {"tool": tool_name, "status": "success", "result": result}
     except Exception as e:
         logger.error(

@@ -60,7 +60,7 @@ class FeatureTesterWorker:
         url_pattern = r'https?://[^\s<>"\']+|www\.[^\s<>"\']+'
         matches = re.findall(url_pattern, self.objective)
         if matches:
-            return matches[0]
+            return str(matches[0])
         return None
 
     def _parse_credentials(self) -> Dict[str, str]:
@@ -121,7 +121,7 @@ class FeatureTesterWorker:
         await browser.start()
 
         try:
-            tester = VisualRegressionTester(str(VAULT_PATH / "Baselines"))
+            tester = VisualRegressionTester(VAULT_PATH / "Baselines")
             result = await tester.test_visual_regression(browser, url)
             self.results["visual_regression"] = result
             return self.results
@@ -199,7 +199,7 @@ class FeatureTesterWorker:
                 "metrics": {"http_status": result.get("status")},
             }
 
-        result = await tester.test_all_browsers(url, test_browser)
+        result = await tester.test_all_browsers(test_browser, url)
         self.results["multi_browser"] = result
         return self.results
 

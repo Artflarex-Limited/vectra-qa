@@ -6,7 +6,7 @@ Dark Mode Dashboard for Obsidian-backed Multi-Agent Testing
 import json
 import asyncio
 from datetime import datetime, timezone
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator, Dict, List, Optional, cast
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import StreamingResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -54,7 +54,7 @@ async def call_mcp_tool(tool_name: str, params: dict) -> dict:
         result = response.json()
         # MCP wraps the result in result.result
         if "result" in result:
-            return result["result"]
+            return cast(Dict[str, Any], result["result"])
         return {"status": "error", "error": result.get("error", "Unknown error")}
 
 
@@ -317,11 +317,11 @@ async def get_result(agent_id: str):
     return JSONResponse(status_code=404, content={"error": "Test result not found"})
 
 
-def _extract_findings(content: str) -> list:
+def _extract_findings(content: str) -> List[Dict[str, Any]]:
     """Parse findings from markdown content."""
-    findings = []
+    findings: List[Dict[str, Any]] = []
     lines = content.split("\n")
-    current_finding = None
+    current_finding: Optional[Dict[str, Any]] = None
 
     for line in lines:
         line = line.strip()
@@ -350,11 +350,11 @@ def _extract_findings(content: str) -> list:
 
 def _extract_sections(content: str) -> list:
     """Parse structured report sections from markdown content."""
-    sections = []
+    sections: List[Dict[str, Any]] = []
     lines = content.split("\n")
-    current_section = None
-    current_findings = []
-    current_metrics = {}
+    current_section: Optional[Dict[str, Any]] = None
+    current_findings: List[Dict[str, Any]] = []
+    current_metrics: Dict[str, Any] = {}
     in_metrics = False
 
     for line in lines:

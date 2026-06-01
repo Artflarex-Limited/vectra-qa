@@ -18,7 +18,8 @@ from datetime import datetime, timezone
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from mcp_server.tools import vault
+from typing import Optional
+from mcp_server.tools import get_vault
 from mcp_server.browser_tools import BrowserAutomation
 from agents.ui_explorer.report_builder import ReportBuilder
 
@@ -29,8 +30,8 @@ async def update_progress(
     step: str,
     progress: int,
     findings: str = "",
-    screenshots: list = None,
-    findings_list: list = None,
+    screenshots: Optional[list] = None,
+    findings_list: Optional[list] = None,
 ):
     """Update agent progress in memory node."""
     try:
@@ -46,23 +47,23 @@ async def update_progress(
 
         if findings:
             # Append findings to node content
-            node = vault.read_node(memory_node)
+            node = get_vault().read_node(memory_node)
             current_content = node["content"]
             new_content = (
                 current_content
                 + f"\n\n## [{datetime.now(timezone.utc).strftime('%H:%M:%S')}] {step}\n{findings}"
             )
-            vault.write_node(memory_node, new_content, node["frontmatter"])
+            get_vault().write_node(memory_node, new_content, node["frontmatter"])
 
         # If we have structured findings, append them too
         if findings_list:
-            node = vault.read_node(memory_node)
+            node = get_vault().read_node(memory_node)
             current_content = node["content"]
             for finding in findings_list:
                 current_content += f"\n- {finding}"
-            vault.write_node(memory_node, current_content, node["frontmatter"])
+            get_vault().write_node(memory_node, current_content, node["frontmatter"])
 
-        vault.update_frontmatter(memory_node, updates)
+        get_vault().update_frontmatter(memory_node, updates)
     except Exception as e:
         print(f"[ERROR] Failed to update progress: {e}", file=sys.stderr)
 
@@ -70,11 +71,11 @@ async def update_progress(
 async def update_report_in_memory(agent_id: str, memory_node: str, report: "ReportBuilder"):
     """Write the full structured report to the memory node."""
     try:
-        node = vault.read_node(memory_node)
+        node = get_vault().read_node(memory_node)
         # Prepend the report to existing content
         report_md = report.get_report().to_markdown()
         new_content = f"{report_md}\n\n---\n\n## Detailed Log\n\n{node['content']}"
-        vault.write_node(memory_node, new_content, node["frontmatter"])
+        get_vault().write_node(memory_node, new_content, node["frontmatter"])
     except Exception as e:
         print(f"[ERROR] Failed to update report: {e}", file=sys.stderr)
 
@@ -447,7 +448,8 @@ async def test_navigation(
         tested += 1
 
         # Go back
-        await browser.page.go_back()
+        if browser.page:
+            await browser.page.go_back()
         await asyncio.sleep(0.3)
 
     # Link Test Results Section
@@ -1042,7 +1044,7 @@ async def run_agent(agent_id: str, memory_node: str):
 
     # Read objective from memory node
     try:
-        node = vault.read_node(memory_node)
+        node = get_vault().read_node(memory_node)
         objective = node["frontmatter"].get("objective", "")
         print(f"[UI EXPLORER {agent_id}] Objective: {objective[:100]}...")
     except Exception as e:
@@ -1107,7 +1109,7 @@ async def run_agent(agent_id: str, memory_node: str):
         if report.report.overall_status == "pass":
             await update_progress(agent_id, memory_node, "Test complete", 100)
 
-            vault.update_frontmatter(
+            get_vault().update_frontmatter(
                 memory_node,
                 {
                     "status": "completed",
@@ -1120,7 +1122,7 @@ async def run_agent(agent_id: str, memory_node: str):
         elif report.report.overall_status == "warning":
             await update_progress(agent_id, memory_node, "Test complete with warnings", 100)
 
-            vault.update_frontmatter(
+            get_vault().update_frontmatter(
                 memory_node,
                 {
                     "status": "completed",
@@ -1131,7 +1133,7 @@ async def run_agent(agent_id: str, memory_node: str):
             )
             print(f"[UI EXPLORER {agent_id}] Test completed with warnings")
         else:
-            vault.update_frontmatter(
+            get_vault().update_frontmatter(
                 memory_node,
                 {
                     "status": "completed",
@@ -1148,7 +1150,7 @@ async def run_agent(agent_id: str, memory_node: str):
 
         traceback.print_exc()
 
-        vault.update_frontmatter(
+        get_vault().update_frontmatter(
             memory_node,
             {
                 "status": "failed",

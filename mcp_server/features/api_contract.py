@@ -174,12 +174,12 @@ class APIContractTester:
         if not self.schema:
             return None
 
-        paths = self.schema.get("paths", {})
+        paths: Dict[str, Any] = self.schema.get("paths", {})
 
         # Try exact match first
         for path in paths:
             if path in url:
-                return path
+                return str(path)
 
         # Try pattern matching
         for path in paths:
@@ -187,9 +187,9 @@ class APIContractTester:
             # /users/{id} -> /users/[^/]+
             import re
 
-            pattern = re.sub(r"\{[^}]+\}", "[^/]+", path)
+            pattern = re.sub(r"\{[^}]+\}", "[^/]+", str(path))
             if re.search(pattern, url):
-                return path
+                return str(path)
 
         return None
 
@@ -335,6 +335,26 @@ class APIContractTester:
                     "severity": "high",
                 }
             )
+
+    async def test_endpoint(
+        self,
+        base_url: str,
+        endpoint: str,
+        method: str = "GET",
+        body: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Test an API endpoint (wrapper for validate_response)."""
+        from mcp_server.browser_tools import BrowserAutomation
+
+        browser = BrowserAutomation()
+        await browser.start()
+        try:
+            # Visit the endpoint to populate network logs
+            url = f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}"
+            await browser.visit(url)
+            return await self.validate_response(browser, endpoint, method)
+        finally:
+            await browser.close()
 
     def _build_result(self, status: str, start_time: datetime) -> Dict[str, Any]:
         """Build test result."""

@@ -12,7 +12,7 @@ import json
 import asyncio
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -137,7 +137,7 @@ Guidelines:
             elif "```" in content:
                 content = content.split("```")[1].split("```")[0].strip()
 
-            plan = json.loads(content)
+            plan = cast(Dict[str, Any], json.loads(content))
             logger.info(
                 "test_plan_generated",
                 plan_id=plan.get("test_plan_id"),
@@ -189,8 +189,8 @@ Guidelines:
         await self._initialize_run_master(plan_id, objective, url, plan)
 
         # Execute tasks by parallel groups
-        completed_tasks = {}
-        failed_tasks = {}
+        completed_tasks: Dict[str, Any] = {}
+        failed_tasks: Dict[str, Any] = {}
 
         for group_idx, group in enumerate(plan["parallel_groups"]):
             logger.info("executing_parallel_group", group_index=group_idx, tasks=group)

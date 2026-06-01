@@ -151,7 +151,7 @@ class LLMRouter:
     """
 
     def __init__(self, cache_enabled: bool = True):
-        self.clients = {}
+        self.clients: Dict[str, Any] = {}
         self._init_clients()
 
         # Initialize cache if enabled

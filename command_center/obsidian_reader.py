@@ -94,7 +94,7 @@ class ObsidianReader:
             content = file_path.read_text(encoding="utf-8")
 
             # Parse YAML frontmatter
-            frontmatter = {}
+            frontmatter: Dict[str, Any] = {}
             body = content
 
             if content.startswith("---"):

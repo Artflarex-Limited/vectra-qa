@@ -39,11 +39,14 @@ class BrowserPool:
                 # Try to reuse an available browser
                 while self._pool:
                     browser = self._pool.pop()
+                    is_connected = True
                     if (
-                        browser.page and not browser.browser.is_connected()
-                        if hasattr(browser.browser, "is_connected")
-                        else True
+                        browser.page
+                        and browser.browser
+                        and hasattr(browser.browser, "is_connected")
                     ):
+                        is_connected = browser.browser.is_connected()
+                    if browser.page and not is_connected:
                         # Browser is dead, skip it
                         continue
                     self._in_use.add(browser)
@@ -212,7 +215,11 @@ class AgentResourceTracker:
 
     def get_all_usage(self) -> Dict[str, Dict[str, Any]]:
         """Get resource usage for all active agents."""
-        return {agent_id: self.get_usage(agent_id) for agent_id in self._agents}
+        return {
+            agent_id: usage
+            for agent_id in self._agents
+            if (usage := self.get_usage(agent_id)) is not None
+        }
 
 
 # Global instances

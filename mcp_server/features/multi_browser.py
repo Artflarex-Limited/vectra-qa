@@ -52,9 +52,9 @@ class MultiBrowserTester:
                 browser = BrowserAutomation(headless=True)
 
                 # Override browser launch to use specific browser
-                playwright = (
-                    await browser.playwright.start() if hasattr(browser, "playwright") else None
-                )
+                playwright = None
+                if browser.playwright and hasattr(browser, "playwright"):
+                    playwright = await browser.playwright.start()
 
                 if not playwright:
                     # Need to start playwright first

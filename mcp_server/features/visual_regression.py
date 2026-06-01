@@ -279,6 +279,10 @@ class VisualRegressionTester:
                 "error": str(e),
             }
 
+    async def test_visual_regression(self, browser, url: str) -> Dict[str, Any]:
+        """Test visual regression for a URL (wrapper for compare_screenshot)."""
+        return await self.compare_screenshot(browser, url, name="default")
+
     def _build_result(self, status: str, start_time: datetime) -> Dict[str, Any]:
         """Build test result."""
         elapsed = (datetime.now(timezone.utc) - start_time).total_seconds()
