@@ -14,7 +14,6 @@ import tempfile
 import shutil
 from pathlib import Path
 
-
 # Import framework modules
 from mcp_server.browser_tools import BrowserAutomation
 

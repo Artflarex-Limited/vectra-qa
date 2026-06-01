@@ -402,13 +402,30 @@ Always be concise but thorough. Use formatting for readability."""
         """Generate a conversational response."""
         messages = [{"role": "system", "content": self._build_system_prompt()}]
 
+        # Retrieve relevant knowledge from RAG
+        knowledge = ""
+        try:
+            import asyncio
+            from mcp_server.rag import get_rag_pipeline
+
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                rag = loop.run_until_complete(get_rag_pipeline())
+                results = loop.run_until_complete(rag.search_knowledge(message, k=2))
+                if results:
+                    knowledge = "\nRelevant knowledge:\n"
+                    for r in results:
+                        knowledge += f"- {r['text'][:200]}...\n"
+        except Exception:
+            pass
+
         # Add history context
         if history:
             for msg in history[-10:]:  # Last 10 messages for context
                 if msg["role"] in ["user", "assistant"]:
                     messages.append({"role": msg["role"], "content": msg["content"]})
 
-        messages.append({"role": "user", "content": message})
+        messages.append({"role": "user", "content": message + knowledge})
 
         try:
             response = self.llm.complete(

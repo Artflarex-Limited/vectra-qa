@@ -23,6 +23,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime, timezone
 
+import structlog
+
+logger = structlog.get_logger()
+
 
 @dataclass
 class LLMResponse:
@@ -351,6 +355,20 @@ class LLMRouter:
             cached = self.cache.get(model, messages, temperature, max_tokens)
             if cached:
                 print(f"LLM cache hit for {model}")
+                # Track cache hit (zero cost)
+                try:
+                    from mcp_server.cost_tracker import get_cost_tracker
+
+                    tracker = get_cost_tracker()
+                    tracker.track_usage(
+                        model=model,
+                        input_tokens=0,
+                        output_tokens=0,
+                        provider="cache",
+                        cache_hit=True,
+                    )
+                except Exception:
+                    pass
                 return cached
 
         provider, model_name = self._parse_model(model)
@@ -379,6 +397,21 @@ class LLMRouter:
         # Cache the response
         if hasattr(self, "cache") and self.cache:
             self.cache.set(model, messages, temperature, max_tokens, response)
+
+        # Track cost
+        try:
+            from mcp_server.cost_tracker import get_cost_tracker
+
+            tracker = get_cost_tracker()
+            usage = response.usage
+            tracker.track_usage(
+                model=model,
+                input_tokens=usage.get("prompt_tokens", 0),
+                output_tokens=usage.get("completion_tokens", 0),
+                provider=provider,
+            )
+        except Exception as e:
+            logger.debug("cost_tracking_failed", error=str(e))
 
         return response
 

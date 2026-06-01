@@ -27,13 +27,18 @@ Agents don't use JSON blobs. They read and write **Markdown files** in a local [
 
 - **🤖 Dynamic Agent Spawning**: The Orchestrator instantiates specialized agents on-demand, not as pre-running daemons
 - **🧠 LLM-Driven Agents**: Full LLM reasoning for every decision—no brittle keyword matching
+- **🗄️ PostgreSQL + pgvector**: Structured data storage with vector search for RAG (replaces filesystem-only storage)
+- **📚 RAG Integration**: Retrieve relevant test requirements and past findings using embeddings (OpenAI, local, Ollama)
+- **🛒 E-Commerce Testing**: Generic platform-agnostic modules for cart, checkout, payment, inventory, locale, GDPR
+- **🎯 Deterministic Mode**: YAML playbooks for reliable CI/CD—no LLM flakiness
+- **💰 Cost Tracking**: Per-run LLM spend tracking with configurable budget limits and alerts
 - **🔐 Security Testing**: Auth flow validation, session cookie security, HTTPS enforcement
 - **📊 Performance Monitoring**: Core Web Vitals (LCP, FID, CLS, TTFB, FCP), Lighthouse CI integration
 - **🎨 Visual Regression**: Screenshot comparison with baseline management
 - **🔌 API Contract Validation**: OpenAPI schema verification for REST endpoints
 - **♿ Accessibility Testing**: axe-core integration with WCAG compliance checks
 - **🌐 Cross-Browser Testing**: Chromium, Firefox, WebKit smoke tests
-- **⚡ LLM Response Caching**: SHA256-based cache with TTL, reducing API costs by 60-80%
+- **⚡ LLM Response Caching**: PostgreSQL-backed cache with TTL, reducing API costs by 60-80%
 - **📡 Distributed Workers**: Redis-backed task queue for horizontal scaling
 - **🎛️ Live Command Center**: Dark-mode HTMX dashboard with Server-Sent Events
 - **📡 MCP Skill System**: Extensible Model Context Protocol tools
@@ -44,6 +49,7 @@ Agents don't use JSON blobs. They read and write **Markdown files** in a local [
 ### Prerequisites
 
 - Python 3.12+
+- PostgreSQL 16+ with pgvector extension (for structured data and RAG)
 - [Obsidian](https://obsidian.md/) (optional, for visual graph browsing)
 - Chrome/Chromium, Firefox, WebKit (for Playwright browser automation)
 - Redis (optional, for distributed workers)

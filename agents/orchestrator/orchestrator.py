@@ -12,7 +12,7 @@ import json
 import asyncio
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import structlog
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -81,13 +81,31 @@ You are the Orchestrator. Your job is to plan tests and coordinate agents.
         """
         Use LLM to plan tests based on objective.
 
+        Retrieves relevant context from RAG before planning.
         Returns a structured test plan with discrete tasks.
         """
+        # Retrieve relevant context from RAG
+        context = ""
+        try:
+            from mcp_server.rag import get_rag_pipeline
+
+            rag = await get_rag_pipeline()
+            results = await rag.search_knowledge(objective, k=3)
+            if results:
+                context = "\n\nRelevant context from previous tests:\n"
+                for r in results:
+                    context += (
+                        f"- {r['source']} (relevance: {r['relevance']}): {r['text'][:200]}...\n"
+                    )
+        except Exception as e:
+            logger.debug("rag_retrieval_failed", error=str(e))
+
         prompt = f"""
 Analyze this testing objective and create a detailed test plan.
 
 Objective: {objective}
 Target URL: {url}
+{context}
 
 Create a test plan with discrete, executable tasks. Each task should be completable by a single agent.
 
@@ -129,15 +147,38 @@ Guidelines:
                 max_tokens=2000,
             )
 
-            # Parse JSON from response
-            content = response.content.strip()
-            # Handle markdown code blocks
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
+            # Parse JSON from response using robust extractor
+            from mcp_server.json_extractor import extract_json
 
-            plan = cast(Dict[str, Any], json.loads(content))
+            content = response.content.strip()
+            plan = extract_json(content, fallback={})
+
+            # Validate plan structure
+            if not plan or "test_plan_id" not in plan or "tasks" not in plan:
+                logger.error(
+                    "failed_to_parse_test_plan",
+                    error="Invalid plan structure",
+                    raw_response=response.content[:500],
+                )
+                # Fallback: create a simple single-task plan
+                return {
+                    "test_plan_id": f"fallback-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
+                    "summary": f"Direct test of {url}",
+                    "tasks": [
+                        {
+                            "task_id": "task-1",
+                            "role": "ui_explorer",
+                            "objective": objective,
+                            "memory_node": f"Runs/Direct_Test_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.md",
+                            "depends_on": None,
+                            "estimated_duration_seconds": 120,
+                            "success_criteria": "Page loads and basic checks pass",
+                        }
+                    ],
+                    "parallel_groups": [["task-1"]],
+                    "overall_success_criteria": "Basic page functionality verified",
+                }
+
             logger.info(
                 "test_plan_generated",
                 plan_id=plan.get("test_plan_id"),

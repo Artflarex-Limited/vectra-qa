@@ -16,6 +16,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 try:
     import psycopg
     from psycopg.rows import dict_row
+
     PSYCOPG_AVAILABLE = True
 except ImportError:
     PSYCOPG_AVAILABLE = False
