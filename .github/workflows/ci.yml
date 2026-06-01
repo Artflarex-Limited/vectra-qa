@@ -45,10 +45,10 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:15
+        image: ankane/pgvector:latest
         env:
-          POSTGRES_USER: vectra
-          POSTGRES_PASSWORD: vectra_dev_password_change_in_production
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
           POSTGRES_DB: vectra_qa
         options: >-
           --health-cmd pg_isready
@@ -80,7 +80,7 @@ jobs:
       - name: Run migrations
         run: python scripts/run_migrations.py
         env:
-          DATABASE_URL: postgresql://vectra:vectra_dev_password_change_in_production@localhost:5432/vectra_qa
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vectra_qa
 
       - name: Run integration tests with coverage
         run: |
