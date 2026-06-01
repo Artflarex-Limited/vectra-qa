@@ -9,6 +9,8 @@ Usage:
 """
 
 import pytest
+
+pytestmark = pytest.mark.integration
 import asyncio
 import tempfile
 import shutil
