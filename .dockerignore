@@ -47,3 +47,15 @@ pytest.ini
 node_modules/
 playwright-report/
 test-results/
+
+# Build artifacts & large directories
+coverage_html/
+.coverage
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+docs/
+examples/
+wiki/
+verify-docker.sh
+mkdocs.yml
