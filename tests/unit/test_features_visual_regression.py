@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-from mcp_server.features.visual_regression import HAS_PIL, VisualRegressionTester
+from mcp_server.features.visual_regression import VisualRegressionTester
 
 
 class PixelMap:
