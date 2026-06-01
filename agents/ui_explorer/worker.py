@@ -12,7 +12,6 @@ Usage:
 import sys
 import os
 import asyncio
-import time
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -367,9 +366,13 @@ async def test_navigation(
 
     # Filter to same-domain links
     base_domain = url.replace("https://", "").replace("http://", "").split("/")[0]
-    internal_links = [l for l in links if base_domain in l["href"] or l["href"].startswith("/")]
+    internal_links = [
+        link for link in links if base_domain in link["href"] or link["href"].startswith("/")
+    ]
     external_links = [
-        l for l in links if l["href"].startswith("http") and base_domain not in l["href"]
+        link
+        for link in links
+        if link["href"].startswith("http") and base_domain not in link["href"]
     ]
 
     link_findings = [
@@ -490,7 +493,7 @@ async def test_navigation(
         },
     )
 
-    await update_progress(agent_id, memory_node, f"Navigation test complete", 90)
+    await update_progress(agent_id, memory_node, "Navigation test complete", 90)
 
     report.finalize()
     return report
@@ -539,12 +542,11 @@ async def test_contact_form(
     ]
 
     found = False
-    contact_element = None
     for selector in contact_selectors:
         elements = await browser.get_elements(selector)
         if elements["count"] > 0:
             found = True
-            contact_element = selector
+            _contact_element = selector
             if selector.startswith("a"):
                 await browser.click(selector)
                 report.add_section(

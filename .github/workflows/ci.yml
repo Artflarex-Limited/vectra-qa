@@ -68,7 +68,7 @@ jobs:
         run: ruff check .
       
       - name: Type check with mypy
-        run: mypy mcp_server/ command_center/ agents/
+        run: mypy mcp_server/ command_center/ agents/ --ignore-missing-imports --explicit-package-bases
 
   docker:
     runs-on: ubuntu-latest

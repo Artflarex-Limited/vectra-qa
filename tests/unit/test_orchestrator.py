@@ -4,12 +4,10 @@ Uses mocked LLM router to avoid real API calls.
 """
 
 import pytest
-import asyncio
 import json
 from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime
 
-from agents.orchestrator.orchestrator import Orchestrator, execute_test_plan
+from agents.orchestrator.orchestrator import Orchestrator
 
 
 class TestOrchestratorBasic:

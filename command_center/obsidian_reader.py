@@ -6,10 +6,8 @@ Provides real-time file watching and SSE updates.
 import os
 import yaml
 import time
-import asyncio
 from pathlib import Path
-from datetime import datetime
-from typing import Dict, Any, List, Optional, AsyncGenerator
+from typing import Dict, Any, List, Optional
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -62,7 +60,7 @@ class VaultWatcher(FileSystemEventHandler):
         for callback in self._callbacks:
             try:
                 callback(path)
-            except:
+            except Exception:
                 pass
 
 

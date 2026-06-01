@@ -304,7 +304,7 @@ class FeatureTesterWorker:
                 "status": status,
                 "started_at": timestamp,
                 "duration_seconds": elapsed,
-                "url": url if "url" in dir() else None,
+                "url": getattr(self, "url", None),
             },
         )
 

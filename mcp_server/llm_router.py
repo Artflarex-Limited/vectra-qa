@@ -19,7 +19,7 @@ import json
 import hashlib
 import time
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 
 

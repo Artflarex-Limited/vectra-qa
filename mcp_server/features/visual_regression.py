@@ -4,8 +4,6 @@ Visual regression testing for Vectra QA.
 Screenshot comparison with baseline management.
 """
 
-import os
-import io
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime, timezone

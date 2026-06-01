@@ -4,7 +4,6 @@ Multi-browser support for Vectra QA.
 Supports Chromium, Firefox, and WebKit via Playwright.
 """
 
-import os
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 
@@ -73,7 +72,7 @@ class MultiBrowserTester:
                 else:
                     self.findings.append(
                         {
-                            "title": f"Unknown Browser",
+                            "title": "Unknown Browser",
                             "description": f"Browser '{browser_name}' not supported",
                             "severity": "warning",
                         }

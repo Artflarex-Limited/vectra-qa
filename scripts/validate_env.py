@@ -83,11 +83,11 @@ def check_playwright_browsers() -> bool:
             # Try to launch chromium
             browser = p.chromium.launch()
             browser.close()
-            print(f"  ✅ Playwright Chromium browser installed")
+            print("  ✅ Playwright Chromium browser installed")
             return True
     except Exception as e:
         print(f"  ❌ Playwright browser not available: {e}")
-        print(f"     Run: playwright install chromium")
+        print("     Run: playwright install chromium")
         return False
 
 
@@ -110,7 +110,7 @@ def check_llm_connectivity() -> bool:
             print(f"     - {p}")
         return True
     else:
-        print(f"  ❌ No LLM providers configured")
+        print("  ❌ No LLM providers configured")
         print(f"     Set at least one of: {', '.join(providers)}")
         return False
 

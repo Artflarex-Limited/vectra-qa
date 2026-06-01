@@ -3,7 +3,7 @@ Pydantic models for input validation across the Vectra QA framework.
 Ensures all tool parameters are validated before processing.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field, field_validator
 import validators
 

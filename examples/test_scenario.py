@@ -10,7 +10,6 @@ Demonstrates the complete agent lifecycle:
 """
 
 import sys
-import time
 import asyncio
 from pathlib import Path
 
@@ -78,7 +77,7 @@ async def run_test_scenario():
 
     if spawn_result["status"] == "success":
         ui_agent = spawn_result["result"]
-        print(f"✅ UI Explorer spawned:")
+        print("✅ UI Explorer spawned:")
         print(f"   Agent ID: {ui_agent['agent_id']}")
         print(f"   PID: {ui_agent['pid']}")
         print(f"   Memory Node: {ui_agent['memory_node']}")
@@ -181,7 +180,7 @@ Verify login form rendering, test input validation, and simulate user login work
 
     if spawn_result["status"] == "success":
         data_agent = spawn_result["result"]
-        print(f"✅ Data Validator spawned:")
+        print("✅ Data Validator spawned:")
         print(f"   Agent ID: {data_agent['agent_id']}")
         print(f"   PID: {data_agent['pid']}")
         print(f"   Memory Node: {data_agent['memory_node']}")

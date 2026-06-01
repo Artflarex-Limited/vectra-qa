@@ -211,9 +211,9 @@ class StateManager:
                     node = self.vault.read_node(node_path)
                     if node["frontmatter"].get("agent_id") == agent_id:
                         return node_path
-                except:
+                except Exception:
                     continue
-        except:
+        except Exception:
             pass
         return None
 
@@ -235,9 +235,9 @@ class StateManager:
                                 "orphaned_at": frontmatter.get("orphaned_at", "unknown"),
                             }
                         )
-                except:
+                except Exception:
                     continue
-        except:
+        except Exception:
             pass
 
         return orphaned

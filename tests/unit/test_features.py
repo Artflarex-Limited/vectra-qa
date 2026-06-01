@@ -5,9 +5,7 @@ Unit tests for feature modules.
 import pytest
 import asyncio
 import json
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
-from pathlib import Path
+from unittest.mock import Mock, AsyncMock
 
 # Auth testing
 from mcp_server.features.auth_testing import AuthFlowTester
@@ -126,6 +124,7 @@ class TestVisualRegressionTester:
         """Should create baseline if none exists."""
         tester = VisualRegressionTester(temp_vault_path)
         # Baseline doesn't exist, should return appropriate message
+        assert tester.baselines_dir.exists()
 
 
 class TestPerformanceTester:

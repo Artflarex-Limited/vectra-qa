@@ -5,8 +5,6 @@ Tests login/logout flows, session management, and credential security.
 Supports configurable credentials via environment variables.
 """
 
-import os
-import json
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 
@@ -242,7 +240,7 @@ class AuthFlowTester:
         try:
             element = await self.browser.page.query_selector(selector)
             return element is not None
-        except:
+        except Exception:
             return False
 
     def _find_session_cookie(self, cookies: List[Dict]) -> Optional[Dict]:

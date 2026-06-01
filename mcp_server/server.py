@@ -6,11 +6,10 @@ Includes health checks, state persistence, and graceful shutdown.
 
 import json
 import sys
-import os
 import asyncio
 import argparse
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import structlog
 

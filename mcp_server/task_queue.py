@@ -15,12 +15,10 @@ Usage:
 
 import os
 import json
-import time
 import uuid
 from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
 
 import structlog
 

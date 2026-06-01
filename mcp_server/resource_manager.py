@@ -6,9 +6,8 @@ Controls concurrent browser instances, agent timeouts, and resource usage.
 
 import os
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
-from contextlib import asynccontextmanager
 
 import structlog
 
@@ -77,7 +76,7 @@ class BrowserPool:
                         # Don't return broken browsers to pool
                         try:
                             await browser.close()
-                        except:
+                        except Exception:
                             pass
                         return
 
@@ -89,7 +88,7 @@ class BrowserPool:
                     # Pool is full, close browser
                     try:
                         await browser.close()
-                    except:
+                    except Exception:
                         pass
                     logger.debug("browser_closed_pool_full")
 
@@ -99,14 +98,14 @@ class BrowserPool:
             for browser in self._pool:
                 try:
                     await browser.close()
-                except:
+                except Exception:
                     pass
             self._pool.clear()
 
             for browser in list(self._in_use):
                 try:
                     await browser.close()
-                except:
+                except Exception:
                     pass
             self._in_use.clear()
 

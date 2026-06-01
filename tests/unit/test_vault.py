@@ -6,8 +6,6 @@ Tests file locking, atomic writes, and concurrent access safety.
 import pytest
 import threading
 import time
-from pathlib import Path
-from mcp_server.tools import ObsidianVault, VaultError
 
 
 class TestObsidianVaultBasicOperations:

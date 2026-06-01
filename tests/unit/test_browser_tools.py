@@ -4,9 +4,7 @@ Uses mocked Playwright to avoid real browser launching.
 """
 
 import pytest
-import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from datetime import datetime
+from unittest.mock import Mock, AsyncMock, patch
 
 from mcp_server.browser_tools import BrowserAutomation
 

@@ -450,7 +450,7 @@ class AgentSpawner:
                         node_path, {"status": "terminated", "terminated_at": timestamp}
                     )
                     break
-            except:
+            except Exception:
                 continue
 
         del self.active_processes[agent_id]
@@ -700,8 +700,6 @@ def _get_browser() -> Any:
 
 def _run_browser_tool(tool_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
     """Run a browser-based MCP tool asynchronously."""
-    import asyncio
-
     try:
         # Try to get or create an event loop
         try:
@@ -748,7 +746,7 @@ async def _async_browser_tool(tool_type: str, params: Dict[str, Any]) -> Dict[st
                 try:
                     if await el.is_visible():
                         visible_count += 1
-                except:
+                except Exception:
                     pass
 
             return {
@@ -815,8 +813,6 @@ async def _async_browser_tool(tool_type: str, params: Dict[str, Any]) -> Dict[st
 
 def _run_feature_tool(feature_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
     """Run a feature test MCP tool asynchronously."""
-    import asyncio
-
     try:
         try:
             loop = asyncio.get_event_loop()

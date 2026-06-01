@@ -3,10 +3,9 @@ Unit tests for wired-up browser MCP tools.
 """
 
 import pytest
-import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 
-from mcp_server.tools import TOOLS, execute_tool
+from mcp_server.tools import execute_tool
 import mcp_server.tools as tools_module
 
 

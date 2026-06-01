@@ -12,7 +12,6 @@ Usage:
 import sys
 import os
 import asyncio
-import json
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -205,7 +204,7 @@ async def validate_api_endpoint(
     if api_logs:
         # Check for common issues
         error_responses = [log for log in api_logs if log.get("status", 200) >= 400]
-        slow_responses = [log for log in api_logs if False]  # Would need timing data
+        _slow_responses = [log for log in api_logs if False]  # Would need timing data
 
         findings += f"- **Error responses**: {len(error_responses)}\n"
 

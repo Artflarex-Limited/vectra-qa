@@ -7,7 +7,7 @@ Uses existing LLMRouter from mcp_server for multi-provider LLM support.
 
 import os
 import re
-import json
+import asyncio
 import yaml
 from typing import List, Dict, Any, Optional, AsyncGenerator
 from datetime import datetime, timezone
@@ -189,7 +189,7 @@ class ChatEngine:
                     parts = plan_str.split(":", 1)
                     if len(parts) == 2:
                         current_metadata["plan"] = {"tests": parts[0].split(","), "url": parts[1]}
-                except:
+                except Exception:
                     pass
             elif line_stripped.startswith("[EXECUTED:"):
                 current_metadata["executed"] = line_stripped[10:-1]

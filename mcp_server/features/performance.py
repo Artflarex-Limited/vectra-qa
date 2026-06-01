@@ -2,12 +2,10 @@
 Performance testing using Playwright metrics and Lighthouse CI.
 """
 
-import os
 import json
 import subprocess
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
-from pathlib import Path
 
 import structlog
 

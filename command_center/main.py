@@ -499,22 +499,22 @@ def _extract_summary(content: str) -> dict:
         if "| Sections Passed |" in line_stripped:
             try:
                 summary["pass"] = int(line_stripped.split("|")[2].strip())
-            except:
+            except Exception:
                 pass
         elif "| Sections Failed |" in line_stripped:
             try:
                 summary["fail"] = int(line_stripped.split("|")[2].strip())
-            except:
+            except Exception:
                 pass
         elif "| Warnings |" in line_stripped:
             try:
                 summary["warning"] = int(line_stripped.split("|")[2].strip())
-            except:
+            except Exception:
                 pass
         elif "| Total Checks |" in line_stripped:
             try:
                 summary["total"] = int(line_stripped.split("|")[2].strip())
-            except:
+            except Exception:
                 pass
 
     return summary

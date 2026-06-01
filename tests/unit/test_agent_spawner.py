@@ -3,14 +3,7 @@ Unit tests for AgentSpawner.
 Uses mocked subprocess to avoid spawning real processes.
 """
 
-import pytest
-import os
-import sys
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
-from datetime import datetime
-
-from mcp_server.tools import AgentSpawner, ObsidianVault, VaultError
+from unittest.mock import patch, MagicMock
 
 
 class TestAgentSpawnerBasic:
@@ -196,6 +189,7 @@ class TestAgentSpawnerCleanup:
             result = agent_spawner.spawn_agent(
                 role="ui_explorer", objective="Test", memory_node="Runs/Test.md"
             )
+            assert result is not None
 
             # Verify Runs directory exists
             runs_dir = vault.vault_path / "Runs"

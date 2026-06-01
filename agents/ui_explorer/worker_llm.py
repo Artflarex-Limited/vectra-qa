@@ -25,7 +25,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from mcp_server.tools import get_vault
 from mcp_server.browser_tools import BrowserAutomation
 from mcp_server.llm_router import llm_router
-from agents.ui_explorer.report_builder import ReportBuilder
 
 logger = structlog.get_logger()
 
@@ -142,7 +141,7 @@ Rules:
                                 "selector": selector,
                             }
                         )
-                except:
+                except Exception:
                     pass
         except Exception as e:
             observation["interactive_elements_error"] = str(e)
@@ -156,7 +155,7 @@ Rules:
         try:
             viewport = await self.browser.page.viewport_size()
             observation["viewport"] = viewport
-        except:
+        except Exception:
             pass
 
         return observation

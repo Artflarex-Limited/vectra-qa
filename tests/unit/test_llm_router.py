@@ -5,7 +5,7 @@ Uses mocked LLM clients to avoid real API calls.
 
 import pytest
 import os
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from mcp_server.llm_router import LLMRouter, LLMResponse
 
 
