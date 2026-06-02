@@ -10,6 +10,9 @@ python-multipart>=0.0.6
 # LLM Routing (Multi-Provider Support)
 openai>=1.30.0
 
+# Anthropic Claude SDK
+anthropic>=0.18.0
+
 # Google Gemini SDK
 google-genai>=0.8.0
 

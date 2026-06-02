@@ -55,7 +55,10 @@ class BrowserAutomation:
                 "--disable-gpu",
             ]
 
-        self.browser = await self.playwright.chromium.launch(**launch_options)
+        try:
+            self.browser = await self.playwright.chromium.launch(**launch_options)
+        except Exception as e:
+            raise RuntimeError(f"Failed to launch Chromium: {e}") from e
 
         context = await self.browser.new_context(
             viewport={"width": 1920, "height": 1080},

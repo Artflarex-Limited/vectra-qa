@@ -78,8 +78,8 @@ services:
       - LOCAL_LLM_MODEL=${LOCAL_LLM_MODEL:-llama3.1:70b}
       # Model Selection
       - ORCHESTRATOR_MODEL=${ORCHESTRATOR_MODEL:-openai/gpt-4o}
-      - UI_EXPLORER_MODEL=${UI_EXPLORER_MODEL:-anthropic/claude-3-5-sonnet-20241022}
-      - CHATBOT_MODEL=${CHATBOT_MODEL:-anthropic/claude-3-5-sonnet-20241022}
+      - UI_EXPLORER_MODEL=${UI_EXPLORER_MODEL:-minimax/MiniMax-M2.7}
+      - CHATBOT_MODEL=${CHATBOT_MODEL:-minimax/MiniMax-M2.7}
       # Worker Configuration
       - VECTRA_LLM_WORKERS=${VECTRA_LLM_WORKERS:-true}
       # Database
@@ -133,7 +133,7 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - COMMAND_CENTER_SECRET_KEY=${COMMAND_CENTER_SECRET_KEY:-dev-secret-key-change-in-production}
-      - CHATBOT_MODEL=${CHATBOT_MODEL:-anthropic/claude-3-5-sonnet-20241022}
+      - CHATBOT_MODEL=${CHATBOT_MODEL:-minimax/MiniMax-M2.7}
       - CHATBOT_MAX_HISTORY=${CHATBOT_MAX_HISTORY:-50}
       - CHATBOT_ENABLE_STREAMING=${CHATBOT_ENABLE_STREAMING:-true}
       - MINIMAX_API_KEY=${MINIMAX_API_KEY:-}
