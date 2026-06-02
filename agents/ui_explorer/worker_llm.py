@@ -23,6 +23,7 @@ import structlog
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from mcp_server.tools import get_vault
+from mcp_server.json_extractor import extract_json
 from mcp_server.browser_tools import BrowserAutomation
 from mcp_server.llm_router import llm_router
 
@@ -204,14 +205,11 @@ Respond with a JSON object containing your chosen action.
                 max_tokens=500,
             )
 
-            # Parse JSON from response
+            # Parse JSON from response using robust extractor
             content = response.content.strip()
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
-
-            action = cast(Dict[str, Any], json.loads(content))
+            action = cast(Dict[str, Any], extract_json(content, fallback=None))
+            if not action:
+                raise json.JSONDecodeError("Failed to extract valid JSON", content, 0)
             logger.info(
                 "llm_action_decided",
                 action=action.get("action"),
