@@ -77,7 +77,7 @@ services:
       - LOCAL_LLM_BASE_URL=${LOCAL_LLM_BASE_URL:-}
       - LOCAL_LLM_MODEL=${LOCAL_LLM_MODEL:-llama3.1:70b}
       # Model Selection
-      - ORCHESTRATOR_MODEL=${ORCHESTRATOR_MODEL:-openai/gpt-4o}
+      - ORCHESTRATOR_MODEL=${ORCHESTRATOR_MODEL:-minimax/MiniMax-M2.7}
       - UI_EXPLORER_MODEL=${UI_EXPLORER_MODEL:-minimax/MiniMax-M2.7}
       - CHATBOT_MODEL=${CHATBOT_MODEL:-minimax/MiniMax-M2.7}
       # Worker Configuration
@@ -138,7 +138,7 @@ services:
       - CHATBOT_ENABLE_STREAMING=${CHATBOT_ENABLE_STREAMING:-true}
       - MINIMAX_API_KEY=${MINIMAX_API_KEY:-}
       - MINIMAX_BASE_URL=${MINIMAX_BASE_URL:-https://api.minimax.io/v1}
-      - MINIMAX_MODEL=${MINIMAX_MODEL:-MiniMax-M2.7}
+      - MINIMAX_MODEL=${MINIMAX_MODEL:-minimax/MiniMax-M2.7}
     volumes:
       - obsidian-vault:/app/obsidian_vault
       - ./command_center:/app/command_center
