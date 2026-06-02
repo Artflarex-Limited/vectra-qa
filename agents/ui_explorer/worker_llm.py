@@ -229,7 +229,7 @@ Respond with a JSON object containing your chosen action.
         except Exception as e:
             logger.error("llm_planning_error", error=str(e))
             return {
-                "action": "complete",
+                "action": "error",
                 "reasoning": f"Error during planning: {e}",
                 "confidence": 0,
             }
@@ -271,7 +271,11 @@ Respond with a JSON object containing your chosen action.
             elif action_type == "scroll":
                 result = await self.browser.scroll_to_bottom()
             elif action_type == "complete":
-                result = {"success": True, "action": "complete", "completed": True}
+                # If action was "error" previously, treat as failure
+                if action.get("reasoning", "").startswith("Error during planning"):
+                    result = {"success": False, "action": "complete", "completed": False, "error": "Planning failed"}
+                else:
+                    result = {"success": True, "action": "complete", "completed": True}
             else:
                 result = {"success": False, "error": f"Unknown action: {action_type}"}
         except Exception as e:
@@ -381,6 +385,12 @@ Respond with a JSON object containing your chosen action.
                 # Plan
                 action = await self._plan(objective, observation)
 
+                # Handle planning errors - fail immediately
+                if action.get("action") == "error":
+                    logger.error("planning_failed", reasoning=action.get("reasoning", ""))
+                    await self._fail(f"Planning failed: {action.get('reasoning', 'Unknown error')}")
+                    break
+
                 # Check for completion
                 if action.get("action") == "complete":
                     logger.info("objective_complete", step=self.step_count)
@@ -388,6 +398,13 @@ Respond with a JSON object containing your chosen action.
 
                 # Act
                 result = await self._act(action)
+
+                # Handle action failures - fail immediately unless it's a screenshot
+                if not result.get("success", False) and action.get("action") != "screenshot":
+                    error_msg = result.get("error", "Action failed")
+                    logger.error("action_failed", action=action.get("action"), error=error_msg)
+                    await self._fail(error_msg)
+                    break
 
                 # Log
                 await self._log(action, result, observation)
@@ -420,10 +437,19 @@ Respond with a JSON object containing your chosen action.
         confidence = 100 - (len(self.findings) * 5)
         confidence = max(0, min(100, confidence))
 
-        # Determine result
-        result = (
-            "pass" if len(self.findings) == 0 else "warning" if len(self.findings) < 3 else "fail"
+        # Determine result - check for any failed actions in history
+        has_failures = any(
+            not entry.get("result", {}).get("success", False)
+            for entry in self.action_history
+            if entry.get("action", {}).get("action") != "screenshot"
         )
+
+        if has_failures:
+            result = "fail"
+        else:
+            result = (
+                "pass" if len(self.findings) == 0 else "warning" if len(self.findings) < 3 else "fail"
+            )
 
         # Build final report content
         report_content = f"""# UI Explorer Report

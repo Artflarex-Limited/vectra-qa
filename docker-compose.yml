@@ -136,6 +136,9 @@ services:
       - CHATBOT_MODEL=${CHATBOT_MODEL:-anthropic/claude-3-5-sonnet-20241022}
       - CHATBOT_MAX_HISTORY=${CHATBOT_MAX_HISTORY:-50}
       - CHATBOT_ENABLE_STREAMING=${CHATBOT_ENABLE_STREAMING:-true}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY:-}
+      - MINIMAX_BASE_URL=${MINIMAX_BASE_URL:-https://api.minimax.io/v1}
+      - MINIMAX_MODEL=${MINIMAX_MODEL:-MiniMax-M2.7}
     volumes:
       - obsidian-vault:/app/obsidian_vault
       - ./command_center:/app/command_center

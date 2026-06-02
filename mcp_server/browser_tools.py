@@ -46,6 +46,15 @@ class BrowserAutomation:
         if self.slow_mo > 0:
             launch_options["slow_mo"] = self.slow_mo
 
+        # Docker/Linux requires sandbox bypass flags
+        if self.headless:
+            launch_options["args"] = [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+            ]
+
         self.browser = await self.playwright.chromium.launch(**launch_options)
 
         context = await self.browser.new_context(

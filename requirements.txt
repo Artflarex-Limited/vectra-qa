@@ -23,6 +23,9 @@ httpx2>=0.27.0
 # Structured Logging
 structlog>=24.1.0
 
+# Environment Variables
+python-dotenv>=1.0.0
+
 # Retry Logic
 tenacity>=8.2.0
 
