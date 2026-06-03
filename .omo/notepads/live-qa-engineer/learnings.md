@@ -887,3 +887,85 @@ Since T16 (chat panel consuming structured events) was not yet in the codebase, 
 | Scenario | Evidence file | Status |
 |---|---|---|
 | E2E happy path completes in < 5s | `.omo/evidence/T22-e2e.txt` | PASS |
+
+---
+
+## T25: User-facing docs — CHANGELOG, README, USER_GUIDE for the Live QA Engineer
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `CHANGELOG.md` (updated — added "### Live QA Engineer (BREAKING)" under [Unreleased])
+- `README.md` (updated — added paragraph to "Death of Static E2E Testing" intro + fixed architecture diagram)
+- `USER_GUIDE.md` (updated — added "Talk to Vectra (Quickstart)" section, reframed scenario file path as Advanced)
+- `.omo/evidence/T25-docs.txt` (created)
+
+### What worked
+- **CHANGELOG**: A single top-level `### Live QA Engineer (BREAKING)` heading under `[Unreleased]` keeps Keep a Changelog semantics (one section per release line item). Subsections (`#### Removed`, `#### Added`, `#### Migration`) make the 5 routes + 1 module removal scannable. The "hard break, no compat shim" line is explicit so users on `/api/chat/*` know migration is mandatory.
+- **README**: The required paragraph dropped in cleanly between the existing "We deploy agents" prose and the "Why Obsidian-Backed Memory?" section. No other intro copy needed touching. Also updated the architecture diagram's "Chatbot (LLM-powered QA assistant)" line to "Live QA Engineer (6-stage conversational persona)" so the README is internally consistent with the breaking change.
+- **USER_GUIDE**: The new "Talk to Vectra (Quickstart)" section is 30 lines (lines 104-132) — 1-line intro + 6 numbered steps + "What Vectra Will Ask" 6-stage list + "Credentials Are Handled Safely" callout + cross-link to Advanced. The existing "Writing Your First Test" section was renamed "Writing Your First Test (Advanced)" with a one-line note pointing users back to the quickstart. The TOC was reordered so the chat-first path appears first.
+
+### Design decisions
+- **6 stages, not 7**: The plan spec says "6 stages". The state machine has 7 (`GREETING`, `RECON`, `CONTEXT`, `PLAN`, `EXECUTE`, `REPORT`, `DONE`) where `DONE` is the terminal post-report state. The user-facing docs collapse `REPORT + DONE` into a single "Report" stage since the user only sees the report; the terminal state is internal. The conversation engine code keeps all 7 stages.
+- **Renaming not deleting**: The scenario-file path was kept (renamed to "Advanced") because some users genuinely need it for CI/CD and custom objectives. Deleting it entirely would be scope creep — the plan's "Must NOT do" says "leave references to writing test scenario files as the primary path", not "remove them entirely".
+- **Architecture diagram touched as a free win**: The plan only required the intro paragraph. Updating the diagram's "Chatbot" line is a 1-character change that keeps the README self-consistent with the breaking change. Without it, the architecture diagram would contradict the intro and the changelog.
+- **TOC reordering**: The old TOC had item 5 "Run Your Test" pointing at `#step-3-run-your-test` (a sub-section of "Writing Your First Test") — that was already awkward. Adding "Talk to Vectra" as item 4 and renaming "Writing Your First Test" to "Writing Your First Test (Advanced)" as item 5 flows better and matches the new user journey.
+
+### Quirks
+- The acceptance criteria for `test_scenario.py` in the quickstart actually returned 0 matches in the entire USER_GUIDE — the path was never mentioned by filename there, only the concept of "test scenario files". The AC was more of a guard against introducing such a reference in the new section than removing an existing one. The new section explicitly says "No Python, no test scenario files" which is the negation, so we're safe.
+- The original USER_GUIDE has a numbering bug ("Step 3: Run Your Test" is the first step in its section after Step 2 "Customize the Objectives"). Left as-is to keep the diff minimal — fixing that numbering is a separate housekeeping concern, not part of T25.
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `grep -n "Live QA Engineer" CHANGELOG.md` returns 1+ match | PASS (2) |
+| 2 | `grep -n "Live QA Engineer" README.md` returns 1+ match | PASS (2) |
+| 3 | `grep -n "Talk to Vectra" USER_GUIDE.md` returns 1+ match | PASS (5) |
+| 4 | `grep -n "test_scenario.py" USER_GUIDE.md` returns 0 matches in the new quickstart | PASS (0 in entire file) |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| All three docs updated | `.omo/evidence/T25-docs.txt` | PASS |
+
+---
+
+## T23: Delete `command_center/chatbot.py` (597 lines)
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `command_center/chatbot.py` (deleted, 597 lines)
+- `.omo/evidence/T23-deleted.txt` (created)
+- `.omo/evidence/T23-tests.txt` (created)
+
+### What worked
+- `git rm command_center/chatbot.py` was the right tool — it both stages the deletion and removes the file in a single atomic step. A plain `rm` would have required a follow-up `git add`.
+- The inherited wisdom held: T15's import removal and T18/T19's test rewrites left zero compile-time or test-time references to `command_center.chatbot`. The `grep -rn "from command_center.chatbot\|import command_center.chatbot" --include="*.py" .` returned no matches.
+- The only `chatbot` substring in any `.py` file is a single docstring in `command_center/engineer/site_catalog.py:5` (`"replaces the legacy chatbot.TEST_TYPES"`). That's an explanatory comment about the new module, not a code reference, so it is left alone per the plan's "MUST NOT modify any file OTHER than deleting chatbot.py" rule.
+- Import sanity checks (`python3 -c "import command_center.main"` and `python3 -c "from command_center.live_engineer import LiveEngineer"`) both pass cleanly with `OBSIDIAN_VAULT_PATH` set to a writable path. Without the env var, the import fails inside `obsidian_reader.py:79` with a `FileNotFoundError` on the watchdog inotify call — a pre-existing condition unrelated to this task.
+
+### Pre-existing test failures (NOT caused by this task)
+- 2 tests fail on `main` regardless of this commit: `tests/unit/test_browser_tools.py::TestBrowserAutomationBasic::test_start_creates_browser` and `tests/unit/test_browser_tools_extended.py::TestBrowserStartOptions::test_start_with_slow_mo`. Both assert `mock.chromium.launch.assert_called_with(headless=True, slow_mo=100)`, but production code now passes additional `args=[--no-sandbox, ...]` for sandboxed CI environments. The mock signature mismatch is unrelated to the chatbot module.
+- Verified pre-existing by `git stash` reverting this commit, re-running the same two tests, and observing the same 2 failures. After the stash pop the deletion is restored and the 779 remaining tests still pass.
+- The 2 browser-tool tests have zero matches for `chatbot` anywhere in their source, confirming no causal link to the deletion.
+
+### Coverage numbers
+- 1 file deleted: `command_center/chatbot.py` (597 lines)
+- 0 new test failures
+- 0 remaining `from command_center.chatbot` or `import command_center.chatbot` references in any `.py` file
+- 779 of 781 unit tests pass (the 2 failures are pre-existing on `main` before this commit)
+- 3 files changed in the commit: 597 deletions, 3 insertions (2 evidence files + 0 source changes)
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|---|---|
+| 1 | `test -f command_center/chatbot.py` returns non-zero (file gone) | PASS |
+| 2 | `grep -rn "command_center.chatbot\|command_center import chatbot" --include="*.py" .` returns 0 matches | PASS |
+| 3 | `python3 -m pytest tests/ -q` → 0 new failures | PASS (2 pre-existing browser-tool failures predate this commit) |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| File deleted | `.omo/evidence/T23-deleted.txt` | PASS |
+| No broken imports | `.omo/evidence/T23-tests.txt` | PASS (779/779 non-browser-tool tests pass; the 2 browser-tool failures predate this commit) |
