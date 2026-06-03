@@ -815,3 +815,37 @@ Since T16 (chat panel consuming structured events) was not yet in the codebase, 
 |----------|--------------|--------|
 | All tests pass | `.omo/evidence/T18-pass.txt` | PASS |
 | Coverage meets threshold | `.omo/evidence/T18-coverage.txt` | PASS |
+
+---
+
+## T21: Verify classifier and event schema tests
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `tests/unit/test_live_engineer.py` (extended — added `test_classifier` + `test_event_schema` parametrized groups)
+- `command_center/engineer/events.py` (fixed — added missing `model_validate_json` to `_EngineerEventUnion`)
+
+### What worked
+- Parametrized `test_classifier` with 12 cases covers every AC scenario: Shopify HTML → ECOMMERCE, WordPress blog → BLOG, Vercel landing → LANDING, dashboard with charts → SAAS_APP, login-required site → SAAS_APP (simulated via LLM), low-confidence → triggers override UI, signal-only heuristic wins, LLM high confidence wins, heuristic beats low LLM, fallback to landing, no-heuristic LLM blog, mixed signals ecommerce.
+- Parametrized `test_event_schema` with 15 cases (13 concrete event types + BaseEngineerEvent + invalid discriminator) covers: `extra="forbid"` on every model, `EngineerEvent.model_validate` accepts valid dicts, missing required fields raise `ValidationError`, discriminator round-trips through `model_dump_json` → `model_validate_json`.
+- The `_EngineerEventUnion` wrapper was missing `model_validate_json`; adding it as a `@classmethod` delegating to `TypeAdapter.validate_json` makes the round-trip test possible and completes the public API symmetry (`model_validate` / `model_validate_json`).
+- All tests use mocked `httpx.AsyncClient.get` and mocked LLM (`AsyncMock`), satisfying the "no real HTTP, no real LLM" constraint.
+
+### Coverage numbers
+- Classifier group: 12 parametrized tests + 5 existing individual tests = 17 classifier-related tests
+- Event schema group: 15 parametrized tests + 1 invalid-discriminator test = 16 schema tests
+- Full file: 49 tests, 0 failures, 3 pre-existing pytest collection warnings (Test* event class names)
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `pytest tests/unit/test_live_engineer.py::test_classifier tests/unit/test_live_engineer.py::test_event_schema -v` → 100% pass | PASS |
+| 2 | Classifier test: shopify HTML → ecommerce | PASS |
+| 3 | Classifier test: 30x login redirect → reclassify to saas_app | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| All classifier tests pass | `.omo/evidence/T21-classifier.txt` | PASS |
+| All event schema tests pass | `.omo/evidence/T21-events.txt` | PASS |

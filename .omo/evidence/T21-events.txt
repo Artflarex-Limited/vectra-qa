@@ -1,0 +1,25 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/bugra/Documents/projects/vectra-qa
+configfile: pyproject.toml
+plugins: postgresql-8.1.0, cov-7.1.0, asyncio-1.4.0, anyio-4.13.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 14 items
+
+tests/unit/test_live_engineer.py::test_event_schema[greeting_event] PASSED [  7%]
+tests/unit/test_live_engineer.py::test_event_schema[ask_question_event] PASSED [ 14%]
+tests/unit/test_live_engineer.py::test_event_schema[ask_credential_event] PASSED [ 21%]
+tests/unit/test_live_engineer.py::test_event_schema[classify_site_event] PASSED [ 28%]
+tests/unit/test_live_engineer.py::test_event_schema[confirm_classification_event] PASSED [ 35%]
+tests/unit/test_live_engineer.py::test_event_schema[plan_proposed_event] PASSED [ 42%]
+tests/unit/test_live_engineer.py::test_event_schema[narrate_event] PASSED [ 50%]
+tests/unit/test_live_engineer.py::test_event_schema[test_started_event] PASSED [ 57%]
+tests/unit/test_live_engineer.py::test_event_schema[test_progress_event] PASSED [ 64%]
+tests/unit/test_live_engineer.py::test_event_schema[test_completed_event] PASSED [ 71%]
+tests/unit/test_live_engineer.py::test_event_schema[report_event] PASSED [ 78%]
+tests/unit/test_live_engineer.py::test_event_schema[done_event] PASSED   [ 85%]
+tests/unit/test_live_engineer.py::test_event_schema[error_event] PASSED  [ 92%]
+tests/unit/test_live_engineer.py::test_event_schema[base_event] PASSED   [100%]
+
+============================== 14 passed in 0.14s ==============================

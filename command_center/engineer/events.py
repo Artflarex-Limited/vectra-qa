@@ -199,6 +199,11 @@ class _EngineerEventUnion:
         """Validate ``data`` against the union and return the concrete event."""
         return cls()._adapter.validate_python(data)
 
+    @classmethod
+    def model_validate_json(cls, data: str) -> BaseModel:
+        """Validate JSON ``data`` against the union and return the concrete event."""
+        return cls()._adapter.validate_json(data)
+
     def validate_python(self, data: Any) -> BaseModel:
         """Direct passthrough to the underlying ``TypeAdapter``."""
         return self._adapter.validate_python(data)

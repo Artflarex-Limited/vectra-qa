@@ -1,0 +1,23 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/bugra/Documents/projects/vectra-qa
+configfile: pyproject.toml
+plugins: postgresql-8.1.0, cov-7.1.0, asyncio-1.4.0, anyio-4.13.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 12 items
+
+tests/unit/test_live_engineer.py::test_classifier[shopify_html_to_ecommerce] PASSED [  8%]
+tests/unit/test_live_engineer.py::test_classifier[wordpress_blog_to_blog] PASSED [ 16%]
+tests/unit/test_live_engineer.py::test_classifier[vercel_landing_to_landing] PASSED [ 25%]
+tests/unit/test_live_engineer.py::test_classifier[dashboard_charts_to_saas_app] PASSED [ 33%]
+tests/unit/test_live_engineer.py::test_classifier[login_required_reclassify_saas_app] PASSED [ 41%]
+tests/unit/test_live_engineer.py::test_classifier[low_confidence_triggers_override] PASSED [ 50%]
+tests/unit/test_live_engineer.py::test_classifier[signal_only_heuristic_wins] PASSED [ 58%]
+tests/unit/test_live_engineer.py::test_classifier[llm_high_confidence_wins] PASSED [ 66%]
+tests/unit/test_live_engineer.py::test_classifier[heuristic_beats_low_confidence_llm] PASSED [ 75%]
+tests/unit/test_live_engineer.py::test_classifier[fallback_to_landing] PASSED [ 83%]
+tests/unit/test_live_engineer.py::test_classifier[no_heuristic_llm_blog] PASSED [ 91%]
+tests/unit/test_live_engineer.py::test_classifier[mixed_signals_ecommerce] PASSED [100%]
+
+============================== 12 passed in 0.51s ==============================
