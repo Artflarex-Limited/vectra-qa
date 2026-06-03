@@ -7,14 +7,17 @@ import json
 import asyncio
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, List, Optional, cast
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Response
 from fastapi.responses import StreamingResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from pathlib import Path
+from pydantic import BaseModel
 from command_center.obsidian_reader import reader
 from command_center.chatbot import chat_engine, TEST_TYPES
+from command_center.live_engineer import LiveEngineer
+from command_center.engineer.events import BaseEngineerEvent
 
 # MCP Server Configuration
 import os
@@ -677,6 +680,144 @@ async def result_sse(request: Request, agent_id: str):
             "Connection": "keep-alive",
         },
     )
+
+
+# ═══════════════════════════════════════════════════
+# LIVE QA ENGINEER ENDPOINTS
+# ═══════════════════════════════════════════════════
+
+# Module-level singleton (lazy-init on first request)
+_live_engineer: Optional[LiveEngineer] = None
+
+
+def _get_live_engineer() -> LiveEngineer:
+    global _live_engineer
+    if _live_engineer is None:
+        try:
+            _live_engineer = LiveEngineer()
+        except Exception:
+            # Fallback: init without optional dependencies
+            _live_engineer = LiveEngineer(llm=None, orchestrator=None)
+    return _live_engineer
+
+
+def _event_to_dict(event: BaseEngineerEvent) -> dict:
+    """Serialize a Pydantic v2 engineer event to a plain dict."""
+    return event.model_dump(mode="json")
+
+
+class StartRequest(BaseModel):
+    url: Optional[str] = None
+    session_id: Optional[str] = None
+
+
+class MessageRequest(BaseModel):
+    message: str
+    credential: Optional[Dict[str, str]] = None
+
+
+@app.post("/api/engineer/start")
+async def engineer_start(request: Request, response: Response, body: StartRequest):
+    """Start a new live QA engineer session."""
+    le = _get_live_engineer()
+    sess, events = await le.start_session(url=body.url, existing_session_id=body.session_id)
+    sid = sess.session_id
+
+    if "session_id" not in request.cookies:
+        response.set_cookie(
+            key="session_id",
+            value=sid,
+            httponly=True,
+            samesite="strict",
+            max_age=14400,  # 4 hours
+        )
+
+    return {
+        "session_id": sid,
+        "events": [_event_to_dict(e) for e in events],
+        "stage": sess.state.current_stage.value,
+    }
+
+
+@app.post("/api/engineer/{session_id}/message")
+async def engineer_message(session_id: str, body: MessageRequest):
+    """Send a message to the live QA engineer."""
+    le = _get_live_engineer()
+    try:
+        events = await le.handle_message(
+            session_id=session_id,
+            user_message=body.message,
+            credential=body.credential,
+        )
+    except Exception:
+        from command_center.engineer.events import AskQuestionEvent
+        from command_center.engineer.state_machine import Stage
+
+        events = [
+            AskQuestionEvent(
+                session_id=session_id,
+                stage=Stage.GREETING,
+                timestamp=datetime.now(timezone.utc).isoformat(),
+                question_id="fallback",
+                prompt="Could you repeat that?",
+            )
+        ]
+    return {
+        "events": [_event_to_dict(e) for e in events],
+        "stage": events[-1].stage.value if events else "greeting",
+    }
+
+
+@app.get("/api/engineer/{session_id}/stream")
+async def engineer_stream(request: Request, session_id: str):
+    """SSE endpoint for live engineer progress."""
+    le = _get_live_engineer()
+
+    async def _engineer_event_generator() -> AsyncGenerator[str, None]:
+        # Emit current state events immediately
+        try:
+            events = await le.resume_session(session_id)
+            for event in events:
+                yield f"data: {json.dumps(_event_to_dict(event), default=json_serialize)}\n\n"
+        except KeyError:
+            yield f"data: {json.dumps({'error': 'Session not found', 'session_id': session_id})}\n\n"
+            return
+
+        for _ in range(3):
+            heartbeat = {
+                "type": "heartbeat",
+                "session_id": session_id,
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+            }
+            yield f"data: {json.dumps(heartbeat, default=json_serialize)}\n\n"
+            await asyncio.sleep(2)
+
+    return StreamingResponse(
+        _engineer_event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@app.get("/api/engineer/{session_id}/metrics")
+async def engineer_metrics(session_id: str):
+    """Get metrics for a live QA engineer session."""
+    le = _get_live_engineer()
+    return le.get_metrics(session_id)
+
+
+@app.get("/api/engineer/{session_id}/resume")
+async def engineer_resume(session_id: str):
+    """Resume a live QA engineer session — returns current state events."""
+    le = _get_live_engineer()
+    events = await le.resume_session(session_id)
+    return {
+        "events": [_event_to_dict(e) for e in events],
+        "stage": events[-1].stage.value if events else "greeting",
+    }
 
 
 # ═══════════════════════════════════════════════════
