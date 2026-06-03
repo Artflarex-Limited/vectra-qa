@@ -520,6 +520,66 @@ Both changes are backward-compatible (string equality still works for `Stage` en
 
 ---
 
+## T20: Verify state machine, vocabulary scrub, and credential security tests
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `tests/unit/test_live_engineer.py` (appended `test_state_machine`, expanded vocabulary tests, added `test_credential_never_leaks`)
+
+### What was added
+
+1. **`test_state_machine`** (16 assertions):
+   - STAGE_RANK monotonicity for all 7 stages
+   - ALLOWED_TRANSITIONS covers every stage
+   - DONE is terminal (empty target set)
+   - `can_transition` for valid and invalid moves
+   - `assert_monotonic` allows forward-by-one, rejects forward skips
+   - `assert_monotonic` rejects backward without keyword, allows backward with keyword
+   - Same-stage self-transitions always allowed
+   - Non-Stage input raises TypeError
+   - `requires_credential` only returns True for CONTEXT + credential-required site type
+   - Transition model validation
+   - SessionState defaults to GREETING
+
+2. **Vocabulary test expansion** (4 new focused tests + existing aggregate):
+   - `test_vocabulary_individual_forbidden_words`: iterates all 31 forbidden words and asserts each is detected by `scrub_forbidden`
+   - `test_vocabulary_plural_detection`: asserts all 12 plural forms exist in FORBIDDEN_WORDS and are detected
+   - `test_vocabulary_enforce_word_budget_edge_cases`: single sentence within budget, single sentence over budget (kept guard), max_words=0, empty text
+   - `test_vocabulary_glossary_entries_are_plain_english`: non-empty, differs from forbidden word, no uppercase/camelCase
+
+3. **`test_credential_never_leaks`** (5 security vectors):
+   - (a) **structlog records**: `scrub_log_record` drops `password`, `api_token`, `secret_key` keys recursively while preserving safe keys
+   - (b) **vault node**: `EngineerSessionStore` update with credentials → vault file does not contain secret, username, "password", or "credential"
+   - (c) **agent objective / events**: `_run_execution` emitted events serialized to JSON do not contain credential values
+   - (d) **chat history re-load**: `resume_session` returned events serialized to JSON do not contain credential values
+   - (e) **SSE event stream**: full event list serialized as SSE payload does not contain credential values
+
+### Coverage numbers
+- 22 total test functions in `test_live_engineer.py` (was 16)
+- `test_state_machine`: 16 assertions
+- Vocabulary group: 7 test functions, ~40 assertions
+- Credential security group: 3 test functions, ~25 assertions
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|---|---|
+| 1 | `python3 -m pytest tests/unit/test_live_engineer.py -v` → 100% pass | PASS (22/22) |
+| 2 | `test_credential_never_leaks_to_log` equivalent | PASS (scrub_log_record) |
+| 3 | `test_credential_never_leaks_to_vault` equivalent | PASS (vault node read) |
+| 4 | `test_credential_never_leaks_to_agent_objective` equivalent | PASS (event serialization) |
+| 5 | `test_credential_never_leaks_to_sse_stream` equivalent | PASS (SSE payload) |
+| 6 | `test_credential_never_leaks_to_session_resume` equivalent | PASS (resume_session events) |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|---|---|---|
+| State machine cannot skip stages | `.omo/evidence/T20-state.txt` | PASS |
+| Vocabulary scrub catches all forbidden words | `.omo/evidence/T20-vocab.txt` | PASS |
+| Security contract test passes | `.omo/evidence/T20-secure.txt` | PASS |
+
+---
+
 ## T14: FastAPI endpoints — `/api/engineer/*`
 
 **Date**: 2026-06-03
@@ -721,3 +781,37 @@ Since T16 (chat panel consuming structured events) was not yet in the codebase, 
 | Password input is type=password | `.omo/evidence/T17-masked.png` | PASS |
 | Submitted value never appears in DOM | `.omo/evidence/T17-no-leak.txt` | PASS |
 | Input cleared after submit | `.omo/evidence/T17-cleared.png` | PASS |
+
+---
+
+## T18: Rewrite tests/unit/test_command_center.py for new engine
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `tests/unit/test_command_center.py` (rewritten — 67 tests, was 525 lines of chatbot tests)
+
+### What worked
+- Module-level `OBSIDIAN_VAULT_PATH` redirect before imports (same pattern as `test_live_engineer.py:13-19`) prevents vault-write failures during test collection.
+- 67 tests across 12 classes cover all new engineer modules: events (4), site_catalog (5), state_machine (8), vocabulary (7), metrics (6), session_lifecycle (7), credentials (6), classifier (4), narrator (3), report_builder (4), conversation_engine (4), live_engineer (8).
+- Security-contract test (`test_credentials_never_written_to_vault`) verifies the credential key is absent from vault node frontmatter and body, while still held in-memory.
+- Zero imports from `command_center.chatbot` — all imports come from `command_center.engineer.*` and `command_center.live_engineer`.
+- Coverage: 91% total (838 stmts, 73 miss), exceeding the 90% threshold.
+
+### Coverage numbers
+- 67 tests, 0 failures
+- 11 modules under `command_center/engineer/` tested
+- Lowest individual module coverage: narrator.py 83%, session.py 85%
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `python -m pytest tests/unit/test_command_center.py -v` → 100% pass | PASS |
+| 2 | `pytest --cov=command_center/engineer tests/unit/test_command_center.py` → ≥ 90% line coverage | PASS |
+| 3 | No `from command_center.chatbot` or `import command_center.chatbot` imports | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| All tests pass | `.omo/evidence/T18-pass.txt` | PASS |
+| Coverage meets threshold | `.omo/evidence/T18-coverage.txt` | PASS |

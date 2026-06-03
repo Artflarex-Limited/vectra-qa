@@ -1,0 +1,8 @@
+T18 Evidence: Coverage meets threshold
+========================================
+Command: python3 -m pytest tests/unit/test_command_center.py --cov=command_center/engineer --cov-report=term-missing -q
+Result:
+TOTAL 838 Stmts, 73 Miss, 91% Cover
+All modules ≥83% (narrator.py 83%, session.py 85%, site_catalog.py 86%, metrics.py 89%)
+Threshold: ≥90% line coverage — PASS (TOTAL 91%)
+Date: 2026-06-03
