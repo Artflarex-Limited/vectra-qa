@@ -1069,6 +1069,190 @@
             0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
             30% { transform: translateY(-4px); opacity: 1; }
         }
+
+        /* ─────────────────────────────────────────
+           ENGINEER CHAT — EVENT RENDERING
+           ───────────────────────────────────────── */
+        .event-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: var(--radius);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .event-badge.greeting { background: var(--phosphor-glow); color: var(--phosphor); border: 1px solid rgba(0, 255, 136, 0.2); }
+        .event-badge.classify { background: var(--caution-glow); color: var(--caution); border: 1px solid rgba(255, 170, 0, 0.2); }
+        .event-badge.plan { background: rgba(100, 149, 237, 0.1); color: #6495ed; border: 1px solid rgba(100, 149, 237, 0.2); }
+        .event-badge.execute { background: rgba(138, 43, 226, 0.1); color: #8a2be2; border: 1px solid rgba(138, 43, 226, 0.2); }
+        .event-badge.report { background: rgba(255, 255, 255, 0.05); color: var(--ice); border: 1px solid var(--grid); }
+        .event-badge.error { background: var(--alert-glow); color: var(--alert); border: 1px solid rgba(255, 51, 102, 0.2); }
+        .event-badge.done { background: var(--phosphor-glow); color: var(--phosphor); border: 1px solid rgba(0, 255, 136, 0.2); }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--void);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--phosphor);
+            transition: width 0.5s ease;
+            border-radius: 2px;
+        }
+
+        .choice-btn {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            color: var(--ice);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: var(--radius);
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .choice-btn:hover {
+            border-color: var(--phosphor-dim);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .narration-bubble {
+            background: var(--void);
+            border: 1px dashed var(--grid-bright);
+            color: var(--steel);
+            font-style: italic;
+            font-size: 11px;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            margin: 4px 0;
+        }
+
+        /* ─────────────────────────────────────────
+           PASSWORD INPUT COMPONENT (T17)
+           ───────────────────────────────────────── */
+        .credential-prompt {
+            background: var(--surface-raised);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin: 8px 0;
+        }
+
+        .credential-prompt label {
+            display: block;
+            font-size: 11px;
+            color: var(--ice);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .credential-prompt input[type="password"] {
+            width: 100%;
+            background: var(--void);
+            border: 1px solid var(--grid);
+            color: var(--ice);
+            padding: 8px 12px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            border-radius: var(--radius);
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .credential-prompt input[type="password"]:focus {
+            border-color: var(--phosphor-dim);
+        }
+
+        .credential-prompt .btn-submit {
+            padding: 8px 16px;
+            background: rgba(0, 204, 106, 0.1);
+            border: 1px solid rgba(0, 204, 106, 0.3);
+            color: var(--phosphor-dim);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: var(--radius);
+            transition: all 0.2s;
+        }
+
+        .credential-prompt .btn-submit:hover {
+            background: rgba(0, 204, 106, 0.2);
+            border-color: var(--phosphor-dim);
+        }
+
+        .credential-prompt .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .credential-confirmation {
+            font-size: 11px;
+            color: var(--phosphor-dim);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .credential-help {
+            font-size: 10px;
+            color: var(--steel);
+            margin-top: 10px;
+        }
+
+        .credential-help a {
+            color: var(--phosphor-dim);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .credential-help a:hover {
+            color: var(--phosphor);
+        }
+
+        /* ─────────────────────────────────────────
+           BEST PRACTICES SECTION
+           ───────────────────────────────────────── */
+        #best-practices {
+            max-width: 1400px;
+            margin: 48px auto;
+            padding: 0 32px;
+        }
+
+        .bp-card {
+            background: var(--surface);
+            border: 1px solid var(--grid);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-top: 16px;
+        }
+
+        .bp-card h3 {
+            font-family: var(--font-display);
+            font-size: 14px;
+            color: var(--phosphor);
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .bp-card p {
+            font-size: 12px;
+            color: var(--steel);
+            line-height: 1.8;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -1606,40 +1790,39 @@
             .then(data => updateDashboard({ orchestrator: {}, agents: [], nodes: data }));
         
         // ═══════════════════════════════════════
-        // CHAT FUNCTIONS
+        // ENGINEER CHAT PANEL — Structured Events
         // ═══════════════════════════════════════
-        let currentPlan = null;
-        let isChatLoading = false;
+        let engineerSessionId = null;
+        let engineerStage = 'greeting';
+        let isEngineerLoading = false;
         let unreadCount = 0;
+        let engineerEventSource = null;
+        let pendingQuestionId = null;
+        let pendingPlan = null;
 
         function toggleChatPanel() {
             const panel = document.getElementById('chat-panel-container');
             const isCollapsed = panel.classList.contains('collapsed');
             
             if (isCollapsed) {
-                // Expand
                 panel.classList.remove('collapsed');
                 panel.classList.add('expanded');
                 panel.classList.remove('attention');
                 
-                // Clear unread badge
                 unreadCount = 0;
                 updateUnreadBadge(0);
                 
-                // Focus input
                 setTimeout(() => {
                     const input = document.getElementById('chat-input');
-                    if (input) input.focus();
+                    if (input && input.offsetParent !== null) input.focus();
                 }, 300);
                 
                 scrollChatToBottom();
             } else {
-                // Collapse
                 panel.classList.remove('expanded');
                 panel.classList.add('collapsed');
             }
             
-            // Save state
             localStorage.setItem('chatPanelCollapsed', panel.classList.contains('collapsed'));
         }
 
@@ -1666,84 +1849,6 @@
             }
         }
 
-        async function loadChatHistory() {
-            try {
-                const response = await fetch('/api/chat/history?limit=50');
-                const data = await response.json();
-                
-                if (data.messages && data.messages.length > 0) {
-                    const container = document.getElementById('chat-messages');
-                    container.innerHTML = ''; // Clear welcome message
-                    
-                    data.messages.forEach(msg => {
-                        displayChatMessage(msg.role, msg.content, false);
-                    });
-                    
-                    scrollChatToBottom();
-                }
-            } catch (e) {
-                console.error('Failed to load chat history:', e);
-            }
-        }
-
-        function displayChatMessage(role, content, scroll = true) {
-            const container = document.getElementById('chat-messages');
-            const panel = document.getElementById('chat-panel-container');
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message ${role}-message`;
-            
-            let avatar = '';
-            let bubbleClass = '';
-            
-            if (role === 'user') {
-                avatar = '👤';
-                bubbleClass = 'user';
-            } else if (role === 'assistant') {
-                avatar = '🤖';
-                bubbleClass = 'assistant';
-            } else {
-                avatar = '⚙️';
-                bubbleClass = 'system';
-            }
-            
-            // Convert markdown-like formatting to HTML
-            let formattedContent = content
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/`([^`]+)`/g, '<code>$1</code>')
-                .replace(/\n/g, '<br>');
-            
-            messageDiv.innerHTML = `
-                <div class="chat-avatar">${avatar}</div>
-                <div class="chat-bubble ${bubbleClass}">${formattedContent}</div>
-            `;
-            
-            container.appendChild(messageDiv);
-            
-            // Handle collapsed panel
-            if (panel.classList.contains('collapsed') && role === 'assistant') {
-                // Increment unread count
-                unreadCount++;
-                updateUnreadBadge(unreadCount);
-                
-                // Auto-expand with attention animation
-                panel.classList.remove('collapsed');
-                panel.classList.add('expanded');
-                panel.classList.add('attention');
-                
-                setTimeout(() => {
-                    panel.classList.remove('attention');
-                }, 3000);
-                
-                // Save state
-                localStorage.setItem('chatPanelCollapsed', 'false');
-            }
-            
-            if (scroll) {
-                scrollChatToBottom();
-            }
-        }
-
         function scrollChatToBottom() {
             const container = document.getElementById('chat-messages');
             container.scrollTop = container.scrollHeight;
@@ -1758,136 +1863,549 @@
             document.getElementById('chat-typing').style.display = 'none';
         }
 
-        function showPlanConfirmation(plan) {
-            currentPlan = plan;
-            const detailsDiv = document.getElementById('chat-plan-details');
-            
-            let detailsHtml = `<strong style="color: var(--phosphor);">${plan.url}</strong><br><br>`;
-            plan.test_configs.forEach((test, i) => {
-                detailsHtml += `${i + 1}. <strong>${test.name}</strong> — ${test.description}<br>`;
-            });
-            
-            detailsDiv.innerHTML = detailsHtml;
-            document.getElementById('chat-plan-confirm').style.display = 'block';
-            scrollChatToBottom();
+        function setStageLabel(stage) {
+            const label = document.getElementById('chat-stage-label');
+            if (label) {
+                label.textContent = stage;
+                engineerStage = stage;
+            }
         }
 
-        function hidePlanConfirmation() {
-            document.getElementById('chat-plan-confirm').style.display = 'none';
-            currentPlan = null;
+        // ─────────────────────────────────────────
+        // EVENT RENDERERS
+        // ─────────────────────────────────────────
+        function renderEventBadge(type, stage) {
+            const map = {
+                greeting: 'greeting',
+                ask_question: 'greeting',
+                ask_credential: 'greeting',
+                classify_site: 'classify',
+                confirm_classification: 'classify',
+                plan_proposed: 'plan',
+                narrate: 'execute',
+                test_started: 'execute',
+                test_progress: 'execute',
+                test_completed: 'execute',
+                report: 'report',
+                done: 'done',
+                error: 'error',
+            };
+            const cls = map[type] || 'greeting';
+            return `<span class="event-badge ${cls}">${type.replace(/_/g, ' ')}</span>`;
         }
 
-        async function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
+        function appendToChat(html, scroll = true) {
+            const container = document.getElementById('chat-messages');
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            container.appendChild(wrapper);
             
-            if (!message || isChatLoading) return;
-            
-            // Check if confirming a plan
-            if (currentPlan && (message.toLowerCase() === 'yes' || message.toLowerCase() === 'run' || message.toLowerCase() === 'ok')) {
-                await confirmChatPlan();
-                input.value = '';
-                return;
+            const panel = document.getElementById('chat-panel-container');
+            if (panel.classList.contains('collapsed')) {
+                unreadCount++;
+                updateUnreadBadge(unreadCount);
+                panel.classList.remove('collapsed');
+                panel.classList.add('expanded');
+                panel.classList.add('attention');
+                setTimeout(() => panel.classList.remove('attention'), 3000);
+                localStorage.setItem('chatPanelCollapsed', 'false');
             }
             
-            // Check if canceling a plan
-            if (currentPlan && (message.toLowerCase() === 'no' || message.toLowerCase() === 'cancel')) {
-                cancelChatPlan();
-                input.value = '';
-                return;
+            if (scroll) scrollChatToBottom();
+        }
+
+        function renderGreetingEvent(ev) {
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">🤖</div>
+                    <div class="chat-bubble assistant">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <br>${escapeHtml(ev.message || 'Hello! I am Vectra. How can I help you test today?')}
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderAskQuestionEvent(ev) {
+            pendingQuestionId = ev.question_id;
+            let choicesHtml = '';
+            if (ev.choices && ev.choices.length > 0) {
+                choicesHtml = '<div style="margin-top: 8px;">' +
+                    ev.choices.map((c, i) =>
+                        `<button class="choice-btn" onclick="submitChoice('${escapeHtml(c).replace(/'/g, "\\'")}')">${escapeHtml(c)}</button>`
+                    ).join('') +
+                    '</div>';
             }
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">🤖</div>
+                    <div class="chat-bubble assistant">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <br>${escapeHtml(ev.prompt)}${choicesHtml}
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        // ─────────────────────────────────────────
+        // T17: PASSWORD INPUT COMPONENT
+        // ─────────────────────────────────────────
+        function renderAskCredentialEvent(ev) {
+            const reason = escapeHtml(ev.reason || 'I need to log in. What is the password?');
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">🔐</div>
+                    <div class="chat-bubble assistant" style="max-width: 100%;">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <div class="credential-prompt" id="credential-prompt-${ev.session_id}">
+                            <label>${reason}</label>
+                            <input type="password" id="credential-input-${ev.session_id}"
+                                   placeholder="Enter password..."
+                                   autocomplete="off"
+                                   onkeydown="if(event.key==='Enter') submitCredential('${ev.session_id}')">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <button class="btn-submit" id="credential-submit-${ev.session_id}"
+                                        onclick="submitCredential('${ev.session_id}')">Submit</button>
+                            </div>
+                            <div class="credential-confirmation" id="credential-confirm-${ev.session_id}" style="display: none;">
+                                Submitted. I won't show this again.
+                            </div>
+                            <div class="credential-help">
+                                Need a test account? See the <a href="#best-practices" onclick="document.getElementById('best-practices').scrollIntoView({behavior:'smooth'})">best practices guide</a>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+            
+            // Focus the password input
+            setTimeout(() => {
+                const input = document.getElementById(`credential-input-${ev.session_id}`);
+                if (input) input.focus();
+            }, 100);
+        }
+
+        async function submitCredential(sessionId) {
+            const input = document.getElementById(`credential-input-${sessionId}`);
+            const submitBtn = document.getElementById(`credential-submit-${sessionId}`);
+            const confirmDiv = document.getElementById(`credential-confirm-${sessionId}`);
+            
+            if (!input || !input.value.trim()) return;
+            
+            const value = input.value.trim();
+            
+            // Disable submit button
+            if (submitBtn) submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/api/engineer/${sessionId}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: '[credential_submitted]',
+                        credential: { field: 'password', value: value }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Clear the password input immediately — never keep it in DOM
+                input.value = '';
+                
+                // Show confirmation
+                if (confirmDiv) confirmDiv.style.display = 'block';
+                
+                // Render any follow-up events
+                if (data.events) {
+                    data.events.forEach(ev => renderEngineerEvent(ev));
+                }
+                if (data.stage) setStageLabel(data.stage);
+                
+            } catch (e) {
+                console.error('Credential submit error:', e);
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        }
+
+        function renderClassifySiteEvent(ev) {
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">📊</div>
+                    <div class="chat-bubble assistant">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <br>Classified as: <strong>${escapeHtml(ev.site_type)}</strong> (confidence: ${(ev.confidence * 100).toFixed(0)}%)
+                        <div style="margin-top: 8px; display: flex; gap: 8px;">
+                            <button class="btn-confirm" onclick="sendEngineerMessage('yes')">✓ Confirm</button>
+                            <button class="btn-cancel" onclick="sendEngineerMessage('no, change it')">✕ Change</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderConfirmClassificationEvent(ev) {
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">📊</div>
+                    <div class="chat-bubble assistant">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <br>Does this look right? Let me know if you'd like to change the classification.
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderPlanProposedEvent(ev) {
+            pendingPlan = ev;
+            const testsHtml = (ev.tests || []).map((t, i) =>
+                `${i + 1}. ${escapeHtml(t)}`
+            ).join('<br>');
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">📋</div>
+                    <div class="chat-bubble assistant">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <br><strong>Proposed plan for ${escapeHtml(ev.site_type || 'site')}:</strong>
+                        <div style="margin: 8px 0; font-size: 11px;">${testsHtml}</div>
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <button class="btn-confirm" onclick="confirmEngineerPlan()">▶ Run</button>
+                            <button class="btn-cancel" onclick="sendEngineerMessage('edit plan')">✎ Edit</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderNarrateEvent(ev) {
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar" style="font-size: 10px;">🎙</div>
+                    <div style="flex: 1;">
+                        <div class="narration-bubble">
+                            <strong>${escapeHtml(ev.agent_id)}</strong> — ${escapeHtml(ev.status)}<br>
+                            ${escapeHtml(ev.message)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderTestStartedEvent(ev) {
+            const html = `
+                <div class="chat-message system-message" style="justify-content: center;">
+                    <div class="chat-bubble system">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        Starting <strong>${escapeHtml(ev.test_id)}</strong> (${escapeHtml(ev.role)})
+                        <div class="progress-bar"><div class="progress-bar-fill" id="progress-${ev.test_id}" style="width: 0%"></div></div>
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderTestProgressEvent(ev) {
+            const bar = document.getElementById(`progress-${ev.test_id}`);
+            if (bar) bar.style.width = `${ev.progress_percent}%`;
+            
+            const html = `
+                <div class="chat-message system-message" style="justify-content: center;">
+                    <div class="chat-bubble system">
+                        ${escapeHtml(ev.test_id)}: ${ev.progress_percent}% — ${escapeHtml(ev.message)}
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderTestCompletedEvent(ev) {
+            const bar = document.getElementById(`progress-${ev.test_id}`);
+            if (bar) bar.style.width = '100%';
+            
+            const html = `
+                <div class="chat-message system-message" style="justify-content: center;">
+                    <div class="chat-bubble system">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <strong>${escapeHtml(ev.test_id)}</strong> — ${escapeHtml(ev.result)}<br>
+                        ${escapeHtml(ev.findings_summary || '')}
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderReportEvent(ev) {
+            let sectionsHtml = '';
+            if (ev.sections) {
+                sectionsHtml = Object.entries(ev.sections).map(([k, v]) =>
+                    `<div style="margin: 6px 0; padding: 8px; background: var(--void); border-radius: var(--radius);">
+                        <strong style="color: var(--phosphor-dim);">${escapeHtml(k)}</strong><br>
+                        <span style="font-size: 11px;">${escapeHtml(typeof v === 'string' ? v : JSON.stringify(v))}</span>
+                    </div>`
+                ).join('');
+            }
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">📄</div>
+                    <div class="chat-bubble assistant">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <br><strong>Report</strong>
+                        <div style="margin-top: 8px;">${sectionsHtml}</div>
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderDoneEvent(ev) {
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">✅</div>
+                    <div class="chat-bubble assistant">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <br>All done! The test run is complete.
+                        <div style="margin-top: 8px;">
+                            <button class="btn-confirm" onclick="startEngineerSession()">↻ Start New Session</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+            closeEngineerEventSource();
+        }
+
+        function renderErrorEvent(ev) {
+            const html = `
+                <div class="chat-message assistant-message">
+                    <div class="chat-avatar">⚠️</div>
+                    <div class="chat-bubble assistant" style="border-color: var(--alert);">
+                        ${renderEventBadge(ev.type, ev.stage)}
+                        <br><strong style="color: var(--alert);">${escapeHtml(ev.code)}</strong><br>
+                        ${escapeHtml(ev.message)}
+                    </div>
+                </div>
+            `;
+            appendToChat(html);
+        }
+
+        function renderEngineerEvent(ev) {
+            if (!ev || !ev.type) return;
+            
+            switch (ev.type) {
+                case 'greeting': renderGreetingEvent(ev); break;
+                case 'ask_question': renderAskQuestionEvent(ev); break;
+                case 'ask_credential': renderAskCredentialEvent(ev); break;
+                case 'classify_site': renderClassifySiteEvent(ev); break;
+                case 'confirm_classification': renderConfirmClassificationEvent(ev); break;
+                case 'plan_proposed': renderPlanProposedEvent(ev); break;
+                case 'narrate': renderNarrateEvent(ev); break;
+                case 'test_started': renderTestStartedEvent(ev); break;
+                case 'test_progress': renderTestProgressEvent(ev); break;
+                case 'test_completed': renderTestCompletedEvent(ev); break;
+                case 'report': renderReportEvent(ev); break;
+                case 'done': renderDoneEvent(ev); break;
+                case 'error': renderErrorEvent(ev); break;
+                case 'heartbeat': break; // Ignore heartbeats
+                default:
+                    console.warn('Unknown event type:', ev.type);
+            }
+            
+            if (ev.stage) setStageLabel(ev.stage);
+        }
+
+        function escapeHtml(text) {
+            if (text == null) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ─────────────────────────────────────────
+        // USER ACTIONS
+        // ─────────────────────────────────────────
+        async function startEngineerSession() {
+            if (isEngineerLoading) return;
+            isEngineerLoading = true;
+            showTypingIndicator();
+            
+            // Clear previous session state
+            closeEngineerEventSource();
+            engineerSessionId = null;
+            pendingQuestionId = null;
+            pendingPlan = null;
+            document.getElementById('chat-messages').innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/engineer/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                engineerSessionId = data.session_id;
+                engineerStage = data.stage || 'greeting';
+                setStageLabel(engineerStage);
+                
+                document.getElementById('chat-start-overlay').style.display = 'none';
+                document.getElementById('chat-messages').style.display = 'block';
+                document.getElementById('chat-input-area').style.display = 'flex';
+                
+                if (data.events) {
+                    data.events.forEach(ev => renderEngineerEvent(ev));
+                }
+                
+                openEngineerEventSource(engineerSessionId);
+                
+            } catch (e) {
+                console.error('Failed to start session:', e);
+                appendToChat(`
+                    <div class="chat-message assistant-message">
+                        <div class="chat-avatar">⚠️</div>
+                        <div class="chat-bubble assistant" style="border-color: var(--alert);">
+                            Failed to start session. Please try again.
+                        </div>
+                    </div>
+                `);
+            }
+            
+            hideTypingIndicator();
+            isEngineerLoading = false;
+        }
+
+        async function sendEngineerMessage(message) {
+            if (!message || !engineerSessionId || isEngineerLoading) return;
             
             // Display user message
-            displayChatMessage('user', message);
-            input.value = '';
+            appendToChat(`
+                <div class="chat-message user-message">
+                    <div class="chat-avatar">👤</div>
+                    <div class="chat-bubble user">${escapeHtml(message)}</div>
+                </div>
+            `);
             
-            // Show loading state
-            isChatLoading = true;
+            isEngineerLoading = true;
             showTypingIndicator();
             
             try {
-                const response = await fetch('/api/chat/message', {
+                const response = await fetch(`/api/engineer/${engineerSessionId}/message`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `message=${encodeURIComponent(message)}`
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
                 });
                 
                 const data = await response.json();
                 
                 hideTypingIndicator();
                 
-                if (data.error) {
-                    displayChatMessage('assistant', `Error: ${data.error}`);
-                } else if (data.type === 'plan' && data.plan) {
-                    displayChatMessage('assistant', data.message);
-                    showPlanConfirmation(data.plan);
-                } else {
-                    displayChatMessage('assistant', data.message);
+                if (data.events) {
+                    data.events.forEach(ev => renderEngineerEvent(ev));
                 }
+                if (data.stage) setStageLabel(data.stage);
                 
             } catch (e) {
                 hideTypingIndicator();
-                displayChatMessage('assistant', 'Sorry, I encountered an error. Please try again.');
-                console.error('Chat error:', e);
+                console.error('Message error:', e);
+                appendToChat(`
+                    <div class="chat-message assistant-message">
+                        <div class="chat-avatar">⚠️</div>
+                        <div class="chat-bubble assistant" style="border-color: var(--alert);">
+                            Sorry, I encountered an error. Please try again.
+                        </div>
+                    </div>
+                `);
             }
             
-            isChatLoading = false;
+            isEngineerLoading = false;
         }
 
-        async function confirmChatPlan() {
-            if (!currentPlan) return;
+        async function submitChoice(choice) {
+            await sendEngineerMessage(choice);
+        }
+
+        async function confirmEngineerPlan() {
+            if (!pendingPlan) return;
+            await sendEngineerMessage('run all');
+            pendingPlan = null;
+        }
+
+        // ─────────────────────────────────────────
+        // SSE STREAM
+        // ─────────────────────────────────────────
+        function openEngineerEventSource(sessionId) {
+            closeEngineerEventSource();
             
-            hidePlanConfirmation();
-            displayChatMessage('system', `Executing: ${currentPlan.tests.join(', ')} on ${currentPlan.url}`);
+            const url = `/api/engineer/${sessionId}/stream`;
+            engineerEventSource = new EventSource(url);
             
-            showTypingIndicator();
-            
-            try {
-                const response = await fetch('/api/chat/execute', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `url=${encodeURIComponent(currentPlan.url)}&tests=${encodeURIComponent(currentPlan.tests.join(','))}`
-                });
-                
-                const data = await response.json();
-                
-                hideTypingIndicator();
-                
-                if (data.error) {
-                    displayChatMessage('assistant', `Execution error: ${data.error}`);
-                } else {
-                    displayChatMessage('assistant', `✅ ${data.message}\n\nAgent IDs: ${data.agent_ids.join(', ')}`);
-                    
-                    // Auto-redirect to first agent's result page after a delay
-                    if (data.agent_ids && data.agent_ids.length > 0) {
-                        setTimeout(() => {
-                            displayChatMessage('assistant', `Viewing results for ${data.agent_ids[0]}...`);
-                            window.open(`/results/${data.agent_ids[0]}`, '_blank');
-                        }, 3000);
+            engineerEventSource.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type && data.type !== 'heartbeat') {
+                        renderEngineerEvent(data);
                     }
+                } catch (err) {
+                    console.warn('SSE parse error:', err);
                 }
-                
-            } catch (e) {
-                hideTypingIndicator();
-                displayChatMessage('assistant', 'Failed to execute tests. Please try again.');
-                console.error('Execution error:', e);
-            }
+            };
             
-            currentPlan = null;
+            engineerEventSource.onerror = (e) => {
+                console.warn('SSE error:', e);
+            };
         }
 
-        function cancelChatPlan() {
-            hidePlanConfirmation();
-            displayChatMessage('assistant', 'Test plan cancelled. Let me know if you want to run different tests.');
+        function closeEngineerEventSource() {
+            if (engineerEventSource) {
+                engineerEventSource.close();
+                engineerEventSource = null;
+            }
         }
 
-        // Load chat panel state and history on page load
+        // ─────────────────────────────────────────
+        // SESSION RESUME
+        // ─────────────────────────────────────────
+        async function resumeEngineerSession() {
+            const sid = getCookie('session_id');
+            if (!sid) return;
+            
+            try {
+                const response = await fetch(`/api/engineer/${sid}/resume`);
+                const data = await response.json();
+                
+                if (data.events && data.events.length > 0) {
+                    engineerSessionId = sid;
+                    engineerStage = data.stage || 'greeting';
+                    setStageLabel(engineerStage);
+                    
+                    document.getElementById('chat-start-overlay').style.display = 'none';
+                    document.getElementById('chat-messages').style.display = 'block';
+                    document.getElementById('chat-input-area').style.display = 'flex';
+                    document.getElementById('chat-messages').innerHTML = '';
+                    data.events.forEach(ev => renderEngineerEvent(ev));
+                    
+                    openEngineerEventSource(sid);
+                }
+            } catch (e) {
+                console.error('Resume error:', e);
+            }
+        }
+
+        function getCookie(name) {
+            const value = '; ' + document.cookie;
+            const parts = value.split('; ' + name + '=');
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Load chat panel state and resume session on page load
         loadChatPanelState();
-        loadChatHistory();
+        resumeEngineerSession();
 
         loadRecentTests();
 
@@ -1898,39 +2416,37 @@
     </script>
 
     <!-- ═══════════════════════════════════════
-         FLOATING CHAT WIDGET
+         ENGINEER CHAT PANEL
          ═══════════════════════════════════════ -->
     <div id="chat-panel-container" class="chat-panel-container collapsed">
         <div class="chat-panel-header" onclick="toggleChatPanel()">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <span>🤖</span>
-                <span style="font-family: var(--font-display); font-size: 12px; font-weight: 600;">Vectra</span>
+                <span style="font-family: var(--font-display); font-size: 12px; font-weight: 600;">Talk to Vectra</span>
                 <span id="chat-unread-badge" class="unread-badge">0</span>
             </div>
-            <button class="collapse-btn" onclick="event.stopPropagation(); toggleChatPanel()">
-                ▼
-            </button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="chat-stage-label" style="font-size: 10px; color: var(--steel); text-transform: uppercase; letter-spacing: 0.05em;">Greeting</span>
+                <button class="collapse-btn" onclick="event.stopPropagation(); toggleChatPanel()">
+                    ▼
+                </button>
+            </div>
         </div>
         <div class="chat-panel-body">
-            <!-- Chat Messages -->
-            <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 16px;">
-                <div class="chat-message assistant-message">
-                    <div class="chat-avatar">🤖</div>
-                    <div class="chat-bubble assistant">
-                        Hello! I'm Vectra. I can help you configure and run tests. 
-                        Try: "Test the contact form on https://example.com"
-                    </div>
+            <!-- Start Button (shown when no session) -->
+            <div id="chat-start-overlay" style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 24px; gap: 12px;">
+                <div style="font-size: 11px; color: var(--steel); text-align: center; line-height: 1.6;">
+                    Start a live QA session.<br>
+                    Vectra will guide you through testing your site.
                 </div>
+                <button onclick="startEngineerSession()" class="btn-confirm" style="max-width: 160px;">
+                    ▶ Start
+                </button>
             </div>
             
-            <!-- Test Plan Confirmation (hidden by default) -->
-            <div id="chat-plan-confirm" style="display: none; padding: 12px 16px; border-top: 1px solid var(--grid); background: var(--surface-raised);">
-                <div style="font-size: 10px; color: var(--steel); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.1em;">Planned Tests</div>
-                <div id="chat-plan-details" style="font-size: 11px; color: var(--ice);"></div>
-                <div style="display: flex; gap: 8px; margin-top: 12px;">
-                    <button onclick="confirmChatPlan()" class="btn-confirm">✓ Run</button>
-                    <button onclick="cancelChatPlan()" class="btn-cancel">✕ Cancel</button>
-                </div>
+            <!-- Chat Messages -->
+            <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 16px; display: none;">
+                <!-- Events rendered here -->
             </div>
             
             <!-- Typing Indicator (hidden by default) -->
@@ -1944,16 +2460,28 @@
             </div>
             
             <!-- Input -->
-            <div style="padding: 12px 16px; border-top: 1px solid var(--grid); display: flex; gap: 8px;">
-                <input type="text" id="chat-input" placeholder="Ask Vectra..." 
+            <div id="chat-input-area" style="padding: 12px 16px; border-top: 1px solid var(--grid); display: none; gap: 8px;">
+                <input type="text" id="chat-input" placeholder="Type your message..." 
                        style="flex: 1; background: var(--void); border: 1px solid var(--grid); color: var(--ice); padding: 8px 12px; font-family: var(--font-mono); font-size: 12px; border-radius: var(--radius); outline: none; transition: border-color 0.2s;"
-                       onkeydown="if(event.key==='Enter') sendChatMessage()"
+                       onkeydown="if(event.key==='Enter') sendEngineerMessage(this.value)"
                        onfocus="this.style.borderColor='var(--phosphor-dim)'" 
                        onblur="this.style.borderColor='var(--grid)'">
-                <button onclick="sendChatMessage()" class="btn-chat-send">➤</button>
+                <button onclick="sendEngineerMessage(document.getElementById('chat-input').value)" class="btn-chat-send">➤</button>
             </div>
         </div>
     </div>
+
+    <!-- ═══════════════════════════════════════
+         BEST PRACTICES — Test Accounts
+         ═══════════════════════════════════════ -->
+    <section id="best-practices">
+        <div class="bp-card">
+            <h3>🔐 Best Practices — Test Accounts</h3>
+            <p>Always create dedicated test accounts with fake data rather than using real user credentials in automated tests. This protects real user data and ensures tests remain reproducible regardless of production state changes.</p>
+            <p>Use deterministic credentials like <code>test@example.com</code> / <code>password123</code> that are clearly identifiable as test data, and document them in your team's runbook so anyone can replicate test scenarios without guessing.</p>
+            <p>Rotate test passwords regularly and store them in a secrets manager rather than hard-coding them in test scripts; Vectra's credential handler never writes credentials to the vault or local storage, keeping them in-memory only.</p>
+        </div>
+    </section>
 
 </body>
 </html>
