@@ -1,0 +1,13 @@
+QA Scenario 3 — Discriminator routes dict to correct event subclass.
+Plan ref: .omo/plans/live-qa-engineer.md lines 175-179 (T1)
+Run from project root.
+
+Command:
+  python3 -c "from command_center.engineer.events import EngineerEvent; from datetime import datetime,timezone; ts=datetime.now(timezone.utc).isoformat(); e=EngineerEvent.model_validate({'type':'narrate','session_id':'s','stage':'execute','timestamp':ts,'agent_id':'a','status':'running','message':'m'}); print(e.__class__.__name__)"
+
+Output (stdout):
+  NarrateEvent
+
+Exit code: 0
+Expected: prints "NarrateEvent"
+Result: PASS — discriminator "type" routes {'type':'narrate',...} to NarrateEvent.

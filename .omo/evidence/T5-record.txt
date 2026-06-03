@@ -1,0 +1,4 @@
+2026-06-03 19:39:45 [info     ] metrics.first_response         breach=False first_response_ms=0 session_id=s1 threshold_ms=2000
+2026-06-03 19:39:45 [info     ] metrics.narration              agent_id=a breach=False delta_ms=5000 session_id=s1 threshold_ms=5000
+2026-06-03 19:39:45 [info     ] metrics.report                 breach=False report_ms=9000 session_id=s1 threshold_ms=10000
+QA-RECORD OK: {'first_response_ms': 0, 'narrations': [{'agent_id': 'a', 'delta_ms': 5000}], 'report_ms': 9000, 'config': {'first_response_ms': 2000, 'narration_lag_ms': 5000, 'report_render_ms': 10000, 'greeting_word_budget': 25, 'narration_word_budget': 15, 'report_section_word_budget': 150}}

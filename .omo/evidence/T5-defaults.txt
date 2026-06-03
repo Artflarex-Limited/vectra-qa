@@ -1,0 +1,1 @@
+ACCEPTANCE #3 OK: {'first_response_ms': 2000, 'narration_lag_ms': 5000, 'report_render_ms': 10000, 'greeting_word_budget': 25, 'narration_word_budget': 15, 'report_section_word_budget': 150}

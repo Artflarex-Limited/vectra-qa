@@ -1,0 +1,89 @@
+{
+  "schema_version": 2,
+  "active_work_id": "live-qa-engineer-3fa53122",
+  "works": {
+    "live-qa-engineer-3fa53122": {
+      "work_id": "live-qa-engineer-3fa53122",
+      "active_plan": "/home/bugra/Documents/projects/vectra-qa/.omo/plans/live-qa-engineer.md",
+      "plan_name": "live-qa-engineer",
+      "status": "active",
+      "started_at": "2026-06-03T16:35:51.432Z",
+      "updated_at": "2026-06-03T17:07:09.489Z",
+      "session_ids": [
+        "opencode:ses_172919676ffeBKz6A6PYat3DfW"
+      ],
+      "session_origins": {
+        "opencode:ses_172919676ffeBKz6A6PYat3DfW": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "Define structured event schema + Pydantic models",
+          "session_id": "opencode:ses_171a76d61ffeGO6mj5DforqzZT",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-low",
+          "updated_at": "2026-06-03T16:50:29.435Z",
+          "started_at": "2026-06-03T16:44:04.420Z",
+          "status": "completed",
+          "ended_at": "2026-06-03T16:50:29.435Z",
+          "elapsed_ms": 385015
+        },
+        "todo:7": {
+          "task_key": "todo:7",
+          "task_label": "7",
+          "task_title": "Build EngineerSession class — session lifecycle, in-memory + vault persistence",
+          "session_id": "opencode:ses_1719a2a72ffeQxWg4j6aBQ4HD3",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "updated_at": "2026-06-03T17:07:09.489Z",
+          "started_at": "2026-06-03T17:06:28.793Z",
+          "status": "completed",
+          "ended_at": "2026-06-03T17:07:09.489Z",
+          "elapsed_ms": 40696
+        }
+      }
+    }
+  },
+  "active_plan": "/home/bugra/Documents/projects/vectra-qa/.omo/plans/live-qa-engineer.md",
+  "started_at": "2026-06-03T16:35:51.432Z",
+  "status": "active",
+  "updated_at": "2026-06-03T17:07:09.489Z",
+  "session_ids": [
+    "opencode:ses_172919676ffeBKz6A6PYat3DfW"
+  ],
+  "session_origins": {
+    "opencode:ses_172919676ffeBKz6A6PYat3DfW": "direct"
+  },
+  "plan_name": "live-qa-engineer",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Define structured event schema + Pydantic models",
+      "session_id": "opencode:ses_171a76d61ffeGO6mj5DforqzZT",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-low",
+      "updated_at": "2026-06-03T16:50:29.435Z",
+      "started_at": "2026-06-03T16:44:04.420Z",
+      "status": "completed",
+      "ended_at": "2026-06-03T16:50:29.435Z",
+      "elapsed_ms": 385015
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "Build EngineerSession class — session lifecycle, in-memory + vault persistence",
+      "session_id": "opencode:ses_1719a2a72ffeQxWg4j6aBQ4HD3",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-06-03T17:07:09.489Z",
+      "started_at": "2026-06-03T17:06:28.793Z",
+      "status": "completed",
+      "ended_at": "2026-06-03T17:07:09.489Z",
+      "elapsed_ms": 40696
+    }
+  },
+  "agent": "atlas"
+}

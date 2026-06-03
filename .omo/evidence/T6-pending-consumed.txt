@@ -1,0 +1,6 @@
+Scenario: Pending credentials are returned and consumed
+Tool: Bash
+Steps: python -c "from agents.feature_tester.worker import FeatureTesterWorker; FeatureTesterWorker.set_pending_credentials('test-agent-001','foo','bar'); w=FeatureTesterWorker.__new__(FeatureTesterWorker); w.agent_id='test-agent-001'; creds=w._get_pending_credentials(); assert creds=={'username':'foo','password':'bar'}; creds2=w._get_pending_credentials(); assert creds2 is None"
+Expected: exits 0
+Result: PASS
+Output: (no output)

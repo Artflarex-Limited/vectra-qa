@@ -1,0 +1,6 @@
+Warning: anthropic package not installed. Anthropic provider unavailable.
+Warning: google-genai package not installed. Google provider unavailable.
+LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+Greeting message: 'Hi! Give me a URL to test.'
+Word count: 7
+PASS

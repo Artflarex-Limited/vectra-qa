@@ -1,0 +1,21 @@
+QA Scenario 2 — Extra fields are rejected by GreetingEvent.
+Plan ref: .omo/plans/live-qa-engineer.md lines 169-173 (T1)
+Run from project root.
+
+Command:
+  python3 -c "from command_center.engineer.events import GreetingEvent; from datetime import datetime,timezone; ts=datetime.now(timezone.utc).isoformat(); GreetingEvent(session_id='s', stage='greeting', timestamp=ts, random_field='x')"
+
+Output (stderr):
+  Traceback (most recent call last):
+    File "<string>", line 1, in <module>
+    File "/home/bugra/.local/lib/python3.12/site-packages/pydantic/main.py", line 263, in __init__
+      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  pydantic_core._pydantic_core.ValidationError: 1 validation error for GreetingEvent
+  random_field
+    Extra inputs are not permitted [type=extra_forbidden, input_value='x', input_type=str]
+      For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden
+
+Exit code: 1
+Expected: ValidationError raised
+Result: PASS — extra="forbid" enforced, ValidationError raised with input_value='x'.

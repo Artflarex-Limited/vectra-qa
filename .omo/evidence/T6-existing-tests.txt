@@ -1,0 +1,8 @@
+Scenario: Existing tests still pass
+Tool: Bash
+Steps: cd /home/bugra/Documents/projects/vectra-qa && python -m pytest tests/unit/test_feature_tester.py -q
+Expected: 0 failures
+Result: PASS
+Output:
+....
+4 passed in 0.06s

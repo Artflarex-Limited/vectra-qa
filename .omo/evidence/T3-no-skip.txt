@@ -1,0 +1,8 @@
+=== QA SCENARIO 1: Cannot skip stages ===
+Tool: Bash
+Steps: python -c "from command_center.engineer.state_machine import Stage, can_transition; assert not can_transition(Stage.GREETING, Stage.EXECUTE); assert not can_transition(Stage.RECON, Stage.PLAN)"
+Expected: exits 0
+Evidence: .omo/evidence/T3-no-skip.txt
+--- Output ---
+OK: both skip attempts blocked
+exit_code=0

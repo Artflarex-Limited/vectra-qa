@@ -1,0 +1,7 @@
+Scenario: Credentials in objective are ignored
+Tool: Bash
+Steps: python -c "import re,base64; from agents.feature_tester.worker import FeatureTesterWorker; w=FeatureTesterWorker.__new__(FeatureTesterWorker); obj='Test login with username=foo and password=bar'; result=w._parse_credentials(obj); assert result is None"
+Expected: exits 0
+Result: PASS
+Output:
+<string>:1: DeprecationWarning: _parse_credentials is deprecated. Use set_pending_credentials() and _get_pending_credentials() instead.

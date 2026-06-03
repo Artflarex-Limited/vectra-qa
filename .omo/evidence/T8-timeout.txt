@@ -1,0 +1,2 @@
+2026-06-03 20:04:00 [info     ] classifying_url                url=https://slow.example.com
+PASS: TimeoutError raised on slow URL

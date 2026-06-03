@@ -1,0 +1,3 @@
+PASS: validate_override works correctly
+validate_override("blog") = SITE_TYPES.BLOG
+validate_override("e-commerce") = SITE_TYPES.ECOMMERCE

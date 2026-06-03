@@ -1,0 +1,44 @@
+=== QA Scenario: Word budget truncates at sentence ===
+Date: 2026-06-03T16:46:14Z
+Plan command:
+  python3 -c "from command_center.engineer.vocabulary import enforce_word_budget; out = enforce_word_budget('First sentence. Second sentence. Third sentence.', max_words=4); assert out == 'First sentence.'"
+
+--- Actual output (max_words=4) ---
+OUTPUT: 'First sentence. Second sentence.'
+
+--- Diagnostic: try max_words=2 (the plan likely has a typo) ---
+OUTPUT (max_words=2): 'First sentence.'
+
+--- Word counts (for transparency) ---
+First  sentence. -> 2 words
+Second sentence. -> 2 words
+Third  sentence. -> 2 words
+First+Second = 4 words (== max_words=4, fits exactly)
+First+Second+Third = 6 words (> max_words=4, would overflow)
+
+=== Result: PLAN BUG (likely typo: max_words=4 should be max_words=2) ===
+
+My implementation returns 'First sentence. Second sentence.' for max_words=4 —
+a 4-word prefix that fits the budget exactly. The plan asserts
+'First sentence.' (a 2-word prefix).
+
+The natural reading of 'truncate at sentence boundary if over budget' is
+include-as-many-complete-sentences-as-fit. With sentences of 2 words each
+and max=4, the answer is two sentences (= 4 words).
+
+The plan's expected output is correct ONLY if max_words=2 (which would make
+the second sentence overflow and stop after the first). The AC1 acceptance
+test ('a. b. c. d.' with max_words=2 -> 'a. b.') confirms 1-word sentences
+fill the budget at exactly 2 words, so the same behavior should hold for
+2-word sentences with max_words=2.
+
+The authoritative acceptance criterion #3 —
+  enforce_word_budget('a. b. c. d.', max_words=2) returns 'a. b.'
+— passes. This QA scenario test is contradictory with AC#3 under any
+consistent reading of 'truncate at sentence boundary if over budget'.
+
+Action: noted in .omo/notepads/live-qa-engineer/issues.md for the plan
+owner. Implementation kept natural (greedy sentence fit); the test would
+pass if max_words were 2.
+
+Exit code (the natural assertion that max_words=4 returns 4 words): 0

@@ -1,0 +1,5 @@
+Cache hit on identical event: PASS
+
+Identical narrate_test_completed('t1','pass','') called twice.
+Second call hit module-level SHA256 cache (key=4550dabce20cf65bf4dda9eb9e3713c311399d8695844f6b69d6222d52bea5ec).
+LLM complete call_count == 1.

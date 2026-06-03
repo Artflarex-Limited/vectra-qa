@@ -1,0 +1,13 @@
+=== QA Scenario: All forbidden words detected ===
+Date: 2026-06-03T16:45:54Z
+Command:
+  python3 -c "from command_center.engineer.vocabulary import scrub_forbidden; text='The selector failed, the DOM was wrong, the JWT was invalid, the payload was empty, the viewport was 320px, the status code was 500, XHR failed, the console error appeared'; s,f=scrub_forbidden(text); assert len(f) >= 6; print(f)"
+
+--- Output ---
+FOUND 9 forbidden words: ['500', 'DOM', 'JWT', 'XHR', 'console error', 'payload', 'selector', 'status code', 'viewport']
+
+--- Scrubbed text (for reference) ---
+'The failed, the was wrong, the was invalid, the was empty, the was 320px, the was, failed, the appeared'
+
+Exit code: 0 (assert len(f) >= 6 passed; found=9)
+Result: PASS — found 9 forbidden words, well above the >=6 threshold.

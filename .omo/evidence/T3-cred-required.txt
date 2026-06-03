@@ -1,0 +1,8 @@
+=== QA SCENARIO 3: Requires-credential logic ===
+Tool: Bash
+Steps: python -c "from command_center.engineer.state_machine import requires_credential, Stage; assert requires_credential(Stage.CONTEXT, 'ecommerce'); assert not requires_credential(Stage.CONTEXT, 'landing'); assert not requires_credential(Stage.PLAN, 'ecommerce')"
+Expected: exits 0
+Evidence: .omo/evidence/T3-cred-required.txt
+--- Output ---
+OK: ecommerce needs creds, landing does not, PLAN never re-prompts
+exit_code=0

@@ -1,0 +1,4 @@
+CREDENTIAL_REQUIRED repr: {<SITE_TYPES.PORTAL: 'portal'>, <SITE_TYPES.ECOMMERCE: 'ecommerce'>, <SITE_TYPES.SAAS_APP: 'saas_app'>}
+CREDENTIAL_REQUIRED as strings: [<SITE_TYPES.ECOMMERCE: 'ecommerce'>, <SITE_TYPES.PORTAL: 'portal'>, <SITE_TYPES.SAAS_APP: 'saas_app'>]
+OK: CREDENTIAL_REQUIRED matches the documented policy
+EXIT=0

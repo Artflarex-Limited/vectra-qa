@@ -1,0 +1,6 @@
+PASS: scrub_log_record QA
+rec={'event':'login','username':'foo','password':'secret123','api_token':'abc'}
+c=scrub_log_record(rec)
+assert 'password' not in c
+assert 'api_token' not in c
+assert c['username']=='foo'

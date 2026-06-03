@@ -1,0 +1,5 @@
+PASS: clear QA
+state={'credentials':{'username':'foo','password':'secret123'}}
+ch.clear(state)
+assert state['credentials']['password']!='secret123'
+assert re.match(r'^[A-Za-z0-9]{32}$', state['credentials']['password'] or '') or state['credentials']=={}

@@ -1,0 +1,5 @@
+PASS: inject_to_agent QA
+ch.inject_to_agent('test-agent-001', username='foo', password='bar')
+w=FeatureTesterWorker.__new__(FeatureTesterWorker); w.agent_id='test-agent-001'
+c=w._get_pending_credentials()
+assert c=={'username':'foo','password':'bar'}

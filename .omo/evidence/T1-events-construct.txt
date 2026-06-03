@@ -1,0 +1,13 @@
+QA Scenario 1 — All 12 event types construct with required fields.
+Plan ref: .omo/plans/live-qa-engineer.md lines 161-167 (T1)
+Run from project root.
+
+Command:
+  python3 -c "from command_center.engineer.events import *; from datetime import datetime,timezone; ts=datetime.now(timezone.utc).isoformat(); GreetingEvent(session_id='s', stage='greeting', timestamp=ts); AskQuestionEvent(session_id='s', stage='context', timestamp=ts, question_id='q1', prompt='hi'); AskCredentialEvent(session_id='s', stage='context', timestamp=ts, field='password', reason='test'); ClassifySiteEvent(session_id='s', stage='recon', timestamp=ts, site_type='ecommerce', confidence=0.9, signals=['cart']); ConfirmClassificationEvent(session_id='s', stage='recon', timestamp=ts); PlanProposedEvent(session_id='s', stage='plan', timestamp=ts, tests=['cart'], site_type='ecommerce'); NarrateEvent(session_id='s', stage='execute', timestamp=ts, agent_id='a', status='running', message='ok'); TestStartedEvent(session_id='s', stage='execute', timestamp=ts, test_id='t', role='ui_explorer'); TestProgressEvent(session_id='s', stage='execute', timestamp=ts, test_id='t', progress_percent=50, message='halfway'); TestCompletedEvent(session_id='s', stage='execute', timestamp=ts, test_id='t', result='pass', findings_summary='ok'); ReportEvent(session_id='s', stage='report', timestamp=ts, sections={}); DoneEvent(session_id='s', stage='done', timestamp=ts); ErrorEvent(session_id='s', stage='greeting', timestamp=ts, code='e', message='m'); print('OK: all 12 event types constructed')"
+
+Output (stdout):
+  OK: all 12 event types constructed
+
+Exit code: 0
+Expected: exits 0, no exception
+Result: PASS

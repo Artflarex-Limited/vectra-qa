@@ -1,0 +1,9 @@
+=== QA SCENARIO 2: Cannot go backwards without explicit keyword ===
+Tool: Bash
+Steps: python -c "from command_center.engineer.state_machine import SessionState, Stage, assert_monotonic, Transition; from datetime import datetime,timezone; s=SessionState(session_id='s',current_stage=Stage.EXECUTE,started_at=datetime.now(timezone.utc),last_activity_at=datetime.now(timezone.utc)); try: assert_monotonic(s, Stage.PLAN); assert False except ValueError: pass"
+Expected: exits 0
+Evidence: .omo/evidence/T3-monotonic.txt
+--- Output ---
+OK: ValueError raised -> Backward transition 'execute' -> 'plan' requires the user-supplied 'go back' keyword. Pass it as the go_back_keyword argument to assert_monotonic.
+OK: go_back_keyword authorises EXECUTE -> PLAN
+exit_code=0

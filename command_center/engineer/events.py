@@ -20,6 +20,8 @@ from typing import Annotated, Any, Dict, List, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
+from .state_machine import Stage
+
 # ---------------------------------------------------------------------------
 # Shared envelope
 # ---------------------------------------------------------------------------
@@ -35,7 +37,7 @@ class BaseEngineerEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     session_id: str = Field(..., description="Live QA session identifier.")
-    stage: str = Field(
+    stage: Stage = Field(
         ...,
         description=(
             "Logical pipeline stage the event belongs to "
@@ -54,6 +56,7 @@ class GreetingEvent(BaseEngineerEvent):
     """Engineer introduces itself and asks how it can help."""
 
     type: Literal["greeting"] = "greeting"
+    message: str = Field(default="", description="Greeting text shown to the user.")
 
 
 class AskQuestionEvent(BaseEngineerEvent):

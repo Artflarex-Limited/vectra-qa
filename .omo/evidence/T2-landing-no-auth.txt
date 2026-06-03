@@ -1,0 +1,4 @@
+get_default_plan("landing"): ['homepage', 'accessibility', 'responsive']
+contains auth_login? False
+OK: landing plan does not include auth_login; all other site types match their catalog
+EXIT=0

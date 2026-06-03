@@ -1,0 +1,10 @@
+AC1 PASS: narrate_test_started produces plain English within 15-word budget.
+Test output: "Started testing your homepage." (4 words)
+
+AC3 PASS: Identical event narrated twice hits cache on second call.
+LLM complete call_count == 1 after two identical narrate_test_completed calls.
+
+SCRUB PASS: Forbidden word "selector" is removed from LLM output.
+Input: "The selector is broken." → Output: "The  is broken."
+
+pytest test_narrator PASSED

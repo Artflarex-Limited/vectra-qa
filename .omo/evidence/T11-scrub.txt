@@ -1,0 +1,6 @@
+Forbidden word scrubbing: PASS
+
+LLM returned: "The selector is broken."
+After scrub_forbidden: "The  is broken."
+After enforce_word_budget(15): "The  is broken."
+"selector" not in final message.

@@ -1,0 +1,4 @@
+2026-06-03 20:01:35 [info     ] classifying_url                url=https://shop.example.com
+2026-06-03 20:01:35 [info     ] classification_done            confidence=0.4 site_type=ecommerce url=https://shop.example.com
+PASS: Shopify-style HTML classified as ecommerce
+signals: ['heuristic:ecommerce', 'llm:ecommerce(conf=0.00)']

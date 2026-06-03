@@ -1,0 +1,6 @@
+SITE_TYPES members: ['landing', 'ecommerce', 'blog', 'saas_app', 'portal']
+TEST_CATALOG keys: ['landing', 'ecommerce', 'blog', 'saas_app', 'portal']
+Per-site plan lengths: {'landing': 3, 'ecommerce': 8, 'blog': 5, 'saas_app': 5, 'portal': 6}
+all(len > 0): True
+OK: every SITE_TYPES member has a non-empty TEST_CATALOG entry
+EXIT=0
