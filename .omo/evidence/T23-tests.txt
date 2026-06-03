@@ -1,0 +1,2 @@
+$ python3 -m pytest tests/unit/ -q --ignore=tests/unit/test_browser_tools.py --ignore=tests/unit/test_browser_tools_extended.py
+779 passed, 8 warnings in 43.88s
