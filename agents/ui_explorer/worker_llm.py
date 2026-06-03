@@ -82,14 +82,14 @@ class LLMDrivenUIExplorer:
 ## Instructions
 You are a UI testing agent. You will receive the current state of a webpage and must decide the next action to take.
 
-Respond ONLY with a JSON object in this exact format:
+Respond with a single JSON object and nothing else. Do not wrap it in markdown code fences. Do not write any text before or after the JSON. Use exactly this shape:
 {{
     "action": "click|fill|navigate|assert|screenshot|complete|hover|scroll",
     "selector": "CSS selector (if applicable)",
     "value": "Text to type (if applicable)",
     "url": "URL to navigate to (if action=navigate)",
-    "reasoning": "Why you're taking this action",
-    "expected_result": "What you expect to happen",
+    "reasoning": "Why you're taking this action (keep under 200 chars)",
+    "expected_result": "What you expect to happen (keep under 200 chars)",
     "confidence": 0-100
 }}
 
@@ -108,6 +108,7 @@ Rules:
 - Test edge cases and error states
 - Log everything you observe
 - Use "complete" action when you've thoroughly tested the objective
+- Keep reasoning and expected_result under 200 characters each
 """
 
     async def _observe(self) -> Dict[str, Any]:
@@ -201,8 +202,9 @@ Respond with a JSON object containing your chosen action.
                     {"role": "system", "content": self._build_system_prompt()},
                     {"role": "user", "content": prompt},
                 ],
-                temperature=0.7,
-                max_tokens=500,
+                temperature=0.2,                                    # was 0.7 - too high for JSON
+                max_tokens=1500,                                    # was 500 - too low, causes truncation
+                response_format={"type": "json_object"},            # OAI-compat: forces JSON output
             )
 
             # Parse JSON from response using robust extractor

@@ -145,6 +145,7 @@ Guidelines:
                 ],
                 temperature=0.3,
                 max_tokens=2000,
+                response_format={"type": "json_object"},
             )
 
             # Parse JSON from response using robust extractor
