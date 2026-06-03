@@ -42,10 +42,10 @@ At least one LLM provider API key is required for chatbot and orchestrator featu
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ORCHESTRATOR_MODEL` | `openai/gpt-4o` | LLM for test planning |
-| `UI_EXPLORER_MODEL` | `anthropic/claude-3-5-sonnet-20241022` | LLM for UI exploration |
-| `CHATBOT_MODEL` | `anthropic/claude-3-5-sonnet-20241022` | LLM for chatbot |
-| `DATA_VALIDATOR_MODEL` | `openai/gpt-4o-mini` | LLM for data validation |
+| `ORCHESTRATOR_MODEL` | `minimax/MiniMax-M2.7` | LLM for test planning |
+| `UI_EXPLORER_MODEL` | `minimax/MiniMax-M2.7` | LLM for UI exploration |
+| `CHATBOT_MODEL` | `minimax/MiniMax-M2.7` | LLM for chatbot |
+| `DATA_VALIDATOR_MODEL` | `minimax/MiniMax-M2.7` | LLM for data validation |
 
 ### Supported Models
 
@@ -57,7 +57,7 @@ Format: `provider/model-name`
 | `openai` | `gpt-4o` | Fast and reliable |
 | `openai` | `gpt-4o-mini` | Cost-effective |
 | `google` | `gemini-1.5-pro` | Long context |
-| `minimax` | `minimax-text-01` | Budget option |
+| `minimax` | `MiniMax-M2.7` | Budget option |
 | `kimi` | `kimi-k2` | Chinese-optimized |
 | `local` | `llama3.1:70b` | Privacy-first |
 
@@ -194,8 +194,8 @@ GOOGLE_API_KEY=...
 ### MiniMax
 ```bash
 MINIMAX_API_KEY=...
-MINIMAX_BASE_URL=https://api.minimax.chat/v1
-MINIMAX_MODEL=minimax-m2.7
+MINIMAX_BASE_URL=https://api.minimax.io/v1
+MINIMAX_MODEL=minimax/MiniMax-M2.7
 ```
 
 ### Kimi/Moonshot
