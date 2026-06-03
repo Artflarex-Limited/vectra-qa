@@ -969,3 +969,71 @@ Since T16 (chat panel consuming structured events) was not yet in the codebase, 
 |----------|--------------|--------|
 | File deleted | `.omo/evidence/T23-deleted.txt` | PASS |
 | No broken imports | `.omo/evidence/T23-tests.txt` | PASS (779/779 non-browser-tool tests pass; the 2 browser-tool failures predate this commit) |
+
+---
+
+## T24: Rewrite API docs — replace chatbot with live-engineer
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `docs/api/chatbot.md` (deleted via `git rm`)
+- `docs/api/endpoints.md` (rewrote `## Chatbot` section as `## Live QA Engineer`)
+- `docs/api/live-engineer.md` (created — 385 lines)
+- `docs/architecture/components.md` (line 21 updated; line 14 too)
+- 12 additional docs swept for residual `chatbot` / `CHATBOT_` / `/api/chat/` references
+
+### What worked
+- The four primary deliverables (`chatbot.md` delete, `endpoints.md` rewrite, `live-engineer.md` create, `components.md` line 21) covered the plan's explicit list. The acceptance criteria and both QA scenarios passed after those four edits.
+- A single broad `grep -rn "chatbot" docs/ --include="*.md"` sweep surfaced 12 additional files with stale references: 3 in `user-guide/`, 3 in `development/`, 2 in `getting-started/`, 3 in `reference/` (including the `CHATBOT_MODEL` env var doc), and 1 in `api/agents.md`. Cleaning them up was mechanical — each was either (a) a casual reference ("the chatbot" → "the Live QA Engineer chat panel") or (b) a code example pointing at `command_center/chatbot.py` / `TEST_TYPES` (rewritten to point at `command_center/engineer/site_catalog.py` and `_TEST_ROLE_MAP`).
+- A two-pass grep (case-sensitive then case-insensitive) caught the `CHATBOT_MODEL` env-var references and the `Chat_Log.md` path. The first pass alone would have missed them.
+
+### Patterns borrowed from source
+- **Event schema copy** — `live-engineer.md` mirrors `command_center/engineer/events.py` exactly: same envelope (`session_id` / `stage` / `timestamp`), same per-event field list, same `extra="forbid"` config note. Reading the source first avoided any drift between the docs and the runtime contract.
+- **Vocabulary table** — the 19 base + 12 plural forms in `vocabulary.py` map 1:1 to the prose table in `live-engineer.md`. Substitutes taken verbatim from `VOCABULARY_GLOSSARY`. (The plan called for "20 base + 12 plural = 32"; the actual count is "19 + 12 = 31" — same as T4 noted.)
+- **Site-type matrix** — the 5×N matrix in `live-engineer.md` is `TEST_CATALOG` flattened, with the `CREDENTIAL_REQUIRED` column drawn from the same-named set in `site_catalog.py`. Description strings come from `SITE_TYPE_DESCRIPTIONS`.
+
+### State machine diagram
+Used a Mermaid `stateDiagram-v2` block (matches the style in `components.md` for the agent lifecycle). Six states with re-entry arrows (`RECON → RECON` for URL change, `CONTEXT → CONTEXT` for follow-ups, `PLAN → CONTEXT` for "go back") and a `DONE → [*]` terminal edge.
+
+### Endpoint documentation choices
+- Each `/api/engineer/*` section uses the same shape: short description, request body table, response example, status code table, side effects (where relevant). This is the same template the original `endpoints.md` used for `/api/chat/*` minus the removed fields, so the document is internally consistent.
+- `POST /api/engineer/{sid}/message` includes two request examples — one for a plain message, one for credential submission — because the credential path is the part most likely to trip up an integrator and it is the one the security test suite guards.
+- The `stream` endpoint section explicitly notes the three-heartbeats-then-close behaviour, which is the MVP compromise from T14. The "browsers reconnect automatically" line is a reader hint, not a server guarantee.
+- The `resume` endpoint enumerates the event returned per stage in a table. This is the canonical place to look up "what does the dashboard see when the user refreshes in CONTEXT?", and the answer is in the source as a chain of `if stage == ...` branches in `live_engineer.resume_session`.
+
+### Credential security contract
+The contract section in `live-engineer.md` is written for a non-engineer reader (a security reviewer or a stakeholder) rather than a developer. Five bullet points cover the lifecycle: prompt-and-forget, in-session only, never persisted (with five concrete "never" surfaces — vault, log, event, objective, echo), cleared on demand (with the overwrite-then-null detail), and side-channel injection. The 5-vector security test from T20 is named as the regression test of record.
+
+### Component map
+`live-engineer.md` ends with an "Implementation map" table — one row per module under `command_center/engineer/` with its one-line responsibility, plus a row for `command_center/live_engineer.py` (the orchestrator). This is the natural entry point for someone who wants to read the source after reading the doc.
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `test -f docs/api/chatbot.md` returns non-zero (file gone) | PASS |
+| 2 | `test -f docs/api/live-engineer.md` returns zero (file exists) | PASS |
+| 3 | `grep -rn "chatbot" docs/` returns zero non-historical matches | PASS (case-insensitive too) |
+| 4 | `grep -rn "/api/chat/" docs/api/endpoints.md` returns zero matches | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| Old chatbot doc gone, new doc present | `.omo/evidence/T24-docs.txt` | PASS |
+| No chatbot references in docs | `.omo/evidence/T24-no-chatbot.txt` | PASS |
+
+### Files touched (final tally)
+- 1 deleted: `docs/api/chatbot.md`
+- 1 created: `docs/api/live-engineer.md`
+- 1 substantially rewritten: `docs/api/endpoints.md` (107 chat lines removed, 230 engineer lines added)
+- 1 minimally edited: `docs/architecture/components.md` (line 14 + line 21)
+- 12 swept clean: `docs/user-guide/{writing-tests,understanding-results,advanced-usage}.md`, `docs/development/{contributing,local-setup,custom-agents}.md`, `docs/getting-started/{installation,configuration}.md`, `docs/reference/{environment-variables,troubleshooting,quick-reference}.md`, `docs/architecture/overview.md`, `docs/api/agents.md`
+
+### Coverage numbers
+- 0 references to `chatbot` (case-insensitive) in any `.md` file under `docs/`
+- 0 references to `CHATBOT_` env vars in any `.md` file under `docs/`
+- 0 references to `/api/chat/` in any `.md` file under `docs/`
+- 5 `/api/engineer/*` endpoints documented in `endpoints.md`
+- 13 event types documented in `live-engineer.md` (all 13)
+- 5 site types in the test-catalog matrix (all 5)
+- 31 forbidden words in the vocabulary glossary (19 base + 12 plural, matches the source)
