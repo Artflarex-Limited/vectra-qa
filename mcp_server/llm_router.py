@@ -461,6 +461,14 @@ class LLMRouter:
         """Handle Anthropic API calls."""
         client = self.clients["anthropic"]
 
+        # Strip OpenAI-only kwargs that the Anthropic SDK does not accept.
+        # These are valid for OpenAI-compatible providers (openai, minimax, kimi, local)
+        # but raise TypeError on the strictly-typed Anthropic SDK.
+        # The router dispatches all providers through the same `**kwargs` surface,
+        # so each provider must quarantine params it does not understand.
+        for openai_only in ("response_format", "tools", "tool_choice", "logprobs"):
+            kwargs.pop(openai_only, None)
+
         # Convert messages to Anthropic format
         system_msg = None
         anthropic_messages = []

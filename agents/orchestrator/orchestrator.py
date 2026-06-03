@@ -8,7 +8,6 @@ Reads soul.md and agents.md for behavioral context.
 """
 
 import os
-import json
 import asyncio
 from pathlib import Path
 from datetime import datetime, timezone
@@ -187,28 +186,6 @@ Guidelines:
             )
             return plan
 
-        except json.JSONDecodeError as e:
-            logger.error(
-                "failed_to_parse_test_plan", error=str(e), raw_response=response.content[:500]
-            )
-            # Fallback: create a simple single-task plan
-            return {
-                "test_plan_id": f"fallback-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
-                "summary": f"Direct test of {url}",
-                "tasks": [
-                    {
-                        "task_id": "task-1",
-                        "role": "ui_explorer",
-                        "objective": objective,
-                        "memory_node": f"Runs/Direct_Test_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.md",
-                        "depends_on": None,
-                        "estimated_duration_seconds": 120,
-                        "success_criteria": "Page loads and basic checks pass",
-                    }
-                ],
-                "parallel_groups": [["task-1"]],
-                "overall_success_criteria": "Basic page functionality verified",
-            }
         except Exception as e:
             logger.error("test_plan_generation_failed", error=str(e))
             raise
