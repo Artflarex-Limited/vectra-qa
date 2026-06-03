@@ -1,0 +1,19 @@
+Evidence: alive-001-greeting-without-llm
+==========================================
+
+Test: unset OPENAI_API_KEY; python3 -c "... start_session('https://example.com') ..."
+
+Result: PASS
+Output: ['NarrateEvent', 'GreetingEvent']
+
+The GreetingAgent emitted a proactive NarrateEvent ("Saying hello...") even
+though the LLM provider was not initialized. The fallback GreetingEvent
+contained the canned message:
+
+  "Hi! I'm Vectra, your live QA engineer. What URL would you like me to test?"
+
+No WARNING was logged. The fallback was logged at DEBUG level:
+
+  stage_llm_fallback stage=greeting error="Provider 'openai' not initialized."
+
+This proves the engineer is "alive" without an LLM.

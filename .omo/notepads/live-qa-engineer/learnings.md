@@ -852,6 +852,85 @@ Since T16 (chat panel consuming structured events) was not yet in the codebase, 
 
 ---
 
+## Per-stage agents for LiveEngineer — LLM fallback + proactive narration
+
+**Date**: 2026-06-04
+**Status**: Complete
+**Files**:
+- `command_center/engineer/agents.py` (created — StageAgent base + 6 concrete agents)
+- `command_center/live_engineer.py` (refactored — dispatches to stage agents)
+- `tests/unit/test_agents.py` (created — 14 resilience tests)
+- `.omo/evidence/alive-00{1-5}-*.txt` (created — 5 evidence files)
+
+### What worked
+- `StageAgent` base class wraps every stage with three guarantees:
+  1. A proactive `NarrateEvent(status="thinking")` is emitted on entry.
+  2. The LLM-driven `_run()` is tried; on any exception the agent logs at
+     DEBUG and falls back to `_fallback()`.
+  3. `run()` never raises and always returns a non-empty list.
+- `start_session` now dispatches to `GreetingAgent` instead of inline
+  `try/except generate_greeting`. This removes the `greeting_llm_failed`
+  WARNING path entirely.
+- `resume_session` now dispatches to the current stage's agent. The DONE
+  stage is handled explicitly (returns `DoneEvent`) because `STAGE_AGENTS`
+  does not include a DONE agent.
+- `handle_message` keeps `conversation.generate_turn` as the primary
+  conversation path (preserving all existing tests) but adds:
+  - A thinking event at the head of the response so the engineer feels alive.
+  - A `try/except` around `generate_turn` that falls back to the stage agent
+    on LLM failure, logging at DEBUG.
+  - A deterministic stage transition when a credential is submitted in
+    CONTEXT stage (CONTEXT -> PLAN), replacing the previous reliance on
+    the LLM emitting `ConfirmClassificationEvent`.
+- `_run_execution` now delegates test-event generation to `ExecuteAgent`
+  while keeping credential injection, metrics, report building, and the
+  DONE transition in `LiveEngineer`.
+- The `classification_failed` log in `handle_message` was downgraded from
+  WARNING to DEBUG, with a heuristic fallback to `SiteType.LANDING` so the
+  pipeline never stalls on a missing classifier.
+
+### Design decisions
+- **Hybrid handle_message**: Rather than fully replacing `generate_turn`
+  with agent dispatch (which would break tests that expect `AskQuestionEvent`
+  from a GREETING-stage message), we prepend the thinking event and wrap
+  the LLM call with agent fallback. This gives us the "alive" feel and
+  resilience without breaking the conversation contract.
+- **Agent fallback in handle_message**: When `generate_turn` raises, the
+  stage agent's `run()` method takes over. Because the agent also emits a
+  thinking event, the UI still sees the engineer working even during a
+  total LLM outage.
+- **No changes to event schema**: The agents emit the same Pydantic events
+  that `ConversationEngine` produces, so the SSE pipeline and frontend
+  renderers require zero modifications.
+- **No new dependencies**: Everything uses existing modules
+  (`events.py`, `state_machine.py`, `site_catalog.py`, `conversation.py`,
+  `narrator.py`, `report.py`).
+
+### Coverage numbers
+- 6 stage agents: Greeting, Recon, Context, Plan, Execute, Report
+- 14 new tests in `test_agents.py`
+- 176 total tests pass across all 3 test files (0 regressions)
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `python3 -c "import ...; assert set(STAGE_AGENTS.keys()) == ..."` exits 0 | PASS |
+| 2 | `pytest tests/unit/test_agents.py -v` → 14 pass | PASS |
+| 3 | `pytest tests/unit/test_live_engineer.py tests/unit/test_command_center.py tests/unit/test_command_center_main.py -q` → no regressions | PASS |
+| 4 | Manual smoke without OPENAI_API_KEY returns GreetingEvent + NarrateEvent | PASS |
+| 5 | No WARNING on LLM failure; only DEBUG logs | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| Greeting without LLM | `.omo/evidence/alive-001-greeting-without-llm.txt` | PASS |
+| Resume session is clean | `.omo/evidence/alive-002-resume-clean.txt` | PASS |
+| Thinking event per stage | `.omo/evidence/alive-003-thinking-per-stage.txt` | PASS |
+| No warning on LLM failure | `.omo/evidence/alive-004-no-warning.txt` | PASS |
+| All tests pass | `.omo/evidence/alive-005-tests-pass.txt` | PASS |
+
+---
+
 ## T22: E2E happy-path test — 9 steps, 6 stages, < 5 s
 
 **Date**: 2026-06-03

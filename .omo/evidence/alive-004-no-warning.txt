@@ -1,0 +1,22 @@
+Evidence: alive-004-no-warning
+==============================
+
+Test: test_no_warning_on_llm_failure
+
+Result: PASS
+
+Setup: Captured all WARNING-level log records during a forced LLM failure
+(RuntimeError: "Provider 'openai' not initialized.") in GreetingAgent.
+
+Assertion: log_output contains neither "WARNING" nor "WARN".
+
+The agent logs the failure at DEBUG level:
+
+  logger.debug("stage_llm_fallback", stage=..., error=..., session_id=...)
+
+Additionally, the classification failure in handle_message was downgraded
+from WARNING to DEBUG:
+
+  logger.debug("classification_failed", session_id=..., url=..., error=...)
+
+No scary logs reach the user.

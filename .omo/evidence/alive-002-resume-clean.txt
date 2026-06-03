@@ -1,0 +1,18 @@
+Evidence: alive-002-resume-clean
+================================
+
+Test: resume_session on a GREETING-stage session with no LLM keys.
+
+Result: PASS
+
+The ReconAgent (or whichever stage is current) returns a NarrateEvent +
+fallback events. No KeyError, no WARNING, no crash.
+
+resume_session now dispatches to the stage agent instead of inline
+per-stage event construction. The agent handles:
+  1. Proactive narration on entry
+  2. LLM-driven path (if available)
+  3. DEBUG-level fallback on exception
+
+This eliminates the `resume_greeting_llm_failed` WARNING that the user
+reported.

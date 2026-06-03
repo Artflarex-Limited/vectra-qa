@@ -23,7 +23,7 @@ from command_center.engineer.events import (
     TestProgressEvent, TestStartedEvent,
 )
 from command_center.engineer.site_catalog import CREDENTIAL_REQUIRED, get_default_plan
-from command_center.engineer.state_machine import Credentials, SessionState, Stage
+from command_center.engineer.state_machine import SessionState, Stage
 
 logger = structlog.get_logger("engineer.agents")
 

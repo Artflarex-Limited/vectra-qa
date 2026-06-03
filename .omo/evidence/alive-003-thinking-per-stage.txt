@@ -1,0 +1,19 @@
+Evidence: alive-003-thinking-per-stage
+========================================
+
+Test: test_all_stage_agents_emit_thinking_event
+
+Result: PASS (14/14)
+
+Every StageAgent subclass emits a NarrateEvent with status="thinking" on
+entry:
+
+  GreetingAgent:  "Saying hello..."
+  ReconAgent:     "Looking at your site now..."
+  ContextAgent:   "Gathering a few details..."
+  PlanAgent:      "Putting together a test plan..."
+  ExecuteAgent:   "Running tests... N remaining"
+  ReportAgent:    "Writing up the findings..."
+
+These messages are ≤15 words, plain English, and appear BEFORE any LLM call.
+The UI shows the engineer is present and working even when the LLM is offline.
