@@ -1014,6 +1014,12 @@
                     updateFindings(data.findings);
                 }
             }
+            
+            // Populate raw log with full content
+            const rawLog = document.getElementById('raw-log');
+            if (rawLog && data.content) {
+                rawLog.textContent = data.content;
+            }
         }
 
         // ═══════════════════════════════════════

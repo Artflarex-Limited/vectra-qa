@@ -490,12 +490,19 @@ def _extract_recommendations(content: str) -> list:
 
 
 def _extract_summary(content: str) -> dict:
-    """Parse summary stats from report content."""
+    """Parse summary stats from report content.
+    
+    Supports two formats:
+    1. Markdown table: | Sections Passed | 5 |
+    2. Bullet points: - **Steps Executed**: 36, - **Findings**: N
+    """
     summary = {"pass": 0, "fail": 0, "warning": 0, "total": 0}
     lines = content.split("\n")
 
     for line in lines:
         line_stripped = line.strip()
+        
+        # Table format parsing
         if "| Sections Passed |" in line_stripped:
             try:
                 summary["pass"] = int(line_stripped.split("|")[2].strip())
@@ -514,6 +521,21 @@ def _extract_summary(content: str) -> dict:
         elif "| Total Checks |" in line_stripped:
             try:
                 summary["total"] = int(line_stripped.split("|")[2].strip())
+            except Exception:
+                pass
+        
+        # Bullet point format parsing
+        elif line_stripped.startswith("- **Steps Executed**:"):
+            try:
+                steps = int(line_stripped.split(":")[-1].strip())
+                summary["total"] = steps
+                summary["pass"] = steps  # All steps were executed
+            except Exception:
+                pass
+        elif line_stripped.startswith("- **Findings**:"):
+            try:
+                findings = int(line_stripped.split(":")[-1].strip())
+                summary["fail"] = findings
             except Exception:
                 pass
 
