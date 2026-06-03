@@ -11,14 +11,15 @@ The user-facing web application and API server.
 - Serve the dark-mode dashboard (HTMX frontend)
 - Handle API requests for test execution
 - Stream real-time updates via Server-Sent Events
-- Manage chatbot conversations
+- Run the live QA engineer conversation (greeting through report)
 - Parse and present test results
 
 ### Key Files
 
 - `command_center/main.py` — FastAPI application with all endpoints
 - `command_center/obsidian_reader.py` — Vault file watcher and parser
-- `command_center/chatbot.py` — Conversational AI engine
+- `command_center/engineer/` — Live QA Engineer modules
+- `command_center/live_engineer.py` — LiveEngineer orchestrator class
 - `command_center/static/index.html` — Dashboard UI
 - `command_center/static/result.html` — Test result page
 
@@ -31,7 +32,9 @@ The user-facing web application and API server.
 | GET | `/api/agents/active` | List active agents |
 | GET | `/api/results` | List all test results |
 | GET | `/api/results/{agent_id}` | Get specific result |
-| POST | `/api/chat/message` | Send chat message |
+| POST | `/api/engineer/start` | Start a live QA engineer session |
+| POST | `/api/engineer/{session_id}/message` | Send a message to the engineer |
+| GET | `/api/engineer/{session_id}/stream` | SSE stream of engineer events |
 | GET | `/api/sse/stream` | Main SSE stream |
 | GET | `/api/sse/results/{agent_id}` | Agent-specific SSE |
 

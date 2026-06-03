@@ -4,7 +4,8 @@ Complete reference of all environment variables used by Vectra QA.
 
 ## Required Variables
 
-At least one LLM provider API key is required for chatbot and orchestrator features.
+At least one LLM provider API key is required for the Live QA Engineer
+and the orchestrator features.
 
 ### LLM Providers
 
@@ -44,7 +45,7 @@ At least one LLM provider API key is required for chatbot and orchestrator featu
 |----------|---------|-------------|
 | `ORCHESTRATOR_MODEL` | `minimax/MiniMax-M2.7` | LLM for test planning |
 | `UI_EXPLORER_MODEL` | `minimax/MiniMax-M2.7` | LLM for UI exploration |
-| `CHATBOT_MODEL` | `minimax/MiniMax-M2.7` | LLM for chatbot |
+| `ENGINEER_MODEL` | `minimax/MiniMax-M2.7` | LLM for the Live QA Engineer |
 | `DATA_VALIDATOR_MODEL` | `minimax/MiniMax-M2.7` | LLM for data validation |
 
 ### Supported Models
@@ -107,12 +108,12 @@ Format: `provider/model-name`
 | `AGENT_TEMPLATE_DIR` | `{OBSIDIAN_VAULT_PATH}/Templates` | Template directory for agent memory nodes |
 | `GLOBAL_NODES_DIR` | `{OBSIDIAN_VAULT_PATH}/Global` | Global memory nodes directory |
 
-## Chatbot Configuration
+## Live QA Engineer Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CHATBOT_MAX_HISTORY` | `50` | Max conversation history |
-| `CHATBOT_ENABLE_STREAMING` | `true` | Enable SSE streaming |
+| `ENGINEER_MAX_HISTORY` | `50` | Max conversation history held in the session store |
+| `ENGINEER_ENABLE_STREAMING` | `true` | Enable SSE streaming on `/api/engineer/{sid}/stream` |
 
 ## Browser Configuration
 
@@ -218,8 +219,8 @@ LOCAL_LLM_MODEL=llama3.1:70b
 # .env.development
 HEADLESS=false
 LOG_LEVEL=DEBUG
-CHATBOT_ENABLE_STREAMING=true
-CHATBOT_MAX_HISTORY=50
+ENGINEER_ENABLE_STREAMING=true
+ENGINEER_MAX_HISTORY=50
 VECTRA_LLM_CACHE=true
 VECTRA_LLM_CACHE_TTL=1800
 ```
@@ -230,9 +231,9 @@ VECTRA_LLM_CACHE_TTL=1800
 HEADLESS=true
 LOG_LEVEL=INFO
 COMMAND_CENTER_SECRET_KEY=your-strong-secret
-MCP_API_KEY=your-mcp-key
+MCP_API_KEY=your-mcp-api-key
 CORS_ORIGINS=https://yourdomain.com
-CHATBOT_MODEL=openai/gpt-4o-mini
+ENGINEER_MODEL=openai/gpt-4o-mini
 VECTRA_LLM_CACHE=true
 VECTRA_LLM_CACHE_TTL=7200
 REDIS_URL=redis://redis:6379/0
@@ -243,8 +244,8 @@ REDIS_URL=redis://redis:6379/0
 # .env.ci
 HEADLESS=true
 LOG_LEVEL=WARNING
-CHATBOT_MODEL=openai/gpt-4o-mini
-CHATBOT_MAX_HISTORY=20
+ENGINEER_MODEL=openai/gpt-4o-mini
+ENGINEER_MAX_HISTORY=20
 VECTRA_LLM_WORKERS=true
 ```
 
@@ -314,11 +315,11 @@ services:
       - VECTRA_LLM_CACHE_TTL=7200
       - REDIS_URL=redis://redis:6379/0
       - PERFORMANCE_LCP_MS=2000
-  
+
   command-center:
     environment:
-      - CHATBOT_MODEL=openai/gpt-4o
-      - CHATBOT_MAX_HISTORY=100
+      - ENGINEER_MODEL=openai/gpt-4o
+      - ENGINEER_MAX_HISTORY=100
       - HEADLESS=false
 ```
 

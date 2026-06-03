@@ -1,6 +1,6 @@
 # Understanding Results
 
-Test results are presented in multiple formats: structured reports, chatbot interpretations, and raw vault data.
+Test results are presented in multiple formats: structured reports, plain-English summaries from the Live QA Engineer, and raw vault data.
 
 ## Result Statuses
 
@@ -131,7 +131,7 @@ The `/results/{agent_id}` page shows:
 - Toggle-able raw markdown content
 - Full execution details
 
-## Chatbot Interpretation
+## Live QA Engineer Summary
 
 Vectra provides plain-English summaries:
 

@@ -206,7 +206,7 @@ git commit -m "feat: add new feature"
 
 ```bash
 # Run specific test
-pytest tests/test_chatbot.py -v
+pytest tests/unit/test_live_engineer.py -v
 
 # Run with coverage
 pytest --cov=vectra_qa --cov-report=html
@@ -352,8 +352,13 @@ cat .env | grep API_KEY
 
 # Problem: Rate limiting
 # Solution: Switch provider or add rate limiting
-CHATBOT_MODEL=openai/gpt-4o-mini  # Cheaper option
+ENGINEER_MODEL=openai/gpt-4o-mini  # Cheaper option
 ```
+
+The model for the Live QA Engineer is currently hardcoded in
+`command_center/engineer/conversation.py`. To use a cheaper model
+across the board, update the `model` constant there or set the
+`ENGINEER_MODEL` environment variable (planned, not yet wired).
 
 ## Advanced Configuration
 
@@ -398,14 +403,18 @@ class CustomVault:
 
 ```bash
 # Use lighter LLM model
-CHATBOT_MODEL=openai/gpt-4o-mini
+ENGINEER_MODEL=openai/gpt-4o-mini
 
 # Reduce history
-CHATBOT_MAX_HISTORY=20
+ENGINEER_MAX_HISTORY=20
 
 # Disable streaming
-CHATBOT_ENABLE_STREAMING=false
+ENGINEER_ENABLE_STREAMING=false
 ```
+
+These environment variables are advisory; the Live QA Engineer reads
+its model from `command_center/engineer/conversation.py` directly. Use
+them as a reminder of the recommended setting for faster local runs.
 
 ### Resource Monitoring
 
@@ -424,7 +433,7 @@ du -sh obsidian_vault/
 
 After setup:
 
-1. **Run first test**: Use the dashboard or chatbot
+1. **Run first test**: Use the dashboard or the Live QA Engineer chat panel
 2. **Explore codebase**: Read `ARCHITECTURE.md`
 3. **Add feature**: See `CONTRIBUTING.md`
 4. **Create agent**: See `custom-agents.md`

@@ -90,9 +90,10 @@ open http://localhost:3000
 | `ANTHROPIC_API_KEY` | Alternative | Anthropic API key (Claude) |
 | `MCP_SERVER_URL` | Yes | URL for MCP server (default: <http://mcp-server:8080>) |
 | `OBSIDIAN_VAULT_PATH` | No | Path to Obsidian vault (default: /app/obsidian_vault) |
-| `CHATBOT_MODEL` | No | LLM model for chatbot (default: anthropic/claude-3-5-sonnet) |
+| `ENGINEER_MODEL` | No | LLM model for the Live QA Engineer (default: anthropic/claude-3-5-sonnet) |
 
-*At least one LLM provider API key is required for chatbot and intent classification features.
+*At least one LLM provider API key is required for the Live QA Engineer
+and the orchestrator features.
 
 ## Troubleshooting
 

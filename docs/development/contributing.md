@@ -43,7 +43,7 @@ pytest
 pytest --cov=vectra_qa --cov-report=html
 
 # Run specific test file
-pytest tests/test_chatbot.py
+pytest tests/unit/test_live_engineer.py
 
 # Run in watch mode
 pytest -f
@@ -76,7 +76,8 @@ vectra-qa/
 │   └── browser_tools.py # Playwright wrapper
 ├── command_center/      # Dashboard backend
 │   ├── main.py          # FastAPI app
-│   ├── chatbot.py       # Chat engine
+│   ├── live_engineer.py # LiveEngineer orchestrator
+│   ├── engineer/        # Engineer sub-modules
 │   ├── obsidian_reader.py # Vault watcher
 │   └── static/          # HTMX frontend
 ├── agents/              # Agent workers
@@ -219,20 +220,21 @@ def classify_intent(message: str) -> str:
 ### Testing
 
 ```python
-# tests/test_chatbot.py
+# tests/unit/test_live_engineer.py
 import pytest
-from command_center.chatbot import ChatEngine
+from command_center.live_engineer import LiveEngineer
 
-class TestChatEngine:
-    def test_extract_url(self):
-        engine = ChatEngine()
-        url = engine._extract_url("Test https://example.com")
-        assert url == "https://example.com"
-    
-    def test_classify_intent(self):
-        engine = ChatEngine()
-        intent = engine._classify_intent("Test the homepage")
-        assert intent == "plan_tests"
+class TestLiveEngineer:
+    def test_start_session(self):
+        le = LiveEngineer()
+        sess, events = await le.start_session(url="https://example.com")
+        assert sess.session_id
+        assert events[0].type == "greeting"
+
+    def test_handle_message(self):
+        le = LiveEngineer()
+        events = await le.handle_message(session_id, "https://example.com")
+        assert any(e.type == "classify_site" for e in events)
 ```
 
 ## Submitting Changes
@@ -258,7 +260,7 @@ Follow conventional commits:
 
 ```bash
 # Format: type(scope): description
-git commit -m "feat(chatbot): add sentiment analysis
+git commit -m "feat(engineer): add sentiment analysis
 
 - Analyze user sentiment in messages
 - Adjust response tone accordingly
@@ -394,9 +396,9 @@ grep -r "result: fail" obsidian_vault/Runs/
 
 ### Add New Test Type
 
-1. Update `TEST_TYPES` in `command_center/chatbot.py`
-2. Add test function in `agents/ui_explorer/worker.py`
-3. Update test type dropdown in `command_center/static/index.html`
+1. Add the test name to `TEST_CATALOG` in `command_center/engineer/site_catalog.py` for the relevant site type(s)
+2. Add the test function in `agents/ui_explorer/worker.py` (or the matching role worker)
+3. Update the role mapping in `command_center/live_engineer.py::_TEST_ROLE_MAP` so the engineer knows which worker to dispatch
 4. Add documentation in `docs/user-guide/writing-tests.md`
 
 ### Add New LLM Provider

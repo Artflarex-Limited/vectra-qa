@@ -191,18 +191,21 @@ worker_scripts = {
 }
 ```
 
-1. **Add to chatbot**:
+1. **Register the test in the catalog**:
 
 ```python
-# command_center/chatbot.py
-TEST_TYPES = {
-    "security": {
-        "name": "Security Scan",
-        "role": "security_scanner",
-        "keywords": ["security", "scan", "vulnerability"]
-    }
-}
+# command_center/engineer/site_catalog.py
+TEST_CATALOG[SiteType.ECOMMERCE] = [
+    "homepage",
+    "security",  # new test name
+    "navigation",
+]
 ```
+
+The test name must appear in the `TEST_CATALOG` for the relevant
+site type so the Live QA Engineer can include it in the proposed
+plan. The conversation engine also relies on the closed catalog to
+prevent LLM hallucination.
 
 ## Environment-Specific Testing
 

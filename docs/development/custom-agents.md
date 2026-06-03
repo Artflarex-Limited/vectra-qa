@@ -237,18 +237,22 @@ worker_scripts = {
 }
 ```
 
-Update `command_center/chatbot.py`:
+Update `command_center/engineer/site_catalog.py` to add the new test to
+`TEST_CATALOG` for the site types that should include it:
 
 ```python
-TEST_TYPES = {
-    # ... existing types ...
-    "performance": {
-        "name": "Performance Test",
-        "description": "Page load speed and resource optimization",
-        "role": "my_custom_agent",
-        "keywords": ["performance", "speed", "load time", "optimization", "fast"]
-    }
-}
+TEST_CATALOG[SiteType.ECOMMERCE] = [
+    "homepage",
+    "performance",  # new test name
+    "navigation",
+]
+```
+
+Then map the test name to the new agent role in
+`command_center/live_engineer.py`:
+
+```python
+_TEST_ROLE_MAP["performance"] = "my_custom_agent"
 ```
 
 Update `command_center/static/index.html`:

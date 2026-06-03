@@ -2,13 +2,13 @@
 
 Vectra QA supports multiple ways to define and run tests, from natural language chat to structured API calls.
 
-## Method 1: Natural Language (Recommended)
+## Method 1: Talk to the Live QA Engineer (Recommended)
 
-The easiest way to run tests is through the chatbot.
+The easiest way to run tests is through the Live QA Engineer chat panel on the dashboard.
 
 ### Basic Test Request
 
-**Vectra Chat:**
+Open the chat panel and type:
 
 ```
 Test the homepage of https://example.com
@@ -298,9 +298,9 @@ Fix critical issues before running comprehensive tests:
 The homepage has errors. Let me fix those first.
 ```
 
-### 3. Use Chat for Complex Workflows
+### 3. Use the Live QA Engineer for Complex Workflows
 
-For multi-step testing, chat with Vectra:
+For multi-step testing, talk to Vectra:
 
 ```
 I need to test a user registration flow:

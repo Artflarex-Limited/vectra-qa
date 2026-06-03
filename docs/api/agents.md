@@ -269,18 +269,21 @@ worker_scripts = {
 }
 ```
 
-1. **Update chatbot**:
+1. **Register the test in the catalog**:
 
 ```python
-# command_center/chatbot.py
-TEST_TYPES = {
-    "my_test": {
-        "name": "My Test",
-        "role": "my_agent",
-        "keywords": ["my", "custom"]
-    }
-}
+# command_center/engineer/site_catalog.py
+TEST_CATALOG[SiteType.ECOMMERCE] = [
+    "homepage",
+    "my_test",  # new test name
+    "navigation",
+]
 ```
+
+The test name must appear in `TEST_CATALOG` for at least one site type
+so the Live QA Engineer can include it in the proposed plan. The
+`ConversationEngine` reads from the closed catalog to prevent the
+LLM from hallucinating test names.
 
 1. **Create soul file**:
 

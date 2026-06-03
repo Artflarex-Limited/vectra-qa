@@ -46,20 +46,27 @@ curl http://localhost:3000/api/results
 curl http://localhost:3000/api/results/{agent_id}
 ```
 
-### Chatbot
+### Live QA Engineer
 
 ```bash
-# Send message
-curl -X POST http://localhost:3000/api/chat/message \
-  -d "message=Test the contact form on https://example.com"
+# Start a session (server sets a session_id cookie)
+curl -X POST http://localhost:3000/api/engineer/start \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
 
-# Get history
-curl http://localhost:3000/api/chat/history
+# Send a message (use the cookie returned above)
+curl -X POST http://localhost:3000/api/engineer/$SID/message \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Test the contact form"}'
 
-# Execute plan
-curl -X POST http://localhost:3000/api/chat/execute \
-  -d "url=https://example.com" \
-  -d "tests=contact,navigation"
+# Stream events (Server-Sent Events)
+curl -N http://localhost:3000/api/engineer/$SID/stream
+
+# Get session metrics
+curl http://localhost:3000/api/engineer/$SID/metrics
+
+# Resume a session (after page refresh)
+curl http://localhost:3000/api/engineer/$SID/resume
 ```
 
 ## API Endpoints
@@ -72,9 +79,11 @@ curl -X POST http://localhost:3000/api/chat/execute \
 | `/api/tests/types` | GET | Test types |
 | `/api/results` | GET | All results |
 | `/api/results/{id}` | GET | Specific result |
-| `/api/chat/message` | POST | Chat message |
-| `/api/chat/history` | GET | Chat history |
-| `/api/chat/execute` | POST | Execute plan |
+| `/api/engineer/start` | POST | Start an engineer session |
+| `/api/engineer/{sid}/message` | POST | Send a message |
+| `/api/engineer/{sid}/stream` | GET | SSE event stream |
+| `/api/engineer/{sid}/metrics` | GET | Session metrics |
+| `/api/engineer/{sid}/resume` | GET | Rehydrate session |
 | `/api/sse/stream` | GET | SSE stream |
 
 ## Test Types
@@ -98,7 +107,7 @@ curl -X POST http://localhost:3000/api/chat/execute \
 | Runs | `obsidian_vault/Runs/` |
 | Screenshots | `obsidian_vault/Screenshots/` |
 | Agent logs | `obsidian_vault/Runs/*_worker.log` |
-| Chat log | `obsidian_vault/Global/Chat_Log.md` |
+| Engineer session node | `obsidian_vault/Runs/EngineerSession_*.md` |
 
 ## Status Codes
 
@@ -190,7 +199,14 @@ curl http://localhost:3000/api/orchestrator/status | jq
 curl http://localhost:3000/api/results | jq '.results[0]'
 
 # Chat with Vectra
-curl -X POST http://localhost:3000/api/chat/message -d "message=Hello"
+curl -X POST http://localhost:3000/api/engineer/start \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}' \
+  -c cookies.txt
+curl -X POST http://localhost:3000/api/engineer/$SID/message \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{"message": "Hello"}'
 
 # Tail logs
 tail -f obsidian_vault/Runs/*_worker.log

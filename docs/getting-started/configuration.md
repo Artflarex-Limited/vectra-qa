@@ -27,13 +27,13 @@ Vectra QA is configured through environment variables. You can set them in:
 | `COMMAND_CENTER_PORT` | `3000` | Dashboard HTTP port |
 | `MCP_SERVER_PORT` | `8080` | MCP server HTTP port |
 
-## Chatbot Configuration
+## Live QA Engineer Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CHATBOT_MODEL` | `anthropic/claude-3-5-sonnet-20241022` | LLM model for chatbot |
-| `CHATBOT_MAX_HISTORY` | `50` | Maximum conversation history messages |
-| `CHATBOT_ENABLE_STREAMING` | `true` | Enable SSE streaming responses |
+| `ENGINEER_MODEL` | `anthropic/claude-3-5-sonnet-20241022` | LLM model for the Live QA Engineer (advisory; the model is read from `command_center/engineer/conversation.py`) |
+| `ENGINEER_MAX_HISTORY` | `50` | Maximum conversation history messages held in the session store |
+| `ENGINEER_ENABLE_STREAMING` | `true` | Enable SSE streaming responses for `/api/engineer/{sid}/stream` |
 
 ## Browser Configuration
 
@@ -61,9 +61,9 @@ MCP_SERVER_URL=http://mcp-server:8080
 COMMAND_CENTER_PORT=3000
 MCP_SERVER_PORT=8080
 
-# Chatbot
-CHATBOT_MODEL=openai/gpt-4o
-CHATBOT_MAX_HISTORY=50
+# Live QA Engineer
+ENGINEER_MODEL=openai/gpt-4o
+ENGINEER_MAX_HISTORY=50
 
 # Browser
 HEADLESS=true
@@ -100,8 +100,8 @@ Override defaults in `docker-compose.yml`:
 services:
   command-center:
     environment:
-      - CHATBOT_MODEL=openai/gpt-4o
-      - CHATBOT_MAX_HISTORY=100
+      - ENGINEER_MODEL=openai/gpt-4o
+      - ENGINEER_MAX_HISTORY=100
       - HEADLESS=false  # For debugging
 ```
 
@@ -112,7 +112,7 @@ services:
 ```bash
 HEADLESS=false  # See browser windows
 LOG_LEVEL=DEBUG
-CHATBOT_ENABLE_STREAMING=true
+ENGINEER_ENABLE_STREAMING=true
 ```
 
 ### Production
@@ -130,5 +130,5 @@ CORS_ORIGINS=https://yourdomain.com
 ```bash
 HEADLESS=true
 LOG_LEVEL=WARNING
-CHATBOT_MODEL=openai/gpt-4o-mini  # Faster, cheaper
+ENGINEER_MODEL=openai/gpt-4o-mini  # Faster, cheaper
 ```

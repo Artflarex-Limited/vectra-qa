@@ -15,7 +15,7 @@ HTMX + SSE]
     subgraph "Control Layer"
         CC[Command Center
 FastAPI + SSE]
-        CH[Chatbot Engine
+        LE[Live QA Engineer
 LLM Router]
     end
 
@@ -63,8 +63,8 @@ Cache + Queue]
 
     U -- HTTP --> D
     D -- HTMX/SSE --> CC
-    U -- Chat --> CH
-    CH -- LLM --> LLM
+    U -- Chat --> LE
+    LE -- LLM --> LLM
     CC -- JSON-RPC --> MCP
     MCP -- Spawn --> UE
     MCP -- Spawn --> DV
@@ -133,7 +133,7 @@ The Command Center doesn't poll. It uses:
 - **FastAPI** backend with async endpoints
 - **HTMX** frontend for hypermedia-driven UI
 - **SSE streams** for live data (agents, orchestrator, results)
-- **Chatbot engine** with intent classification
+- **Live QA Engineer** with 6-stage conversation and site-type classifier
 - **Health endpoints**: `/health`, `/ready`, `/metrics`
 
 ### MCP Server
@@ -277,29 +277,29 @@ sequenceDiagram
     O-->>U: Report complete
 ```
 
-### Chat Flow
+### Live QA Engineer Flow
 
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant CH as Chat Widget
-    participant CE as Chat Engine
+    participant P as Chat Panel
+    participant LE as LiveEngineer
     participant LLM as LLM Router
     participant V as Obsidian Vault
+    participant MCP as MCP Server
 
-    U->>CH: "Test contact form"
-    CH->>CE: POST /api/chat/message
-    CE->>V: Save user message
-    CE->>LLM: Classify intent
-    LLM-->>CE: intent=plan_tests
-    CE->>LLM: Extract test plan
-    LLM-->>CE: {url, tests}
-    CE->>V: Save assistant message
-    CE-->>CH: Return plan for confirmation
-    U->>CH: Click "Run"
-    CH->>CE: POST /api/chat/execute
-    CE->>MCP: Spawn agents
-    CE->>V: Save execution log
+    U->>P: "Test contact form on example.com"
+    P->>LE: POST /api/engineer/{sid}/message
+    LE->>V: Load SessionState
+    LE->>LLM: classify_site(url)
+    LLM-->>LE: site_type=ecommerce
+    LE-->>P: AskQuestionEvent + PlanProposedEvent
+    U->>P: "yes, run it"
+    P->>LE: POST /api/engineer/{sid}/message
+    LE->>V: Persist plan
+    LE->>MCP: spawn_agent(auth_tester, ...)
+    MCP-->>LE: TestStartedEvent + TestCompletedEvent
+    LE-->>P: ReportEvent + DoneEvent
 ```
 
 ## Technology Stack

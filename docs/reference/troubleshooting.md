@@ -146,9 +146,9 @@ asyncio.run(test())
 "
 ```
 
-### Chatbot Not Responding
+### Live QA Engineer Not Responding
 
-**Symptom**: Vectra doesn't respond or gives errors
+**Symptom**: Vectra doesn't respond in the chat panel, or events stop mid-conversation
 
 **Solutions**:
 ```bash
@@ -163,8 +163,8 @@ resp = r.complete('openai/gpt-4o-mini', [{'role':'user','content':'Hello'}])
 print(resp.content)
 "
 
-# Check chat log
-head -50 obsidian_vault/Global/Chat_Log.md
+# Resume the session by hitting the resume endpoint with the session_id cookie
+curl http://localhost:3000/api/engineer/<session_id>/resume
 
 # Restart command center
 docker compose restart command-center
@@ -178,14 +178,15 @@ docker compose restart command-center
 
 **Solutions**:
 ```bash
-# Use lighter LLM model
-CHATBOT_MODEL=openai/gpt-4o-mini
+# Use lighter LLM model (advisory; the model is read from
+# command_center/engineer/conversation.py — update there to switch)
+ENGINEER_MODEL=openai/gpt-4o-mini
 
 # Reduce history context
-CHATBOT_MAX_HISTORY=20
+ENGINEER_MAX_HISTORY=20
 
 # Disable streaming
-CHATBOT_ENABLE_STREAMING=false
+ENGINEER_ENABLE_STREAMING=false
 
 # Check system resources
 docker stats
@@ -399,5 +400,5 @@ python -m uvicorn command_center.main:app --log-level debug --reload
 
 # Monitor in real-time
 tail -f obsidian_vault/Runs/*_worker.log &
-tail -f obsidian_vault/Global/Chat_Log.md
+tail -f obsidian_vault/Runs/EngineerSession_*.md
 ```

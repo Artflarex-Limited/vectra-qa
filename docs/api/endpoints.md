@@ -496,114 +496,235 @@ Returns detailed result for a specific agent.
 
 ---
 
-## Chatbot
+## Live QA Engineer
+
+The Live QA Engineer walks you through testing a site in a 6-stage conversation
+(greeting, recon, context, plan, execute, report, done). Every interaction is
+emitted as a structured `EngineerEvent` over HTTP and SSE. See
+[live-engineer.md](live-engineer.md) for the full event reference, state
+machine, and credential security contract.
+
+### Start Session
+
+```http
+POST /api/engineer/start
+Content-Type: application/json
+```
+
+Create a new live QA engineer session, or resume an existing one when
+`session_id` is provided.
+
+**Request body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | No | Target URL the user wants tested. Recorded into the session state. |
+| `session_id` | string | No | Existing session id. When supplied, the server resumes the session and returns the events that rehydrate the current stage. |
+
+**Response (`200 OK`):**
+
+```json
+{
+  "session_id": "eng-20260603-abc123",
+  "events": [
+    {
+      "type": "greeting",
+      "session_id": "eng-20260603-abc123",
+      "stage": "greeting",
+      "timestamp": "2026-06-03T12:00:00+00:00",
+      "message": "Hi! I'm Vectra, your live QA engineer. What URL would you like me to test?"
+    }
+  ],
+  "stage": "greeting"
+}
+```
+
+**Side effects:**
+
+- Sets an HttpOnly `session_id` cookie (`SameSite=Strict`, `max_age=14400`)
+  when the client did not already present one.
+- Writes (or refreshes) a vault node for the session. **Credentials are
+  never** part of that node.
+
+**Status codes:**
+
+| Code | Meaning |
+|------|---------|
+| 200 | Session created or resumed. |
+| 500 | LLM and static fallback both failed. |
 
 ### Send Message
 
 ```http
-POST /api/chat/message
-Content-Type: application/x-www-form-urlencoded
+POST /api/engineer/{session_id}/message
+Content-Type: application/json
 ```
 
-Process a chat message and get Vectra's response.
+Send one user message (or a credential submission) to the engineer. Returns
+the list of events the engineer emitted in response.
 
-**Parameters:**
+**Request body:**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `message` | string | Yes | User message |
-| `stream` | boolean | No | Enable SSE streaming (default: false) |
+| `message` | string | Yes | The user utterance. Use `"[credential_submitted]"` when a credential is provided in the same request. |
+| `credential` | object | No | `{ "field": "username" \| "password", "value": "..." }`. Submitted to the in-memory `CredentialHandler`. The value is never logged or echoed back. |
 
-**Response (plan):**
+**Example — plain message:**
 
 ```json
 {
-  "type": "plan",
-  "intent": "plan_tests",
-  "plan": {
-    "url": "https://example.com",
-    "tests": ["contact"],
-    "test_configs": [...]
-  },
-  "message": "I'll run the following tests..."
+  "message": "https://shop.example.com"
 }
 ```
 
-**Response (chat):**
+**Example — credential submission:**
 
 ```json
 {
-  "type": "chat",
-  "intent": "chat",
-  "message": "I can help you with that!"
+  "message": "[credential_submitted]",
+  "credential": { "field": "password", "value": "secret123" }
 }
 ```
 
-### Get History
-
-```http
-GET /api/chat/history?limit=50
-```
-
-Returns conversation history.
-
-**Response:**
+**Response (`200 OK`):**
 
 ```json
 {
-  "messages": [
-    {"role": "user", "content": "Test homepage", "timestamp": "..."},
-    {"role": "assistant", "content": "I'll help you...", "timestamp": "..."}
+  "events": [
+    {
+      "type": "ask_question",
+      "session_id": "eng-20260603-abc123",
+      "stage": "context",
+      "timestamp": "2026-06-03T12:00:05+00:00",
+      "question_id": "context",
+      "prompt": "Tell me more about what you'd like tested.",
+      "choices": null
+    }
   ],
-  "count": 42
+  "stage": "context"
 }
 ```
 
-### Execute Plan
+**Status codes:**
+
+| Code | Meaning |
+|------|---------|
+| 200 | Message processed (events list returned; may contain `ErrorEvent`). |
+| 422 | `message` is empty or `credential.field` is not in `{username, password}`. |
+| 500 | Internal error before the fallback event could be produced. |
+
+### Stream Events (SSE)
 
 ```http
-POST /api/chat/execute
-Content-Type: application/x-www-form-urlencoded
+GET /api/engineer/{session_id}/stream
+Accept: text/event-stream
 ```
 
-Execute a confirmed test plan.
+Server-Sent Events stream that emits the current state immediately, then
+keeps the connection open with 2-second heartbeats. Use this for live
+narration and test progress in the dashboard.
 
-**Parameters:**
+**Event format:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `url` | string | Yes | Target URL |
-| `tests` | string | Yes | Comma-separated test types |
+```
+data: {"type": "narrate", "session_id": "eng-20260603-abc123", "stage": "execute", "timestamp": "...", "agent_id": "eng-...-homepage", "status": "running", "message": "Checking the homepage now."}
 
-**Response:**
+data: {"type": "heartbeat", "session_id": "eng-20260603-abc123", "timestamp": "2026-06-03T12:00:08Z"}
+```
+
+**Status codes:**
+
+| Code | Meaning |
+|------|---------|
+| 200 | Stream opened (`Content-Type: text/event-stream`). |
+| 404 | Session id not found. The first event in the stream is `{"type": "error", "code": "session_not_found", "session_id": "..."}`. |
+
+**Connection behaviour:** the server emits the resume-state events,
+then three heartbeat frames at 2-second intervals, then closes the
+stream. Browsers reconnect automatically on disconnect.
+
+### Get Session Metrics
+
+```http
+GET /api/engineer/{session_id}/metrics
+```
+
+Return the API-ready metrics summary for a session — narration count,
+latency breaches, and stage timing. See `MetricsRecorder.metrics_summary`
+in `command_center/engineer/metrics.py` for the full schema.
+
+**Response (`200 OK`):**
 
 ```json
 {
-  "status": "success",
-  "message": "Launched 2 test(s)",
-  "agent_ids": ["ui_explorer-...", "data_validator-..."],
-  "tests": ["homepage", "api"],
-  "url": "https://example.com"
+  "session_id": "eng-20260603-abc123",
+  "narration_count": 5,
+  "breaches": [],
+  "stages": {
+    "greeting": 1.2,
+    "recon": 4.5,
+    "context": 8.0,
+    "plan": 2.3,
+    "execute": 41.0,
+    "report": 3.1
+  }
 }
 ```
 
-### Interpret Results
+**Status codes:**
+
+| Code | Meaning |
+|------|---------|
+| 200 | Metrics returned (empty dict if the session has no recorded activity). |
+| 500 | Metrics recorder raised unexpectedly. |
+
+### Resume Session
 
 ```http
-GET /api/chat/interpret/{agent_id}
+GET /api/engineer/{session_id}/resume
 ```
 
-Get LLM-interpreted results for a specific test.
+Rehydrate the conversation for a given session id. Used on page refresh to
+restore the chat panel without losing context. The endpoint returns the
+stage-appropriate event list:
 
-**Response:**
+| Stage | Events returned |
+|-------|-----------------|
+| `greeting` | `GreetingEvent` |
+| `recon` (no `site_type` yet) | `AskQuestionEvent` (prompt: "What URL...") |
+| `recon` (`site_type` set) | `ConfirmClassificationEvent` |
+| `context` | `AskQuestionEvent` (context prompt) |
+| `plan` (no confirmed plan) | `AskQuestionEvent` (plan prompt) |
+| `plan` (confirmed plan) | `PlanProposedEvent` |
+| `execute` | `TestStartedEvent` (resume marker) |
+| `report` | `ReportEvent` |
+| `done` | `DoneEvent` |
+
+**Response (`200 OK`):**
 
 ```json
 {
-  "agent_id": "ui_explorer-...",
-  "interpretation": "The test found 2 critical issues...",
-  "result_data": {...}
+  "events": [
+    {
+      "type": "ask_question",
+      "session_id": "eng-20260603-abc123",
+      "stage": "context",
+      "timestamp": "2026-06-03T12:00:05+00:00",
+      "question_id": "context",
+      "prompt": "Tell me more about what you'd like tested."
+    }
+  ],
+  "stage": "context"
 }
 ```
+
+**Status codes:**
+
+| Code | Meaning |
+|------|---------|
+| 200 | Events returned. The list may be empty if the session has just been created. |
+| 404 | Session id not found (raised as `KeyError` from the underlying store). |
 
 ---
 
