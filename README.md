@@ -12,6 +12,8 @@ Traditional E2E testing is **dead**. Static scripts, brittle selectors, and mono
 
 Our framework treats testing as an autonomous, multi-agent exploration problem. A Test Manager agent dynamically spawns specialized sub-agents—UI Explorers that hunt for broken flows, Data Validators that intercept network traffic and verify payloads, Auth Testers that probe login flows for security flaws—each operating with its own behavioral DNA, memory, and objectives. When their mission is complete, they gracefully terminate, freeing compute resources.
 
+Vectra QA now includes a **Live QA Engineer** — a conversational persona that walks you through testing your site in 6 stages, asks plain-English questions, prompts for credentials only when needed, and narrates test progress in real time. Run it from the dashboard chat panel.
+
 ## Why Obsidian-Backed Memory?
 
 Agents don't use JSON blobs. They read and write **Markdown files** in a local [Obsidian](https://obsidian.md/) Vault. This isn't just storage—it's a **relational memory layer**:
@@ -433,7 +435,7 @@ For a deep dive into the system design, memory layer, and agent communication pr
 ├─────────────────────────────────────────────────────────────┤
 │  Command Center (Port 3000)                                  │
 │  ├── HTMX Dashboard (SSE live updates)                      │
-│  ├── Chatbot (LLM-powered QA assistant)                     │
+│  ├── Live QA Engineer (6-stage conversational persona)     │
 │  └── Health/Metrics endpoints                               │
 ├─────────────────────────────────────────────────────────────┤
 │  MCP Server (Port 8080)                                      │

@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Live QA Engineer (BREAKING)
+
+The chatbot persona is gone. In its place: a Live QA Engineer that walks you through testing in 6 stages, asks plain-English questions, prompts for credentials only when needed, and narrates progress in real time. This is a hard break. There is no compat shim. Migrate any client that still hits the old `/api/chat/*` routes to `/api/engineer/*`.
+
+#### Removed
+- `GET /api/chat/history`
+- `POST /api/chat/message`
+- `POST /api/chat/execute`
+- `GET /api/chat/sse`
+- `GET /api/chat/interpret/{agent_id}`
+- `command_center/chatbot.py` (the entire module)
+- The dashboard's old chat widget that consumed the removed routes
+
+#### Added
+- `POST /api/engineer/start` — opens a new engineer session
+- `POST /api/engineer/{sid}/message` — sends a user message or credential
+- `GET /api/engineer/{sid}/stream` — Server-Sent Events for live narration
+- `GET /api/engineer/{sid}/metrics` — per-session metrics
+- `GET /api/engineer/{sid}/resume` — pick up where you left off
+- `command_center/engineer/` package — events, vocabulary, state machine, site catalog, session store, credentials, classifier, conversation engine, narrator, report builder, metrics
+- `command_center/live_engineer.py` — top-level orchestrator that wires the engineer modules together
+- Frontend chat panel in `command_center/static/index.html` that consumes structured engineer events and renders the 6-stage flow
+
+#### Migration
+- Hard break, no compat shim. Any client calling `/api/chat/*` will get a 404.
+- Replace `chat_engine` imports with `LiveEngineer` from `command_center.live_engineer`.
+- Replace the `chat_sse` EventSource with `engineerEventSource` against `/api/engineer/{sid}/stream`.
+- Persist the `session_id` cookie set by `/api/engineer/start` and pass it to subsequent calls. Use `/api/engineer/{sid}/resume` after a page refresh to continue a session.
+- See [USER_GUIDE.md](USER_GUIDE.md) for the new "Talk to Vectra" quickstart.
+
 ### Fixed
 - **Model routing**: Models like `minimax-m2.7` without `provider/` prefix defaulted to OpenAI, causing 401 auth errors. All models now use `provider/model` format (e.g., `minimax/MiniMax-M2.7`).
 - **MiniMax base URL**: Updated from `api.minimax.chat` to `api.minimax.io` to match the actual MiniMax API endpoint.

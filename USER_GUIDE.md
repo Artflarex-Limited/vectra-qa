@@ -5,10 +5,11 @@
 1. [Quick Overview](#quick-overview)
 2. [Prerequisites](#prerequisites)
 3. [Configuration](#configuration)
-4. [Writing Your First Test](#writing-your-first-test)
-5. [Run Your Test](#step-3-run-your-test)
-6. [Understanding Results](#understanding-results)
-7. [Advanced Usage](#advanced-usage)
+4. [Talk to Vectra (Quickstart)](#talk-to-vectra-quickstart)
+5. [Writing Your First Test (Advanced)](#writing-your-first-test-advanced)
+6. [Run Your Test](#step-3-run-your-test)
+7. [Understanding Results](#understanding-results)
+8. [Advanced Usage](#advanced-usage)
 
 ---
 
@@ -21,6 +22,8 @@ Vectra QA tests your web application by deploying autonomous agents that:
 3. **Report findings** — Write results to Obsidian vault with detailed logs
 
 You don't write test scripts. You describe what to test, and agents figure out how.
+
+The fastest way to start is to **Talk to Vectra** — open the dashboard and have a plain-English conversation with the Live QA Engineer. See [Talk to Vectra (Quickstart)](#talk-to-vectra-quickstart) below.
 
 ---
 
@@ -98,7 +101,39 @@ PLAYWRIGHT_SLOW_MO=500  # 500ms delay between actions
 
 ---
 
-## Writing Your First Test
+## Talk to Vectra (Quickstart)
+
+The fastest way to test your app is to talk to Vectra. No Python, no test scenario files. Open the dashboard, answer a few plain-English questions, and watch the engineer narrate each test as it runs.
+
+1. Open the dashboard at <http://localhost:3000>.
+2. Click the **"Talk to Vectra"** tab in the chat panel.
+3. When Vectra asks for a URL, paste the address of the site you want to test.
+4. Answer any follow-up questions about your site (does it need login? what should Vectra exercise?).
+5. Watch the narration panel — Vectra announces each test as it starts, what it found, and when it finishes.
+6. Read the plain-English report Vectra writes when all tests are done. It tells you what works, what's broken, and what to fix first.
+
+### What Vectra Will Ask
+
+Vectra walks through 6 stages. At each one, it tells you what it's doing and what it needs from you.
+
+1. **Greeting** — Vectra introduces itself and asks for the URL you want to test.
+2. **Recon** — Vectra inspects your site and decides if it's a landing page, blog, e-commerce store, or SaaS app. It shares its guess and asks you to confirm or correct it.
+3. **Context** — Vectra asks the questions it needs before planning tests. For an e-commerce store, that might be "do you have a test account?". For a SaaS app, "which dashboard page should I exercise?".
+4. **Plan** — Vectra proposes the tests it intends to run and asks for your approval. You can add, remove, or change any test.
+5. **Execute** — Vectra runs each test, narrates what it's doing, and reports findings as it goes. If a test needs a password, Vectra asks for it in a separate masked input — your secret never touches the chat log, the Obsidian vault, or your terminal output.
+6. **Report** — Vectra writes a plain-English summary you can read end-to-end. No jargon, no raw JSON. Just what works, what's broken, and what to fix first.
+
+### Credentials Are Handled Safely
+
+If Vectra needs a password, it asks in a masked field. The secret is sent to the engineer, used to inject into the browser session, then cleared from memory. It never appears in chat history, the Obsidian vault, or your logs.
+
+For test scenario files, custom objectives, and CI integration, see [Writing Your First Test (Advanced)](#writing-your-first-test-advanced) below.
+
+---
+
+## Writing Your First Test (Advanced)
+
+> **Note**: This is the advanced path. Most users should start with [Talk to Vectra (Quickstart)](#talk-to-vectra-quickstart) above. The scenario-file path is for CI/CD pipelines, custom test objectives, and power users who want fine-grained control over agent behaviour.
 
 ### Step 1: Create a Test Scenario File
 
