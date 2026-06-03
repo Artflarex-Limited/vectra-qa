@@ -6,11 +6,9 @@ report builder sections, metrics recording, event schema validation,
 and LiveEngineer flow.
 """
 
-import asyncio
 import os
 import tempfile
 from datetime import datetime, timezone
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -26,7 +24,6 @@ os.environ["OBSIDIAN_VAULT_PATH"] = _VAULT_TMPDIR
 from command_center.engineer.events import (  # noqa: E402
     AskCredentialEvent,
     AskQuestionEvent,
-    BaseEngineerEvent,
     ClassifySiteEvent,
     ConfirmClassificationEvent,
     DoneEvent,
@@ -49,7 +46,6 @@ from command_center.engineer.site_catalog import (  # noqa: E402
     get_default_plan,
 )
 from command_center.engineer.state_machine import (  # noqa: E402
-    ALLOWED_TRANSITIONS,
     Credentials,
     SessionState,
     Stage,
@@ -66,7 +62,7 @@ from command_center.engineer.vocabulary import (  # noqa: E402
     scrub_forbidden,
 )
 from command_center.engineer.metrics import MetricsConfig, MetricsRecorder  # noqa: E402
-from command_center.engineer.session import EngineerSession, EngineerSessionStore  # noqa: E402
+from command_center.engineer.session import EngineerSessionStore  # noqa: E402
 from command_center.engineer.classifier import (  # noqa: E402
     ClassificationResult,
     SiteClassifier,
@@ -928,7 +924,7 @@ class TestLiveEngineer:
             content='{"events":[{"type":"ask_question","question_id":"q1","prompt":"What?"}]}'
         )
         live_engineer.conversation.llm.complete = AsyncMock(return_value=r_turn)
-        evs = await live_engineer.handle_message(
+        await live_engineer.handle_message(
             sess.session_id,
             "test",
             credential={"field": "password", "value": "secret123"},
