@@ -155,6 +155,48 @@ See `issues.md` for the one plan bug discovered during QA.
 
 ---
 
+## T19: Verify/rewrite main endpoint tests
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `tests/unit/test_command_center_main.py` (updated — added TestEngineerEndpoints + TestChatEndpointsRemoved)
+
+### What T15 left behind
+T15's subagent removed all chat tests (11 tests) and the `chat_sse` import, leaving 42 passing tests but zero coverage for the 5 new `/api/engineer/*` endpoints and zero assertions that removed chat endpoints return 404.
+
+### What was added
+- **TestEngineerEndpoints** (12 tests): mocks `_get_live_engineer` (not `chat_engine`) and exercises all 5 endpoints:
+  - `POST /api/engineer/start` — session creation, cookie setting, url param, existing session resume
+  - `POST /api/engineer/{sid}/message` — normal message, credential submission, exception fallback
+  - `GET /api/engineer/{sid}/stream` — SSE content-type, heartbeat inclusion, missing-session handling
+  - `GET /api/engineer/{sid}/metrics` — metrics dict returned
+  - `GET /api/engineer/{sid}/resume` — events + stage returned
+- **TestChatEndpointsRemoved** (5 tests): asserts 404 on all former chat routes (`/api/chat/history`, `/api/chat/message`, `/api/chat/execute`, `/api/chat/sse`, `/api/chat/interpret/{agent_id}`)
+
+### Mock strategy
+`mock_live_engineer` fixture returns a `MagicMock` with async coroutines for `start_session`, `handle_message`, `resume_session`, and a sync `get_metrics`. The coroutines return real Pydantic event instances (`GreetingEvent`, `AskQuestionEvent`) so FastAPI's `model_dump(mode="json")` serialisation path is exercised end-to-end. The fixture is injected per-test and patched via `patch("command_center.main._get_live_engineer")`.
+
+### Coverage numbers
+- 59 total tests in file (was 42 after T15, now 59)
+- 0 references to `chat_engine` or `mock_chat`
+- 5 chat-endpoint 404 assertions
+- 12 engineer endpoint assertions
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `pytest tests/unit/test_command_center_main.py -v` → 100% pass | PASS |
+| 2 | No `mock_chat` references; only `mock_live_engineer` | PASS |
+| 3 | At least 5 tests asserting chat endpoints return 404 | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| All tests pass | `.omo/evidence/T19-pass.txt` | PASS |
+
+---
+
 ## T10: CredentialHandler — prompt-and-forget, log scrub, never-persist assertion
 
 **Date**: 2026-06-03
@@ -430,3 +472,252 @@ Both changes are backward-compatible (string equality still works for `Stage` en
 | Shopify-style HTML classified as ecommerce | `.omo/evidence/T8-shopify-ecom.txt` | PASS |
 | User can override classification | `.omo/evidence/T8-override.txt` | PASS |
 | 10 s timeout on slow URL | `.omo/evidence/T8-timeout.txt` | PASS |
+
+---
+
+## T13: LiveEngineer — top-level orchestrator wiring all engineer modules
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `command_center/live_engineer.py` (created)
+- `tests/unit/test_live_engineer.py` (appended `test_live_engineer`)
+
+### What worked
+- Constructor instantiates all 7 sub-components (`EngineerSessionStore`, `SiteClassifier`, `ConversationEngine`, `CredentialHandler`, `Narrator`, `ReportBuilder`, `MetricsRecorder`) and accepts optional `llm` and `orchestrator` for dependency injection.
+- `start_session` creates a new session via `session_store.create(url)` and returns a `GreetingEvent` via `conversation.generate_greeting`. LLM failure is caught and falls back to a static greeting so the orchestrator never crashes on missing API keys.
+- `handle_message` is the full pipeline: load session, submit credential (if provided, never logged), call `conversation.generate_turn`, post-process events (classify site if needed, store plan, advance stage), update session (never with credentials), and trigger execution if stage transitions to `EXECUTE`.
+- `_prepare_agent` normalises both `EngineerSession` and `SessionState` inputs (QA compatibility) and calls `CredentialHandler.inject_to_agent` only when `site_type in CREDENTIAL_REQUIRED`.
+- `_run_execution` is MVP-synchronous: for each test in `confirmed_plan`, it emits `TestStartedEvent`, injects credentials, narrates, emits `TestProgressEvent` + `TestCompletedEvent`, then finishes with `ReportEvent` and `DoneEvent`. T14 replaces this with real orchestrator calls.
+- `resume_session` returns stage-appropriate events: `GreetingEvent` for `GREETING`, `ConfirmClassificationEvent` for `RECON` with `site_type` set, `AskQuestionEvent` for `CONTEXT`, `PlanProposedEvent` for `PLAN`, etc.
+- `get_metrics` delegates to `MetricsRecorder.metrics_summary` which returns the API-ready dict with `breaches` and `narration_count`.
+
+### Design decisions
+- **LLM resilience**: `start_session` and `resume_session` catch LLM exceptions and return static fallback events. This makes the orchestrator bootable in environments without API keys (CI, local dev) while still using the real LLM when configured.
+- **Test role mapping**: A static `_TEST_ROLE_MAP` dict maps test names (e.g. `auth_login`) to agent roles (`auth_tester`). This is MVP-only; T14 will derive roles dynamically from the orchestrator.
+- **Credential side-channel**: `_prepare_agent` calls `FeatureTesterWorker.set_pending_credentials` before each test starts, matching the pattern established in T10. The credentials are never passed to `session_store.update()`.
+- **Stage transition in handle_message**: For MVP, any message in `PLAN` stage with a confirmed plan triggers an automatic transition to `EXECUTE`. T14 will add a proper user-confirmation gate.
+
+### Coverage numbers
+- 7 sub-components wired in `__init__`
+- 6 public methods on `LiveEngineer` (`start_session`, `handle_message`, `resume_session`, `_prepare_agent`, `_run_execution`, `get_metrics`)
+- 16 assertions in `test_live_engineer` covering all 4 ACs + credential injection + execution flow + metrics
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | Inline python AC (`GreetingEvent` in events) | PASS |
+| 2 | `pytest tests/unit/test_live_engineer.py::test_live_engineer -v` | PASS |
+| 3 | `resume_session` after restart returns same stage | PASS |
+| 4 | `FeatureTesterWorker.set_pending_credentials` called when site_type requires credentials | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| Start session returns greeting | `.omo/evidence/T13-greeting.txt` | PASS |
+| Credentials injected before agent spawn | `.omo/evidence/T13-inject.txt` | PASS |
+| Resume returns current state | `.omo/evidence/T13-resume.txt` | PASS |
+
+---
+
+## T14: FastAPI endpoints — `/api/engineer/*`
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `command_center/main.py` (modified — added 5 endpoints)
+
+### What worked
+- Module-level singleton `_live_engineer` with `_get_live_engineer()` getter avoids
+  circular-import / slow-startup issues at import time. The try/except fallback to
+  `LiveEngineer(llm=None, orchestrator=None)` guarantees the module is importable
+  even when the LLM router has no API keys.
+- Pydantic v2 `model_dump(mode="json")` on `BaseEngineerEvent` subclasses correctly
+  serialises the `Stage(str, Enum)` field as a plain string and datetime fields as
+  ISO strings. No custom JSON encoder needed for the event list.
+- FastAPI `Response.set_cookie` with `httponly=True`, `samesite="strict"`, `max_age=14400`
+  meets the security spec. The cookie name is `session_id` (matching the QA scenario).
+- SSE endpoint uses `StreamingResponse` with `media_type="text/event-stream"` and a
+  local async generator `_engineer_event_generator()`. For MVP, the generator emits
+  the current resume-session events immediately, then yields 3 heartbeats at 2 s
+  intervals and closes gracefully. This makes TestClient-based QA possible without
+  hanging on an infinite loop.
+- The message endpoint catches `handle_message` exceptions (e.g. missing LLM API keys)
+  and returns a static `AskQuestionEvent` fallback so the HTTP contract is always 200
+  + events list. The credential value is never logged or echoed — the structlog line
+  for `credential_submitted` intentionally omits the value field.
+
+### Design decisions
+- **Lazy-init singleton**: `LiveEngineer()` at module level would fail when
+  `OBSIDIAN_VAULT_PATH` is missing or unwritable. The lazy getter defers init to
+  the first request.
+- **Event serialisation helper**: `_event_to_dict(event)` centralises the
+  `model_dump(mode="json")` call. If the event schema changes (e.g. new fields),
+  only one line changes.
+- **SSE heartbeat limit**: A `while True` loop is correct for production SSE but
+  blocks TestClient. Three heartbeats + close is the pragmatic MVP compromise;
+  browsers reconnect automatically on disconnect.
+- **Message fallback**: `conversation.generate_turn` has no LLM-fallback path.
+  Rather than return 500 (which breaks the UI), the endpoint returns a static
+  `ask_question` event. This is an endpoint-level resilience layer, not a change
+  to `LiveEngineer`.
+
+### Coverage numbers
+- 5 new endpoints: `start`, `message`, `stream`, `metrics`, `resume`
+- 2 Pydantic request models: `StartRequest`, `MessageRequest`
+- 1 module-level singleton + 1 getter + 1 serialisation helper
+- 53 existing tests in `test_command_center_main.py` still pass (no regressions)
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `POST /api/engineer/start` returns 200 + cookie + `{session_id, events, stage}` | PASS |
+| 2 | `POST /api/engineer/{sid}/message` returns 200 with events list | PASS |
+| 3 | `GET /api/engineer/{sid}/stream` returns `text/event-stream` | PASS |
+| 4 | `pytest tests/unit/test_command_center_main.py -v` → no regressions | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| Start session sets cookie | `.omo/evidence/T14-start.txt` | PASS |
+| Message endpoint does not echo credential | `.omo/evidence/T14-no-echo.txt` | PASS |
+| SSE stream content-type | `.omo/evidence/T14-sse.txt` | PASS |
+
+---
+
+## T15: Refactor — remove /api/chat/* endpoints, keep /api/engineer/*
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `command_center/main.py` (refactored — removed chatbot import + 5 chat endpoints)
+- `tests/unit/test_command_center_main.py` (updated — removed chat tests + `chat_sse` import)
+
+### What worked
+- Surgical removal of the `from command_center.chatbot import chat_engine, TEST_TYPES` import (line 18 → removed) and the entire CHATBOT ENDPOINTS block (lines 822–1020 of original). The file shrank from 1026 to 822 lines.
+- All `/api/engineer/*` endpoints (T14) remain intact: `start`, `message`, `stream`, `metrics`, `resume`.
+- All non-chat endpoints verified working via TestClient: `/health`, `/ready`, `/`, `/api/orchestrator/status`, `/api/agents/active`, `/api/nodes/*`, `/api/results*`, `/api/sse/*` (stream, agents, orchestrator, results/{id}).
+- The `/api/tests/run` endpoint is preserved per plan instruction (T16 fallback).
+- Zero non-test imports of `command_center.chatbot` remain in the repo.
+
+### Test-file updates required
+- `tests/unit/test_command_center_main.py` imported `chat_sse` from `command_center.main` and had a 12-test `TestChatEndpoints` class. These were removed.
+- The `client` fixture previously yielded a 3-tuple `(client, mock_reader, mock_chat)`; it now yields a 2-tuple `(client, mock_reader)`. All call-sites updated.
+- 42 tests in `test_command_center_main.py` pass (was 53 before; 11 chat tests removed).
+
+### Coverage numbers
+- 5 chat endpoints removed: `GET /api/chat/history`, `POST /api/chat/message`, `POST /api/chat/execute`, `GET /api/chat/sse`, `GET /api/chat/interpret/{agent_id}`
+- 1 import line removed: `from command_center.chatbot import chat_engine, TEST_TYPES`
+- 0 references to `chat_engine` or `TEST_TYPES` remain in `command_center/main.py`
+- 731 total tests pass (same as before; no new failures)
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `grep -rn "chatbot\|chat_engine" command_center/ --include="*.py"` zero non-test matches | PASS |
+| 2 | `python -c "import command_center.main; print('ok')"` exits 0 | PASS |
+| 3 | `python -m pytest tests/ -q` → no new failures | PASS |
+| 4 | `curl http://localhost:3000/health` → 200 | PASS |
+| 5 | `curl http://localhost:3000/api/agents/active` → 200 | PASS |
+| 6 | `curl -X POST http://localhost:3000/api/chat/message` → 404 | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| No imports of chatbot remain | `.omo/evidence/T15-no-imports.txt` | PASS |
+| Existing endpoints still respond | `.omo/evidence/T15-existing-endpoints.txt` | PASS |
+| Chat endpoints return 404 | `.omo/evidence/T15-chat-404.txt` | PASS |
+
+---
+
+## T16: Frontend chat panel in index.html — consume structured events
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `command_center/static/index.html` (modified — replaced chat widget with engineer event panel)
+
+### What worked
+- The existing chat widget (lines 1792-2140 of the pre-T16 file) used `/api/chat/*` endpoints. Those were already removed in T15, so the panel was dead on arrival. Replacing it with an engineer-specific panel was straightforward because the CSS primitives (`--surface`, `--phosphor`, `--alert`, etc.) were already defined.
+- Each `EngineerEvent` type gets its own renderer: `renderGreetingEvent`, `renderAskQuestionEvent`, `renderClassifySiteEvent`, `renderConfirmClassificationEvent`, `renderPlanProposedEvent`, `renderNarrateEvent`, `renderTestStartedEvent`, `renderTestProgressEvent`, `renderTestCompletedEvent`, `renderReportEvent`, `renderDoneEvent`, `renderErrorEvent`. A central `renderEngineerEvent` dispatcher routes by `ev.type`.
+- `EventSource` (not WebSocket) is used for SSE at `/api/engineer/{sid}/stream`. The `openEngineerEventSource` / `closeEngineerEventSource` pair avoids name collisions with the dashboard's existing `eventSource` variable (line 1471).
+- `appendToChat` auto-expands the panel when a new assistant event arrives while collapsed, preserving the existing unread-badge + attention-glow behaviour.
+- `resumeEngineerSession` reads the `session_id` cookie (fallback to `vectra_session_id`), calls `GET /api/engineer/{sid}/resume`, hides the start overlay, shows messages + input, and re-opens the SSE stream.
+- `submitCredential` (T17 boundary) immediately clears `input.value = ''` before the async POST so the secret never sits in the DOM during network latency.
+
+### DOM-ready bug discovered and fixed
+The original file placed the `<script>` tag *before* the `#chat-panel-container` HTML. This meant `loadChatPanelState()` and `resumeEngineerSession()` ran while `#chat-panel-container`, `#chat-messages`, and `#chat-input-area` did not yet exist in the DOM, causing `Cannot read properties of null (reading 'classList')` on every page load. Fixed by wrapping the chat init in a `DOMContentLoaded` listener (with a fallback for `readyState !== 'loading'`).
+
+### Playwright QA adaptations
+The backend returns `AskQuestionEvent` fallback when no LLM API keys are configured (T14 endpoint resilience). This means the full `classify → plan → execute` flow cannot be driven end-to-end without keys. The Playwright test therefore mocks `POST /api/engineer/{sid}/message` for specific utterances (`https://example.com`, `yes`, `run all`) to inject the expected event sequence, then asserts the correct renderer fired and the right DOM elements are visible.
+
+### Coverage numbers
+- 12 event renderers in the engineer chat panel
+- 1 SSE stream handler (`openEngineerEventSource`)
+- 1 resume handler (`resumeEngineerSession`)
+- 1 start handler (`startEngineerSession`)
+- 1 message sender (`sendEngineerMessage`)
+- 0 `addEventListener('click', ...)` for credential reveal
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | `python -c "... 'engineer/start' in open('...').read()"` exits 0 | PASS |
+| 2 | Playwright: click "Talk to Vectra", type URL, see greeting, classify badge, plan with Run button | PASS |
+| 3 | On page refresh, conversation resumes from where it left off | PASS |
+| 4 | No `addEventListener('click', ...)` for credential reveal | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| Chat panel renders greeting | `.omo/evidence/T16-greeting.png` | PASS |
+| AskQuestionEvent renders input | `.omo/evidence/T16-question.png` | PASS |
+| NarrateEvent streams in | `.omo/evidence/T16-narration.png` | PASS |
+
+---
+
+## T17: Frontend password input component — masked, never sent in chat log
+
+**Date**: 2026-06-03
+**Status**: Complete
+**Files**:
+- `command_center/static/index.html` (modified — replaced chat widget with engineer event panel + password component)
+
+### What worked
+- The `renderAskCredentialEvent` function creates a self-contained password prompt with `input[type="password"]` (never `type="text"`). The label is drawn from `event.reason` so backend authors control the prompt text.
+- `submitCredential` reads the value, POSTs it to `/api/engineer/{sid}/message` with body `{message: '[credential_submitted]', credential: {field: 'password', value: ...}}`, then **immediately clears the input** (`input.value = ''`) before any async work. This guarantees the raw secret never lingers in the DOM.
+- The confirmation message "Submitted. I won't show this again." is displayed as static text — the credential value is never echoed back.
+- No unmask toggle exists; there are zero `addEventListener('click', ...)` handlers for credential reveal.
+- No `localStorage.setItem` writes the credential value. The only localStorage key touched is `chatPanelCollapsed`.
+- The `#best-practices` section adds 3 sentences about test accounts, linked from the credential prompt via an inline anchor.
+
+### Naming collision discovered and fixed
+The original dashboard code at line 1471 declares `const eventSource = new EventSource('/api/sse/stream');` in the global script scope. My first draft added `let eventSource = null;` for the engineer chat SSE, causing `Identifier 'eventSource' has already been declared`. Renamed the engineer-specific variable to `engineerEventSource` and the functions to `openEngineerEventSource` / `closeEngineerEventSource`.
+
+### T16 foundation built alongside T17
+Since T16 (chat panel consuming structured events) was not yet in the codebase, the implementation includes the full event-rendering pipeline: `GreetingEvent`, `AskQuestionEvent`, `ClassifySiteEvent`, `PlanProposedEvent`, `NarrateEvent`, `TestStartedEvent`, `TestProgressEvent`, `TestCompletedEvent`, `ReportEvent`, `DoneEvent`, `ErrorEvent`. Each has a dedicated renderer reusing the existing dark-mode CSS variables (`--surface`, `--phosphor`, `--alert`, etc.).
+
+### UI state transitions
+`startEngineerSession` and `resumeEngineerSession` both hide `#chat-start-overlay` and show `#chat-messages` + `#chat-input-area`. Without this, injected events render into a hidden container and Playwright assertions fail on visibility.
+
+### Coverage numbers
+- 11 event renderers in the engineer chat panel
+- 1 password-specific renderer (`renderAskCredentialEvent`)
+- 1 credential submit handler (`submitCredential`)
+- 0 localStorage writes of credential value
+- 0 toggle-to-reveal buttons
+
+### Acceptance criteria status
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | Playwright: trigger AskCredentialEvent, type "secret123", submit, assert input cleared + confirmation visible, assert DOM has 0 matches for "secret123" | PASS |
+| 2 | `<input>` element has `type="password"` | PASS |
+| 3 | No `localStorage` write of credential value | PASS |
+| 4 | Evidence screenshot at `.omo/evidence/T17-password.png` | PASS |
+
+### QA scenario status
+| Scenario | Evidence file | Status |
+|----------|--------------|--------|
+| Password input is type=password | `.omo/evidence/T17-masked.png` | PASS |
+| Submitted value never appears in DOM | `.omo/evidence/T17-no-leak.txt` | PASS |
+| Input cleared after submit | `.omo/evidence/T17-cleared.png` | PASS |

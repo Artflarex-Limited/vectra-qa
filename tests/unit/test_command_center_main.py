@@ -1,7 +1,7 @@
 """
 Unit tests for command_center/main.py FastAPI application.
 
-Covers all HTTP endpoints, SSE streaming, chatbot integration,
+Covers all HTTP endpoints, SSE streaming, engineer integration,
 markdown extraction helpers, and MCP tool calls.
 """
 
@@ -28,7 +28,6 @@ from command_center.main import (  # noqa: E402
     agents_sse,
     app,
     call_mcp_tool,
-    chat_sse,
     event_generator,
     json_serialize,
     orchestrator_sse,
@@ -44,10 +43,7 @@ from command_center.main import (  # noqa: E402
 @pytest.fixture
 def client():
     """Return a FastAPI TestClient with mocked dependencies."""
-    with (
-        patch("command_center.main.reader") as mock_reader,
-        patch("command_center.main.chat_engine") as mock_chat,
-    ):
+    with patch("command_center.main.reader") as mock_reader:
         # Default mock returns
         mock_reader.get_orchestrator_status = MagicMock(return_value={"status": "running"})
         mock_reader.get_active_agents = MagicMock(return_value=[])
@@ -55,14 +51,8 @@ def client():
         mock_reader.get_run_nodes = MagicMock(return_value=[])
         mock_reader.read_node = MagicMock(return_value=None)
 
-        mock_chat.get_history = MagicMock(return_value=[])
-        mock_chat.add_message = MagicMock()
-        mock_chat.process_message = MagicMock(return_value={"message": "ok"})
-        mock_chat.interpret_results = MagicMock(return_value="Interpretation")
-        mock_chat.stream_response = AsyncMock()
-
         client = TestClient(app)
-        yield client, mock_reader, mock_chat
+        yield client, mock_reader
         client.close()  # Prevent ResourceWarning: unclosed event loop
 
 
@@ -236,7 +226,7 @@ class TestHealthEndpoints:
     @pytest.mark.unit
     def test_health_returns_ok(self, client):
         """GET /health should return status ok."""
-        c, _, _ = client
+        c, _ = client
         response = c.get("/health")
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
@@ -244,7 +234,7 @@ class TestHealthEndpoints:
     @pytest.mark.unit
     def test_ready_returns_ready(self, client):
         """GET /ready should return status ready."""
-        c, _, _ = client
+        c, _ = client
         response = c.get("/ready")
         assert response.status_code == 200
         assert response.json() == {"status": "ready"}
@@ -261,7 +251,7 @@ class TestDashboard:
     @pytest.mark.unit
     def test_serves_index_html(self, client):
         """GET / should serve command_center/static/index.html."""
-        c, _, _ = client
+        c, _ = client
         html_content = "<html><body>Dashboard</body></html>"
 
         with patch("builtins.open", mock_open(read_data=html_content)):
@@ -282,7 +272,7 @@ class TestOrchestratorApi:
     @pytest.mark.unit
     def test_orchestrator_status(self, client):
         """GET /api/orchestrator/status should return reader status."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_orchestrator_status = MagicMock(
             return_value={"status": "running", "phase": "execution"}
         )
@@ -294,7 +284,7 @@ class TestOrchestratorApi:
     @pytest.mark.unit
     def test_active_agents(self, client):
         """GET /api/agents/active should return agents list."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_active_agents = MagicMock(
             return_value=[{"role": "ui_explorer", "status": "active"}]
         )
@@ -315,7 +305,7 @@ class TestNodesApi:
     @pytest.mark.unit
     def test_global_nodes(self, client):
         """GET /api/nodes/global should return all global nodes as dicts."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         node = MagicMock()
         node.to_dict = MagicMock(return_value={"path": "Test.md", "content_preview": "Hi"})
         mock_reader.get_global_nodes = MagicMock(return_value={"Test": node})
@@ -327,7 +317,7 @@ class TestNodesApi:
     @pytest.mark.unit
     def test_read_node_found(self, client):
         """GET /api/nodes/{path} should return node dict when found."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         node = MagicMock()
         node.to_dict = MagicMock(return_value={"path": "Global/Test.md", "content": "# Test"})
         mock_reader.read_node = MagicMock(return_value=node)
@@ -339,7 +329,7 @@ class TestNodesApi:
     @pytest.mark.unit
     def test_read_node_not_found(self, client):
         """GET /api/nodes/{path} should return error when node missing."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.read_node = MagicMock(return_value=None)
 
         response = c.get("/api/nodes/missing.md")
@@ -358,7 +348,7 @@ class TestTestTypesApi:
     @pytest.mark.unit
     def test_get_test_types(self, client):
         """GET /api/tests/types should list all available test types."""
-        c, _, _ = client
+        c, _ = client
         response = c.get("/api/tests/types")
         assert response.status_code == 200
         data = response.json()
@@ -371,7 +361,7 @@ class TestTestTypesApi:
     @pytest.mark.unit
     def test_run_test_unknown_type(self, client):
         """POST /api/tests/run should reject unknown test types."""
-        c, _, _ = client
+        c, _ = client
         response = c.post(
             "/api/tests/run", data={"url": "https://example.com", "test_type": "unknown"}
         )
@@ -381,7 +371,7 @@ class TestTestTypesApi:
     @pytest.mark.unit
     def test_run_test_success(self, client):
         """POST /api/tests/run should spawn agent via MCP on success."""
-        c, _, _ = client
+        c, _ = client
         with patch("command_center.main.call_mcp_tool", new_callable=AsyncMock) as mock_mcp:
             mock_mcp.return_value = {"status": "success", "result": {"agent_id": "agent-123"}}
 
@@ -397,7 +387,7 @@ class TestTestTypesApi:
     @pytest.mark.unit
     def test_run_test_mcp_error(self, client):
         """POST /api/tests/run should return 500 when MCP call fails."""
-        c, _, _ = client
+        c, _ = client
         with patch("command_center.main.call_mcp_tool", new_callable=AsyncMock) as mock_mcp:
             mock_mcp.return_value = {"status": "error", "error": "MCP down"}
 
@@ -411,7 +401,7 @@ class TestTestTypesApi:
     @pytest.mark.unit
     def test_run_test_exception(self, client):
         """POST /api/tests/run should return 500 on unexpected exception."""
-        c, _, _ = client
+        c, _ = client
         with patch("command_center.main.call_mcp_tool", new_callable=AsyncMock) as mock_mcp:
             mock_mcp.side_effect = RuntimeError("boom")
 
@@ -434,7 +424,7 @@ class TestResultsApi:
     @pytest.mark.unit
     def test_list_results(self, client, sample_run_node):
         """GET /api/results should return sorted list of test runs."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_run_nodes = MagicMock(return_value=[sample_run_node])
 
         response = c.get("/api/results")
@@ -446,7 +436,7 @@ class TestResultsApi:
     @pytest.mark.unit
     def test_list_results_skips_none_nodes(self, client):
         """GET /api/results should skip None nodes gracefully."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_run_nodes = MagicMock(return_value=[None])
 
         response = c.get("/api/results")
@@ -456,7 +446,7 @@ class TestResultsApi:
     @pytest.mark.unit
     def test_get_result_found(self, client, sample_run_node):
         """GET /api/results/{agent_id} should return full result data."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_run_nodes = MagicMock(return_value=[sample_run_node])
 
         response = c.get("/api/results/agent-20240101000000-abc123")
@@ -471,7 +461,7 @@ class TestResultsApi:
     @pytest.mark.unit
     def test_get_result_not_found(self, client):
         """GET /api/results/{agent_id} should return 404 when missing."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_run_nodes = MagicMock(return_value=[])
 
         response = c.get("/api/results/nonexistent")
@@ -489,7 +479,7 @@ class TestResultPage:
     @pytest.mark.unit
     def test_serves_result_html(self, client):
         """Should serve result.html when file exists."""
-        c, _, _ = client
+        c, _ = client
         html = "<html><body>Result</body></html>"
 
         with patch("builtins.open", mock_open(read_data=html)):
@@ -501,7 +491,7 @@ class TestResultPage:
     @pytest.mark.unit
     def test_result_page_not_found(self, client):
         """Should return 404 HTML when result.html is missing."""
-        c, _, _ = client
+        c, _ = client
 
         def raise_fnf(*args, **kwargs):
             raise FileNotFoundError()
@@ -524,7 +514,7 @@ class TestSseEndpoints:
     @pytest.mark.unit
     def test_sse_stream_returns_event_stream(self, client):
         """GET /api/sse/stream should return a StreamingResponse with event-stream media type."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_orchestrator_status = MagicMock(return_value={})
         mock_reader.get_active_agents = MagicMock(return_value=[])
         mock_reader.get_global_nodes = MagicMock(return_value={})
@@ -542,7 +532,7 @@ class TestSseEndpoints:
     @pytest.mark.unit
     def test_agents_sse_returns_event_stream(self, client):
         """GET /api/sse/agents should return a StreamingResponse with event-stream media type."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_active_agents = MagicMock(return_value=[])
 
         async def _call():
@@ -557,7 +547,7 @@ class TestSseEndpoints:
     @pytest.mark.unit
     def test_orchestrator_sse_returns_event_stream(self, client):
         """GET /api/sse/orchestrator should return a StreamingResponse with event-stream media type."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_orchestrator_status = MagicMock(return_value={})
 
         async def _call():
@@ -572,7 +562,7 @@ class TestSseEndpoints:
     @pytest.mark.unit
     def test_result_sse_returns_event_stream(self, client):
         """GET /api/sse/results/{agent_id} should return a StreamingResponse with event-stream media type."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_run_nodes = MagicMock(return_value=[])
 
         async def _call():
@@ -585,25 +575,9 @@ class TestSseEndpoints:
         assert response.media_type == "text/event-stream"
 
     @pytest.mark.unit
-    def test_chat_sse_returns_event_stream(self, client):
-        """GET /api/chat/sse should return a StreamingResponse with event-stream media type."""
-        c, _, mock_chat = client
-        mock_chat.stream_response = AsyncMock()
-        mock_chat.stream_response.__aiter__.return_value = ["chunk1", "chunk2"]
-
-        async def _call():
-            from fastapi import Request
-
-            request = MagicMock(spec=Request)
-            return await chat_sse(request, "hello")
-
-        response = asyncio.run(_call())
-        assert response.media_type == "text/event-stream"
-
-    @pytest.mark.unit
     def test_event_generator_yields_data(self, client):
         """event_generator should yield a properly formatted SSE data line."""
-        c, mock_reader, _ = client
+        c, mock_reader = client
         mock_reader.get_orchestrator_status = MagicMock(return_value={"status": "ok"})
         mock_reader.get_active_agents = MagicMock(return_value=[])
         mock_reader.get_global_nodes = MagicMock(return_value={})
@@ -619,133 +593,6 @@ class TestSseEndpoints:
         data = json.loads(item.replace("data: ", "").strip())
         assert "timestamp" in data
         assert "orchestrator" in data
-
-
-# =========================================================================
-# Chatbot endpoints
-# =========================================================================
-
-
-class TestChatEndpoints:
-    """Tests for chat history, message, and execution endpoints."""
-
-    @pytest.mark.unit
-    def test_get_chat_history(self, client):
-        """GET /api/chat/history should return messages."""
-        c, _, mock_chat = client
-        mock_chat.get_history = MagicMock(return_value=[{"role": "user", "content": "hi"}])
-
-        response = c.get("/api/chat/history?limit=10")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["count"] == 1
-        assert data["messages"][0]["role"] == "user"
-
-    @pytest.mark.unit
-    def test_get_chat_history_error(self, client):
-        """GET /api/chat/history should return 500 on error."""
-        c, _, mock_chat = client
-        mock_chat.get_history = MagicMock(side_effect=RuntimeError("db error"))
-
-        response = c.get("/api/chat/history")
-        assert response.status_code == 500
-        assert "db error" in response.json()["error"]
-
-    @pytest.mark.unit
-    def test_chat_message(self, client):
-        """POST /api/chat/message should process and return response."""
-        c, _, mock_chat = client
-        mock_chat.process_message = MagicMock(return_value={"message": "Hello!", "type": "chat"})
-
-        response = c.post("/api/chat/message", data={"message": "hi", "stream": "false"})
-        assert response.status_code == 200
-        assert response.json()["message"] == "Hello!"
-
-    @pytest.mark.unit
-    def test_chat_message_error(self, client):
-        """POST /api/chat/message should return 500 on processing error."""
-        c, _, mock_chat = client
-        mock_chat.process_message = MagicMock(side_effect=RuntimeError("llm fail"))
-
-        response = c.post("/api/chat/message", data={"message": "hi"})
-        assert response.status_code == 500
-        assert "llm fail" in response.json()["error"]
-
-    @pytest.mark.unit
-    def test_execute_chat_plan(self, client):
-        """POST /api/chat/execute should spawn agents for valid tests."""
-        c, _, mock_chat = client
-        with patch("command_center.main.call_mcp_tool", new_callable=AsyncMock) as mock_mcp:
-            mock_mcp.return_value = {"status": "success", "result": {"agent_id": "agent-999"}}
-
-            response = c.post(
-                "/api/chat/execute",
-                data={"url": "https://example.com", "tests": "homepage,navigation"},
-            )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "success"
-        assert len(data["agent_ids"]) == 2
-
-    @pytest.mark.unit
-    def test_execute_chat_plan_no_valid_tests(self, client):
-        """POST /api/chat/execute should return 400 when no valid tests given."""
-        c, _, _ = client
-        response = c.post(
-            "/api/chat/execute",
-            data={"url": "https://example.com", "tests": "invalid1,invalid2"},
-        )
-        assert response.status_code == 400
-        assert "No valid test types" in response.json()["error"]
-
-    @pytest.mark.unit
-    def test_execute_chat_plan_exception(self, client):
-        """POST /api/chat/execute should return 500 on exception."""
-        c, _, mock_chat = client
-        with patch("command_center.main.call_mcp_tool", new_callable=AsyncMock) as mock_mcp:
-            mock_mcp.side_effect = RuntimeError("mcp exploded")
-
-            response = c.post(
-                "/api/chat/execute",
-                data={"url": "https://example.com", "tests": "homepage"},
-            )
-
-        assert response.status_code == 500
-        assert "mcp exploded" in response.json()["error"]
-
-    @pytest.mark.unit
-    def test_interpret_test_results_found(self, client, sample_run_node):
-        """GET /api/chat/interpret/{agent_id} should return interpretation."""
-        c, mock_reader, mock_chat = client
-        mock_reader.get_run_nodes = MagicMock(return_value=[sample_run_node])
-        mock_chat.interpret_results = MagicMock(return_value="Looks good overall.")
-
-        response = c.get("/api/chat/interpret/agent-20240101000000-abc123")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["interpretation"] == "Looks good overall."
-        assert data["agent_id"] == "agent-20240101000000-abc123"
-
-    @pytest.mark.unit
-    def test_interpret_test_results_not_found(self, client):
-        """GET /api/chat/interpret/{agent_id} should return 404 when missing."""
-        c, mock_reader, _ = client
-        mock_reader.get_run_nodes = MagicMock(return_value=[])
-
-        response = c.get("/api/chat/interpret/missing")
-        assert response.status_code == 404
-
-    @pytest.mark.unit
-    def test_interpret_test_results_error(self, client, sample_run_node):
-        """GET /api/chat/interpret/{agent_id} should return 500 on error."""
-        c, mock_reader, mock_chat = client
-        mock_reader.get_run_nodes = MagicMock(return_value=[sample_run_node])
-        mock_chat.interpret_results = MagicMock(side_effect=RuntimeError("llm down"))
-
-        response = c.get("/api/chat/interpret/agent-20240101000000-abc123")
-        assert response.status_code == 500
-        assert "llm down" in response.json()["error"]
 
 
 # =========================================================================
@@ -879,3 +726,250 @@ class TestExtractSummary:
         summary = _extract_summary(content)
         assert summary["pass"] == 0  # abc can't be parsed
         assert summary["fail"] == 2
+
+
+# =========================================================================
+# API — Live QA Engineer
+# =========================================================================
+
+
+@pytest.fixture
+def mock_live_engineer():
+    """Return a mock LiveEngineer with predictable async responses."""
+    from command_center.engineer.events import GreetingEvent, AskQuestionEvent
+    from command_center.engineer.state_machine import Stage
+
+    mock = MagicMock()
+
+    mock_sess = MagicMock()
+    mock_sess.session_id = "test-session-123"
+    mock_sess.state.current_stage.value = "greeting"
+
+    async def _start_session(*, url=None, existing_session_id=None):
+        greeting = GreetingEvent(
+            session_id="test-session-123",
+            stage=Stage.GREETING,
+            timestamp="2024-01-01T12:00:00Z",
+            message="Hi! I'm Vectra.",
+        )
+        return mock_sess, [greeting]
+
+    mock.start_session = _start_session
+
+    async def _handle_message(*, session_id, user_message, credential=None):
+        return [
+            AskQuestionEvent(
+                session_id=session_id,
+                stage=Stage.GREETING,
+                timestamp="2024-01-01T12:00:00Z",
+                question_id="q1",
+                prompt="What URL?",
+            )
+        ]
+
+    mock.handle_message = _handle_message
+
+    async def _resume_session(session_id):
+        return [
+            GreetingEvent(
+                session_id=session_id,
+                stage=Stage.GREETING,
+                timestamp="2024-01-01T12:00:00Z",
+                message="Hi! I'm Vectra.",
+            )
+        ]
+
+    mock.resume_session = _resume_session
+
+    mock.get_metrics = MagicMock(
+        return_value={"narration_count": 0, "breaches": []}
+    )
+
+    return mock
+
+
+class TestEngineerEndpoints:
+    """Tests for /api/engineer/* endpoints."""
+
+    @pytest.mark.unit
+    def test_engineer_start_returns_session(self, client, mock_live_engineer):
+        """POST /api/engineer/start should return session_id, events, stage."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.post("/api/engineer/start", json={})
+        assert response.status_code == 200
+        data = response.json()
+        assert "session_id" in data
+        assert "events" in data
+        assert "stage" in data
+        assert data["stage"] == "greeting"
+        assert len(data["events"]) == 1
+        assert data["events"][0]["type"] == "greeting"
+
+    @pytest.mark.unit
+    def test_engineer_start_sets_cookie(self, client, mock_live_engineer):
+        """POST /api/engineer/start should set session_id cookie."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.post("/api/engineer/start", json={})
+        assert "session_id" in response.cookies
+
+    @pytest.mark.unit
+    def test_engineer_start_with_url(self, client, mock_live_engineer):
+        """POST /api/engineer/start should pass url to live_engineer."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.post("/api/engineer/start", json={"url": "https://example.com"})
+        assert response.status_code == 200
+
+    @pytest.mark.unit
+    def test_engineer_start_with_existing_session(self, client, mock_live_engineer):
+        """POST /api/engineer/start should resume when session_id provided."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.post("/api/engineer/start", json={"session_id": "test-session-123"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["session_id"] == "test-session-123"
+
+    @pytest.mark.unit
+    def test_engineer_message_returns_events(self, client, mock_live_engineer):
+        """POST /api/engineer/{sid}/message should return events list."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.post(
+                "/api/engineer/test-session-123/message",
+                json={"message": "hello"},
+            )
+        assert response.status_code == 200
+        data = response.json()
+        assert "events" in data
+        assert "stage" in data
+
+    @pytest.mark.unit
+    def test_engineer_message_with_credential(self, client, mock_live_engineer):
+        """POST /api/engineer/{sid}/message should accept credential."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.post(
+                "/api/engineer/test-session-123/message",
+                json={
+                    "message": "[credential_submitted]",
+                    "credential": {"field": "password", "value": "secret"},
+                },
+            )
+        assert response.status_code == 200
+
+    @pytest.mark.unit
+    def test_engineer_stream_returns_event_stream(self, client, mock_live_engineer):
+        """GET /api/engineer/{sid}/stream should return text/event-stream."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.get("/api/engineer/test-session-123/stream")
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers["content-type"]
+
+    @pytest.mark.unit
+    def test_engineer_stream_includes_heartbeat(self, client, mock_live_engineer):
+        """GET /api/engineer/{sid}/stream should yield heartbeat events."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.get("/api/engineer/test-session-123/stream")
+        assert response.status_code == 200
+        assert "heartbeat" in response.text
+
+    @pytest.mark.unit
+    def test_engineer_metrics_returns_metrics(self, client, mock_live_engineer):
+        """GET /api/engineer/{sid}/metrics should return metrics dict."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.get("/api/engineer/test-session-123/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        assert "narration_count" in data
+
+    @pytest.mark.unit
+    def test_engineer_resume_returns_events(self, client, mock_live_engineer):
+        """GET /api/engineer/{sid}/resume should return events and stage."""
+        c, _ = client
+        with patch("command_center.main._get_live_engineer", return_value=mock_live_engineer):
+            response = c.get("/api/engineer/test-session-123/resume")
+        assert response.status_code == 200
+        data = response.json()
+        assert "events" in data
+        assert "stage" in data
+
+    @pytest.mark.unit
+    def test_engineer_message_fallback_on_exception(self, client):
+        """POST /api/engineer/{sid}/message should return fallback on exception."""
+        c, _ = client
+        bad_engineer = MagicMock()
+        bad_engineer.handle_message = AsyncMock(side_effect=RuntimeError("boom"))
+        with patch("command_center.main._get_live_engineer", return_value=bad_engineer):
+            response = c.post(
+                "/api/engineer/test-session-123/message",
+                json={"message": "hello"},
+            )
+        assert response.status_code == 200
+        data = response.json()
+        assert "events" in data
+        assert data["events"][0]["type"] == "ask_question"
+
+    @pytest.mark.unit
+    def test_engineer_stream_session_not_found(self, client):
+        """GET /api/engineer/{sid}/stream should handle missing session gracefully."""
+        c, _ = client
+        bad_engineer = MagicMock()
+
+        async def _raise(*args, **kwargs):
+            raise KeyError("nope")
+
+        bad_engineer.resume_session = _raise
+        with patch("command_center.main._get_live_engineer", return_value=bad_engineer):
+            response = c.get("/api/engineer/missing/stream")
+        assert response.status_code == 200
+        assert "error" in response.text
+
+
+# =========================================================================
+# API — Removed chat endpoints (must return 404)
+# =========================================================================
+
+
+class TestChatEndpointsRemoved:
+    """Tests confirming old /api/chat/* endpoints return 404."""
+
+    @pytest.mark.unit
+    def test_chat_history_returns_404(self, client):
+        """GET /api/chat/history should return 404."""
+        c, _ = client
+        response = c.get("/api/chat/history")
+        assert response.status_code == 404
+
+    @pytest.mark.unit
+    def test_chat_message_returns_404(self, client):
+        """POST /api/chat/message should return 404."""
+        c, _ = client
+        response = c.post("/api/chat/message", json={"message": "hi"})
+        assert response.status_code == 404
+
+    @pytest.mark.unit
+    def test_chat_execute_returns_404(self, client):
+        """POST /api/chat/execute should return 404."""
+        c, _ = client
+        response = c.post("/api/chat/execute", json={"command": "test"})
+        assert response.status_code == 404
+
+    @pytest.mark.unit
+    def test_chat_sse_returns_404(self, client):
+        """GET /api/chat/sse should return 404."""
+        c, _ = client
+        response = c.get("/api/chat/sse")
+        assert response.status_code == 404
+
+    @pytest.mark.unit
+    def test_chat_interpret_returns_404(self, client):
+        """GET /api/chat/interpret/{agent_id} should return 404."""
+        c, _ = client
+        response = c.get("/api/chat/interpret/agent-123")
+        assert response.status_code == 404

@@ -1,0 +1,30 @@
+T19 Acceptance Criteria Verification
+=====================================
+Date: 2026-06-03
+Command: python3 -m pytest tests/unit/test_command_center_main.py -v
+Result: 59 passed, 0 failed
+
+Acceptance Criteria:
+1. [PASS] python3 -m pytest tests/unit/test_command_center_main.py -v → 100% pass
+2. [PASS] No mock_chat references; only mock_live_engineer
+3. [PASS] At least 5 tests asserting chat endpoints return 404 (5 tests in TestChatEndpointsRemoved)
+
+Test Summary:
+- Total tests: 59 (≥30 required)
+- New engineer endpoint tests: 12 (TestEngineerEndpoints)
+- New chat 404 tests: 5 (TestChatEndpointsRemoved)
+- Existing tests: 42 (unchanged, all still pass)
+
+Engineer endpoints covered:
+- POST /api/engineer/start (4 tests: returns session, sets cookie, with url, with existing session)
+- POST /api/engineer/{sid}/message (3 tests: returns events, with credential, fallback on exception)
+- GET /api/engineer/{sid}/stream (3 tests: event stream, heartbeat, session not found)
+- GET /api/engineer/{sid}/metrics (1 test: returns metrics)
+- GET /api/engineer/{sid}/resume (1 test: returns events and stage)
+
+Chat endpoints asserting 404:
+- GET /api/chat/history
+- POST /api/chat/message
+- POST /api/chat/execute
+- GET /api/chat/sse
+- GET /api/chat/interpret/{agent_id}
