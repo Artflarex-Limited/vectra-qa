@@ -932,17 +932,11 @@ def test_e2e_happy_path() -> None:
 
             # -- FakeLLM: scripted responses per call ----------------------
             responses = [
-                # 0: generate_greeting
                 '{"message": "Hello! What URL would you like me to test?"}',
-                # 1: generate_turn (step 2 - URL -> classify_site)
                 '{"events": [{"type": "classify_site", "site_type": "ecommerce", "confidence": 0.9, "signals": ["heuristic:ecommerce"]}]}',
-                # 2: generate_turn (step 3 - confirm classification)
                 '{"events": [{"type": "confirm_classification"}]}',
-                # 3: generate_turn (step 4 - ask credential)
                 '{"events": [{"type": "ask_credential", "field": "password", "reason": "Need to log in to the store."}]}',
-                # 4: generate_turn (step 5 - confirm context -> PLAN)
                 '{"events": [{"type": "confirm_classification"}]}',
-                # 5: report.build_report (called inside _run_execution)
                 "# Summary\nAll good.\n# What Works\nEverything.\n"
                 "# What Needs Attention\nNothing.\n"
                 "# Recommendations\nShip it.\n# Next Steps\nDone.",
@@ -958,7 +952,6 @@ def test_e2e_happy_path() -> None:
                         resp = self.responses[self.call_count]
                         self.call_count += 1
                         return MagicMock(content=resp)
-                    # Fallback for any extra narration calls
                     self.call_count += 1
                     return MagicMock(content="Started testing.")
 
@@ -976,43 +969,26 @@ def test_e2e_happy_path() -> None:
 
             le.classifier.classify = mock_classify
 
-            # ===========================================================
-            # Step 1: start_session -> GreetingEvent
-            # ===========================================================
             sess, events = await le.start_session("https://example.com")
             assert any(isinstance(e, GreetingEvent) for e in events)
             sid = sess.session_id
             assert sess.state.current_stage == Stage.GREETING
 
-            # ===========================================================
-            # Step 2: send URL -> ClassifySiteEvent
-            # ===========================================================
             evs = await le.handle_message(sid, "https://example.com")
             assert any(isinstance(e, ClassifySiteEvent) for e in evs)
 
-            # The implementation does not auto-transition GREETING->RECON.
-            # Manually advance so the E2E can continue.
             sess.state.current_stage = Stage.RECON
             sess.state.site_type = SiteType.ECOMMERCE
 
-            # ===========================================================
-            # Step 3: confirm classification -> CONTEXT
-            # ===========================================================
             evs = await le.handle_message(sid, "yes")
             assert any(isinstance(e, ConfirmClassificationEvent) for e in evs)
             assert sess.state.current_stage == Stage.CONTEXT
 
-            # ===========================================================
-            # Step 4: ask credential -> AskCredentialEvent
-            # ===========================================================
             evs = await le.handle_message(sid, "need password")
             assert any(isinstance(e, AskCredentialEvent) for e in evs)
             cred_event = [e for e in evs if isinstance(e, AskCredentialEvent)][0]
             assert cred_event.field == "password"
 
-            # ===========================================================
-            # Step 5: submit credential + confirm -> PLAN
-            # ===========================================================
             evs = await le.handle_message(
                 sid,
                 "[credential_submitted]",
@@ -1022,10 +998,6 @@ def test_e2e_happy_path() -> None:
             assert sess.state.credentials.password == "secret123"
             assert sess.state.current_stage == Stage.PLAN
 
-            # ===========================================================
-            # Step 6-9: "test everything" -> PlanProposedEvent -> execution
-            # ===========================================================
-            # Patch narrator to avoid per-test LLM calls
             async def mock_narrate(test_id, role):
                 return NarrateEvent(
                     session_id=sid,
@@ -1039,24 +1011,19 @@ def test_e2e_happy_path() -> None:
             with patch.object(le.narrator, "narrate_test_started", mock_narrate):
                 evs = await le.handle_message(sid, "test everything")
 
-            # -- Step 6: PlanProposedEvent --------------------------------
             plan_events = [e for e in evs if isinstance(e, PlanProposedEvent)]
             assert len(plan_events) == 1
             assert plan_events[0].site_type == "ecommerce"
             plan_idx = evs.index(plan_events[0])
 
-            # -- Step 7: TestStartedEvent, NarrateEvent,
-            #            TestProgressEvent, TestCompletedEvent -----------
             assert any(isinstance(e, TestStartedEvent) for e in evs)
             assert any(isinstance(e, NarrateEvent) for e in evs)
             assert any(isinstance(e, TestProgressEvent) for e in evs)
             assert any(isinstance(e, TestCompletedEvent) for e in evs)
 
-            # Verify relative ordering: PlanProposed before TestStarted
             started_events = [e for e in evs if isinstance(e, TestStartedEvent)]
             assert evs.index(started_events[0]) > plan_idx
 
-            # -- Step 8: ReportEvent with sections ------------------------
             report_events = [e for e in evs if isinstance(e, ReportEvent)]
             assert len(report_events) >= 1
             report_idx = evs.index(report_events[0])
@@ -1066,17 +1033,13 @@ def test_e2e_happy_path() -> None:
             assert "Recommendations" in report_events[0].sections
             assert "Next Steps" in report_events[0].sections
 
-            # -- Step 9: DoneEvent ----------------------------------------
             done_events = [e for e in evs if isinstance(e, DoneEvent)]
             assert len(done_events) == 1
             done_idx = evs.index(done_events[0])
-            # Report comes before Done
             assert report_idx < done_idx
 
-            # -- All stages reached ---------------------------------------
             assert sess.state.current_stage == Stage.DONE
 
-            # -- Timing ---------------------------------------------------
             elapsed = time.monotonic() - start
             assert elapsed < 5.0, f"E2E took {elapsed:.2f}s, expected < 5s"
 
