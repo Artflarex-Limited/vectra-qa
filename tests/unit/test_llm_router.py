@@ -22,6 +22,7 @@ class TestLLMRouterBasic:
     def test_parse_model_without_provider(self):
         """Should default to openai if no provider."""
         router = LLMRouter.__new__(LLMRouter)
+        router.clients = {}
         provider, model = router._parse_model("gpt-4")
         assert provider == "openai"
         assert model == "gpt-4"

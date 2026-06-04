@@ -1,0 +1,21 @@
+VERIFICATION: .env is loaded into the process via load_dotenv()
+
+Command: cd /home/bugra/Documents/projects/vectra-qa && python3 -c "from dotenv import load_dotenv; load_dotenv(); import os; print('OPENAI_API_KEY set:', bool(os.getenv('OPENAI_API_KEY'))); print('ANTHROPIC_API_KEY set:', bool(os.getenv('ANTHROPIC_API_KEY'))); print('MINIMAX_API_KEY set:', bool(os.getenv('MINIMAX_API_KEY'))); print('KIMI_API_KEY set:', bool(os.getenv('KIMI_API_KEY')))"
+
+Output:
+  OPENAI_API_KEY set: True
+  ANTHROPIC_API_KEY set: True
+  MINIMAX_API_KEY set: True
+  KIMI_API_KEY set: True
+
+Expected: all 4 True
+Actual:   all 4 True
+
+Result: PASS
+
+Note: load_dotenv() was added to:
+  - mcp_server/llm_router.py (top of file, after stdlib imports)
+  - command_center/main.py (top of file, after docstring)
+  - command_center/live_engineer.py (top of file, after docstring)
+
+All 4 LLM provider API keys are now visible to the process via os.environ.

@@ -24,6 +24,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
+
+load_dotenv()  # load .env into os.environ for the LLM router
+
 import structlog
 
 logger = structlog.get_logger()
@@ -333,13 +337,28 @@ class LLMRouter:
             print("Warning: google-genai package not installed. Google provider unavailable.")
 
     def _parse_model(self, model: str) -> tuple:
-        """Parse provider/model-name format."""
+        """Parse provider/model-name format.
+
+        If a provider is not specified in the model string, pick the first
+        provider that has a configured client (priority: anthropic > openai > minimax > kimi > local).
+        """
         if "/" in model:
             provider, model_name = model.split("/", 1)
             return provider, model_name
-        else:
-            # Default to openai if no provider specified
-            return "openai", model
+        # Default: pick first available provider by priority
+        for provider in ("anthropic", "openai", "minimax", "kimi", "local"):
+            if provider in self.clients:
+                # Use a sensible default model for the provider
+                default_models = {
+                    "anthropic": "claude-3-5-sonnet-20241022",
+                    "openai": "gpt-4o",
+                    "minimax": "MiniMax-Text-01",
+                    "kimi": "moonshot-v1-128k",
+                    "local": "llama3.1",
+                }
+                return provider, default_models[provider]
+        # Fallback to openai (will raise "not initialized" if env not set)
+        return "openai", model
 
     def complete(
         self,

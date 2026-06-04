@@ -1,0 +1,47 @@
+VERIFICATION: live_engineer.start_session() succeeds; LLM is actually called (not just fell through to cascade from missing env)
+
+Command:
+  cd /home/bugra/Documents/projects/vectra-qa && python3 -c "
+  from dotenv import load_dotenv
+  load_dotenv()
+  import os, tempfile
+  os.environ['OBSIDIAN_VAULT_PATH'] = tempfile.mkdtemp()
+  from command_center.live_engineer import LiveEngineer
+  import asyncio
+  le = LiveEngineer()
+  sess, events = asyncio.run(le.start_session('https://example.com'))
+  names = [e.__class__.__name__ for e in events]
+  print('Events:', names)
+  assert sess.state is not None
+  print('OK')
+  "
+
+Output (key lines):
+  2026-06-04 14:43:11 [debug    ] stage_llm_fallback
+    error="Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-xxxxxxxxx.
+    You can find your API key at https://platform.openai.com/account/api-keys.',
+    'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+    session_id=3f8b9bbc-797e-427e-bfc1-fa5f93fc2e5c stage=greeting
+  Events: ['NarrateEvent', 'GreetingEvent']
+  OK
+
+Result: PASS
+
+Why the stage_llm_fallback line IS present and that is correct:
+  - .env in this environment contains a PLACEHOLDER OpenAI key (sk-xxxxxxxxx).
+  - The fix successfully loads .env (test 001), so the OpenAI client IS initialized.
+  - The router auto-picks 'openai' as the first available provider (test 002).
+  - A real call IS made to the OpenAI API.
+  - The API rejects the placeholder key with HTTP 401.
+  - The safety-net cascade (which the task explicitly told us NOT to remove) kicks in.
+  - The session still completes successfully (sess.state is not None, GreetingEvent emitted).
+
+This is the CORRECT behavior: env loading works (no more "not initialized" failures), the
+provider is auto-selected, the LLM path is actually exercised, and the fallback safety net
+still protects against bad keys.
+
+If the user replaces the placeholder with a real OPENAI_API_KEY, the stage_llm_fallback
+line will disappear (the LLM greeting will be returned instead of the canned fallback).
+
+Regression check: all 7 LLM router unit tests pass; full unit suite is 846 passed (2 pre-existing
+browser-test failures unrelated to this change, confirmed by stashing changes and re-running).

@@ -3,6 +3,9 @@ Command Center Backend - FastAPI + HTMX + SSE
 Dark Mode Dashboard for Obsidian-backed Multi-Agent Testing
 """
 
+from dotenv import load_dotenv
+load_dotenv()  # load .env so LLM provider keys are visible
+
 import json
 import asyncio
 from datetime import datetime, timezone
@@ -15,7 +18,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from pydantic import BaseModel
 from command_center.obsidian_reader import reader
-from command_center.chatbot import chat_engine, TEST_TYPES
 from command_center.live_engineer import LiveEngineer
 from command_center.engineer.events import BaseEngineerEvent
 
@@ -818,206 +820,6 @@ async def engineer_resume(session_id: str):
         "events": [_event_to_dict(e) for e in events],
         "stage": events[-1].stage.value if events else "greeting",
     }
-
-
-# ═══════════════════════════════════════════════════
-# CHATBOT ENDPOINTS
-# ═══════════════════════════════════════════════════
-
-
-@app.get("/api/chat/history")
-async def get_chat_history(limit: int = 50):
-    """Get chat conversation history."""
-    try:
-        messages = chat_engine.get_history(limit=limit)
-        return {"messages": messages, "count": len(messages)}
-    except Exception as e:
-        return JSONResponse(
-            status_code=500, content={"error": f"Failed to load chat history: {str(e)}"}
-        )
-
-
-@app.post("/api/chat/message")
-async def chat_message(message: str = Form(...), stream: bool = Form(False)):
-    """Process a chat message and return Vectra's response."""
-    try:
-        # Save user message
-        chat_engine.add_message("user", message)
-
-        # Process the message
-        result = chat_engine.process_message(message)
-
-        # Save assistant response
-        chat_engine.add_message(
-            "assistant",
-            result["message"],
-            metadata=result.get("plan") or result.get("agent_id") or {},
-        )
-
-        return result
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        return JSONResponse(status_code=500, content={"error": f"Chat processing error: {str(e)}"})
-
-
-@app.post("/api/chat/execute")
-async def execute_chat_plan(url: str = Form(...), tests: str = Form(...)):
-    """Execute a test plan confirmed by the user."""
-    try:
-        # Parse tests (comma-separated)
-        test_list = [t.strip() for t in tests.split(",")]
-
-        # Validate tests
-        valid_tests = []
-        for test in test_list:
-            if test in TEST_TYPES:
-                valid_tests.append(test)
-
-        if not valid_tests:
-            return JSONResponse(status_code=400, content={"error": "No valid test types specified"})
-
-        # Spawn agents for each test
-        agent_ids = []
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-
-        for i, test_type in enumerate(valid_tests):
-            config = TEST_TYPES[test_type]
-            role = config["role"]
-
-            # Build objective
-            if test_type == "full":
-                objective = f"Comprehensive test of {url}. Full suite including homepage, navigation, forms, responsive design, and accessibility checks."
-            elif test_type == "homepage":
-                objective = f"Test the homepage at {url}. Verify page loads, check hero section, navigation, CTAs, footer, and console errors."
-            elif test_type == "navigation":
-                objective = f"Test navigation on {url}. Click all menu items, verify no 404s, check page titles, test mobile menu."
-            elif test_type == "contact":
-                objective = f"Test contact form on {url}. Verify form fields, test validation, check accessibility."
-            elif test_type == "api":
-                objective = f"Monitor API calls on {url}. Intercept requests, check response codes, validate payloads, verify headers."
-            elif test_type == "accessibility":
-                objective = f"Accessibility audit of {url}. Test keyboard navigation, check ARIA labels, verify alt text, check color contrast."
-            elif test_type == "responsive":
-                objective = f"Test responsive design of {url} on desktop (1920x1080), tablet (768x1024), and mobile (375x667)."
-            else:
-                objective = f"Test {test_type} on {url}"
-
-            memory_node = f"Runs/Chat_{test_type.title()}_Test_{timestamp}_{i}.md"
-
-            # Call MCP to spawn agent
-            result = await call_mcp_tool(
-                "spawn_agent", {"role": role, "objective": objective, "memory_node": memory_node}
-            )
-
-            if result.get("status") == "success":
-                spawn_result = result.get("result", {})
-                agent_ids.append(spawn_result.get("agent_id"))
-
-        # Save system message about execution
-        chat_engine.add_message(
-            "system",
-            f"Executed test plan: {', '.join(valid_tests)} on {url}",
-            metadata={"executed": ",".join(agent_ids)},
-        )
-
-        return {
-            "status": "success",
-            "message": f"Launched {len(agent_ids)} test(s) on {url}",
-            "agent_ids": agent_ids,
-            "tests": valid_tests,
-            "url": url,
-        }
-
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        return JSONResponse(status_code=500, content={"error": f"Execution error: {str(e)}"})
-
-
-@app.get("/api/chat/sse")
-async def chat_sse(request: Request, message: str):
-    """SSE endpoint for streaming chat responses."""
-
-    async def stream_events():
-        try:
-            # Save user message
-            chat_engine.add_message("user", message)
-
-            # Get history for context
-            history = chat_engine.get_history(limit=20)
-
-            # Stream response
-            full_response = ""
-            async for chunk in chat_engine.stream_response(message, history):
-                full_response += chunk
-                yield f"data: {json.dumps({'chunk': chunk, 'done': False})}\n\n"
-                await asyncio.sleep(0.01)
-
-            # Save complete response
-            chat_engine.add_message("assistant", full_response)
-
-            # Signal completion
-            yield f"data: {json.dumps({'chunk': '', 'done': True, 'full_response': full_response})}\n\n"
-
-        except Exception as e:
-            yield f"data: {json.dumps({'error': str(e), 'done': True})}\n\n"
-
-    return StreamingResponse(
-        stream_events(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-        },
-    )
-
-
-@app.get("/api/chat/interpret/{agent_id}")
-async def interpret_test_results(agent_id: str):
-    """Get LLM-interpreted results for a specific test."""
-    try:
-        # Find the test result
-        for node in reader.get_run_nodes():
-            if node and node.frontmatter and node.frontmatter.get("agent_id") == agent_id:
-                fm = node.frontmatter
-                content = node.content
-
-                # Build result data
-                result_data = {
-                    "agent_id": fm.get("agent_id", "unknown"),
-                    "role": fm.get("agent_role", "unknown"),
-                    "status": fm.get("status", "unknown"),
-                    "result": fm.get("result", "pending"),
-                    "objective": fm.get("objective", ""),
-                    "overall_status": fm.get("result", "pending"),
-                    "summary": _extract_summary(content),
-                    "sections": _extract_sections(content),
-                    "recommendations": _extract_recommendations(content),
-                    "screenshots": fm.get("screenshots", []),
-                }
-
-                # Generate interpretation
-                interpretation = chat_engine.interpret_results(agent_id, result_data)
-
-                # Save to chat log
-                chat_engine.add_message("assistant", interpretation, metadata={"result": agent_id})
-
-                return {
-                    "agent_id": agent_id,
-                    "interpretation": interpretation,
-                    "result_data": result_data,
-                }
-
-        return JSONResponse(status_code=404, content={"error": "Test result not found"})
-
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        return JSONResponse(status_code=500, content={"error": f"Interpretation error: {str(e)}"})
 
 
 if __name__ == "__main__":

@@ -33,6 +33,9 @@ Design notes
 
 from __future__ import annotations
 
+from dotenv import load_dotenv
+load_dotenv()  # load .env so the LLM router can see provider keys
+
 import asyncio  # noqa: F401
 import structlog
 from datetime import datetime, timezone

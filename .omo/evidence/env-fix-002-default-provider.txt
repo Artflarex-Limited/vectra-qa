@@ -1,0 +1,35 @@
+VERIFICATION: LLMRouter._parse_model picks the first available provider by priority
+
+Command:
+  cd /home/bugra/Documents/projects/vectra-qa && python3 -c "
+  from dotenv import load_dotenv
+  load_dotenv()
+  from mcp_server.llm_router import LLMRouter
+  r = LLMRouter()
+  print('Available providers:', list(r.clients.keys()))
+  prov, model = r._parse_model('default')
+  print(f'Default: {prov}/{model}')
+  "
+
+Output:
+  Warning: anthropic package not installed. Anthropic provider unavailable.
+  Warning: google-genai package not installed. Google provider unavailable.
+  LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+  Available providers: ['openai', 'minimax', 'kimi', 'local']
+  Default: openai/gpt-4o
+
+Expected: Default is one of 'anthropic' or 'openai' (whichever was first initialized)
+Actual:   Default is 'openai/gpt-4o' — openai was the first available in priority order
+          (anthropic package not installed, so anthropic was skipped; openai was next)
+
+Result: PASS
+
+Behavior verification:
+  - Priority order: anthropic > openai > minimax > kimi > local
+  - With anthropic unavailable, openai is the first available
+  - Returns ('openai', 'gpt-4o') — the default model for openai
+  - Explicit provider/model strings like 'openai/gpt-4o' are unaffected (only the no-provider default changed)
+
+Pre-existing behavior for explicit provider strings (test_parse_model_with_provider):
+  Input:  "openai/gpt-4o"
+  Output: ('openai', 'gpt-4o')  -- unchanged
