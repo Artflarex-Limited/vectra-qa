@@ -4,11 +4,10 @@ API key auth via X-API-Key header.
 """
 
 import os
-from typing import Optional, Set, Dict
+from typing import Optional
 from enum import Enum
 
 from fastapi import Request, HTTPException, status
-from fastapi.security import APIKeyHeader
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 

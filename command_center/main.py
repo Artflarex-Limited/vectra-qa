@@ -3,11 +3,9 @@ Command Center Backend - FastAPI + HTMX + SSE
 Dark Mode Dashboard for Obsidian-backed Multi-Agent Testing
 """
 
-from dotenv import load_dotenv
-load_dotenv()  # load .env so LLM provider keys are visible
-
 import json
 import asyncio
+import os
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, List, Optional, cast
 from fastapi import FastAPI, Request, Form, Response
@@ -21,9 +19,11 @@ from command_center.obsidian_reader import reader
 from command_center.live_engineer import LiveEngineer
 from command_center.engineer.events import BaseEngineerEvent
 
-# MCP Server Configuration
-import os
+from dotenv import load_dotenv
 
+load_dotenv()  # load .env so LLM provider keys are visible
+
+# MCP Server Configuration
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8080")
 
 app = FastAPI(title="Vectra QA Command Center")

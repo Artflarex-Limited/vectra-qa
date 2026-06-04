@@ -1839,6 +1839,7 @@
         function loadChatPanelState() {
             const isCollapsed = localStorage.getItem('chatPanelCollapsed') !== 'false';
             const panel = document.getElementById('chat-panel-container');
+            if (!panel) return;
             
             if (isCollapsed) {
                 panel.classList.add('collapsed');
@@ -2374,6 +2375,10 @@
             const sid = getCookie('session_id');
             if (!sid) return;
             
+            const overlay = document.getElementById('chat-start-overlay');
+            const messages = document.getElementById('chat-messages');
+            const inputArea = document.getElementById('chat-input-area');
+            
             try {
                 const response = await fetch(`/api/engineer/${sid}/resume`);
                 const data = await response.json();
@@ -2383,10 +2388,12 @@
                     engineerStage = data.stage || 'greeting';
                     setStageLabel(engineerStage);
                     
-                    document.getElementById('chat-start-overlay').style.display = 'none';
-                    document.getElementById('chat-messages').style.display = 'block';
-                    document.getElementById('chat-input-area').style.display = 'flex';
-                    document.getElementById('chat-messages').innerHTML = '';
+                    if (overlay) overlay.style.display = 'none';
+                    if (messages) {
+                        messages.style.display = 'block';
+                        messages.innerHTML = '';
+                    }
+                    if (inputArea) inputArea.style.display = 'flex';
                     data.events.forEach(ev => renderEngineerEvent(ev));
                     
                     openEngineerEventSource(sid);
@@ -2404,8 +2411,16 @@
         }
 
         // Load chat panel state and resume session on page load
-        loadChatPanelState();
-        resumeEngineerSession();
+        // Defer until DOM is fully parsed (chat widget lives after this script)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                loadChatPanelState();
+                resumeEngineerSession();
+            });
+        } else {
+            loadChatPanelState();
+            resumeEngineerSession();
+        }
 
         loadRecentTests();
 

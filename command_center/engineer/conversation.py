@@ -31,13 +31,11 @@ from .events import (
     TestProgressEvent,
     TestStartedEvent,
 )
-from .site_catalog import CREDENTIAL_REQUIRED, SITE_TYPES, get_default_plan
+from .site_catalog import CREDENTIAL_REQUIRED, get_default_plan
 from .state_machine import (
-    ALLOWED_TRANSITIONS,
     SessionState,
     Stage,
     assert_monotonic,
-    can_transition,
 )
 from .vocabulary import VOCABULARY_GLOSSARY, enforce_word_budget, scrub_forbidden
 

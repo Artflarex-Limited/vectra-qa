@@ -4,7 +4,6 @@ Exposes /metrics endpoint in Prometheus text format.
 """
 
 from prometheus_client import Counter, Gauge, Histogram, REGISTRY, generate_latest
-from typing import Optional
 
 # Counters
 TEST_RUNS = Counter(

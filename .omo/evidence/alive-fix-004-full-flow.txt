@@ -1,0 +1,12 @@
+EVIDENCE: alive-fix-004-full-flow
+DATE: 2026-06-04
+TEST: TestHeuristicStateAdvance (all 6 tests)
+RESULT: PASS
+
+Full plain-English flow without LLM:
+1. URL in greeting → advances to RECON
+2. Bare domain → advances to RECON with http:// prefix
+3. URL in substring → extracted and advances to RECON
+4. "test everything" in PLAN → advances to EXECUTE
+5. "yes" in PLAN → advances to EXECUTE
+6. _extract_url helper → all patterns pass

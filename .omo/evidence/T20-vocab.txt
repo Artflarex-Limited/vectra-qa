@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/bugra/Documents/projects/vectra-qa
+configfile: pyproject.toml
+plugins: postgresql-8.1.0, cov-7.1.0, asyncio-1.4.0, anyio-4.13.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 7 items
+
+tests/unit/test_live_engineer.py::test_vocabulary PASSED                 [ 14%]
+tests/unit/test_live_engineer.py::test_vocabulary_individual_forbidden_words PASSED [ 28%]
+tests/unit/test_live_engineer.py::test_vocabulary_plural_detection PASSED [ 42%]
+tests/unit/test_live_engineer.py::test_vocabulary_enforce_word_budget_edge_cases PASSED [ 57%]
+tests/unit/test_live_engineer.py::test_vocabulary_glossary_entries_are_plain_english PASSED [ 71%]
+tests/unit/test_live_engineer.py::test_scrub_returns_ordered_unique_offenders PASSED [ 85%]
+tests/unit/test_live_engineer.py::test_enforce_word_budget_preserves_trailing_punctuation PASSED [100%]
+
+============================== 7 passed in 0.12s ===============================

@@ -1,0 +1,3 @@
+PASS: 'secret123' not found in page DOM after credential submit.
+DOM length: 101403 chars
+No credential leakage detected.

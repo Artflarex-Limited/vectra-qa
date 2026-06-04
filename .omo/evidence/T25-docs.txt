@@ -1,0 +1,26 @@
+=== T25 Evidence: All three docs updated ===
+Date: 2026-06-03T18:52:01Z
+
+--- Acceptance Criteria ---
+AC1: grep -n 'Live QA Engineer' CHANGELOG.md
+10:### Live QA Engineer (BREAKING)
+12:The chatbot persona is gone. In its place: a Live QA Engineer that walks you through testing in 6 stages, asks plain-English questions, prompts for credentials only when needed, and narrates progress in real time. This is a hard break. There is no compat shim. Migrate any client that still hits the old `/api/chat/*` routes to `/api/engineer/*`.
+
+AC2: grep -n 'Live QA Engineer' README.md
+15:Vectra QA now includes a **Live QA Engineer** — a conversational persona that walks you through testing your site in 6 stages, asks plain-English questions, prompts for credentials only when needed, and narrates test progress in real time. Run it from the dashboard chat panel.
+438:│  ├── Live QA Engineer (6-stage conversational persona)     │
+
+AC3: grep -n 'Talk to Vectra' USER_GUIDE.md
+8:4. [Talk to Vectra (Quickstart)](#talk-to-vectra-quickstart)
+26:The fastest way to start is to **Talk to Vectra** — open the dashboard and have a plain-English conversation with the Live QA Engineer. See [Talk to Vectra (Quickstart)](#talk-to-vectra-quickstart) below.
+104:## Talk to Vectra (Quickstart)
+109:2. Click the **"Talk to Vectra"** tab in the chat panel.
+136:> **Note**: This is the advanced path. Most users should start with [Talk to Vectra (Quickstart)](#talk-to-vectra-quickstart) above. The scenario-file path is for CI/CD pipelines, custom test objectives, and power users who want fine-grained control over agent behaviour.
+
+AC4: grep -c 'test_scenario.py' USER_GUIDE.md (expect 0 in new quickstart)
+0
+
+--- QA Scenario: per-file match counts (each >= 1) ---
+/home/bugra/Documents/projects/vectra-qa/CHANGELOG.md:2
+/home/bugra/Documents/projects/vectra-qa/README.md:2
+/home/bugra/Documents/projects/vectra-qa/USER_GUIDE.md:1

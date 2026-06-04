@@ -1,0 +1,12 @@
+T14 QA Scenario: Start session sets cookie
+Status: PASS
+
+Command:
+  python3 -c "from fastapi.testclient import TestClient; from command_center.main import app; c=TestClient(app); r=c.post('/api/engineer/start', json={'url':'https://example.com'}); assert r.status_code==200; assert 'session_id' in r.cookies or 'session_id' in r.json(); assert r.json()['stage']=='greeting'"
+
+Output:
+  status: 200
+  cookies: {'session_id': '7c342fa0-b9e9-48dc-8795-c10b255cd56b'}
+  json: {'session_id': '7c342fa0-b9e9-48dc-8795-c10b255cd56b', 'events': [...], 'stage': 'greeting'}
+
+Result: exits 0

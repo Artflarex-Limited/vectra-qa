@@ -1,0 +1,4 @@
+Warning: anthropic package not installed. Anthropic provider unavailable.
+Warning: google-genai package not installed. Google provider unavailable.
+LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+ALL_EXISTING_ENDPOINTS_OK

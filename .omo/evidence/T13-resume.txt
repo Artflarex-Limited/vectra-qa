@@ -1,0 +1,12 @@
+Warning: anthropic package not installed. Anthropic provider unavailable.
+Warning: google-genai package not installed. Google provider unavailable.
+LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+Warning: anthropic package not installed. Anthropic provider unavailable.
+Warning: google-genai package not installed. Google provider unavailable.
+LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+2026-06-03 20:29:49 [warning  ] greeting_llm_failed            error="Provider 'openai' not initialized. Check your .env configuration." session_id=e137fe36-4d41-4dec-97d8-60540a93c618
+2026-06-03 20:29:49 [warning  ] resume_greeting_llm_failed     error="Provider 'openai' not initialized. Check your .env configuration." session_id=e137fe36-4d41-4dec-97d8-60540a93c618
+PASS: Resume returns current state
+Session ID: e137fe36-4d41-4dec-97d8-60540a93c618
+Original stage: greeting
+Resumed event types: ['GreetingEvent']

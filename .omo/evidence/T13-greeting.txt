@@ -1,0 +1,10 @@
+Warning: anthropic package not installed. Anthropic provider unavailable.
+Warning: google-genai package not installed. Google provider unavailable.
+LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+Warning: anthropic package not installed. Anthropic provider unavailable.
+Warning: google-genai package not installed. Google provider unavailable.
+LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+2026-06-03 20:29:24 [warning  ] greeting_llm_failed            error="Provider 'openai' not initialized. Check your .env configuration." session_id=ed8ada96-86ff-44b3-bbc7-6d1686bd5faf
+PASS: Start session returns greeting
+Session ID: ed8ada96-86ff-44b3-bbc7-6d1686bd5faf
+Event types: ['GreetingEvent']

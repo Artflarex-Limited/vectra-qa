@@ -16,8 +16,8 @@ Security rules (enforced in code)
 2. Credentials are **never** logged or echoed in events.
 3. ``CredentialHandler.submit_credential`` mutates memory only.
 4. ``_prepare_agent`` injects credentials via the side-channel
-   (``FeatureTesterWorker.set_pending_credentials``) only when
-   ``site_type`` is in ``CREDENTIAL_REQUIRED``.
+    (``FeatureTesterWorker.set_pending_credentials``) only when
+    ``site_type`` is in ``CREDENTIAL_REQUIRED``.
 
 Design notes
 ------------
@@ -33,10 +33,8 @@ Design notes
 
 from __future__ import annotations
 
-from dotenv import load_dotenv
-load_dotenv()  # load .env so the LLM router can see provider keys
-
 import asyncio  # noqa: F401
+import re as _re_for_url
 import structlog
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -49,7 +47,6 @@ from command_center.engineer.events import (
     AskQuestionEvent,  # noqa: F401
     BaseEngineerEvent,
     ClassifySiteEvent,
-    ConfirmClassificationEvent,
     DoneEvent,
     EngineerEvent,  # noqa: F401
     ErrorEvent,  # noqa: F401
@@ -72,9 +69,12 @@ from command_center.engineer.state_machine import (
 )
 from command_center.engineer.agents import STAGE_AGENTS
 
+from dotenv import load_dotenv
+
+load_dotenv()  # load .env so the LLM router can see provider keys
+
 logger = structlog.get_logger("engineer.live_engineer")
 
-import re as _re_for_url
 _URL_RE = _re_for_url.compile(
     r"https?://[^\s<>\"]+|www\.[^\s<>\"]+|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}\.[a-zA-Z]{2,}(?:/[^\s]*)?"
 )

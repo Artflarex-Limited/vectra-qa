@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 import io
 import logging
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 
 import pytest
@@ -22,20 +21,17 @@ from command_center.engineer.agents import (
     ReconAgent,
     ReportAgent,
     STAGE_AGENTS,
-    StageAgent,
     THINKING_MESSAGES,
 )
 from command_center.engineer.events import (
     AskCredentialEvent,
     AskQuestionEvent,
-    BaseEngineerEvent,
     GreetingEvent,
     NarrateEvent,
     PlanProposedEvent,
     ReportEvent,
-    TestCompletedEvent,
 )
-from command_center.engineer.site_catalog import SITE_TYPES, SiteType
+from command_center.engineer.site_catalog import SiteType
 from command_center.engineer.state_machine import SessionState, Stage
 
 

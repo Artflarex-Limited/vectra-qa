@@ -1,0 +1,9 @@
+EVIDENCE: alive-fix-003-test-everything
+DATE: 2026-06-04
+TEST: test_test_everything_in_plan_advances_to_execute
+RESULT: PASS
+
+"test everything" in PLAN stage with confirmed_plan set:
+- Heuristic detection triggers (starts with "test everything")
+- State advances from PLAN to EXECUTE
+- _run_execution continues through REPORT to DONE

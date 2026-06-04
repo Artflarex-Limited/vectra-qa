@@ -1,0 +1,10 @@
+Warning: anthropic package not installed. Anthropic provider unavailable.
+Warning: google-genai package not installed. Google provider unavailable.
+LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+Warning: anthropic package not installed. Anthropic provider unavailable.
+Warning: google-genai package not installed. Google provider unavailable.
+LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+2026-06-03 20:29:37 [warning  ] greeting_llm_failed            error="Provider 'openai' not initialized. Check your .env configuration." session_id=7a27d823-5df2-424c-80c4-c8f5db6fd243
+PASS: Credentials injected before agent spawn
+Agent ID: agent-001
+Credentials: {'username': 'buyer@test.com', 'password': 'pw1'}

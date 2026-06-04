@@ -1,0 +1,23 @@
+=== T24 Evidence: No chatbot references in docs ===
+Date: 2026-06-03T19:03:55Z
+
+--- QA Scenario 2: No chatbot references in docs ---
+Command: grep -rn "chatbot" docs/ --include="*.md" | grep -v "histori\|legacy"
+
+--- Case-sensitive grep ---
+Output: (empty — PASS)
+
+--- Case-insensitive grep ---
+Output: (empty — PASS)
+
+--- QA scenario exact filter ---
+Output: (empty — PASS)
+
+--- Other potential stale chat/CHAT references ---
+PASS: no ChatEngine refs
+
+--- /api/chat/ references anywhere in docs ---
+Output: (empty — PASS)
+
+--- CHATBOT_ env-var references in docs ---
+Output: (empty — PASS)

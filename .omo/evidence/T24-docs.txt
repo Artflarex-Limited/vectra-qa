@@ -1,0 +1,61 @@
+=== T24 Evidence: docs/api/chatbot.md removed, docs/api/live-engineer.md created ===
+Date: 2026-06-03T19:03:40Z
+
+--- QA Scenario 1: Old chatbot doc gone, new doc present ---
+Command: test ! -f docs/api/chatbot.md && test -f docs/api/live-engineer.md && echo "ok"
+Output: ok
+
+--- docs/api/ contents ---
+total 56
+drwxrwxr-x  2 bugra bugra  4096 Jun  3 21:53 .
+drwxrwxr-x 10 bugra bugra  4096 Jun  2 00:01 ..
+-rw-rw-r--  1 bugra bugra  7364 Jun  3 22:00 agents.md
+-rw-rw-r--  1 bugra bugra 17918 Jun  3 21:50 endpoints.md
+-rw-rw-r--  1 bugra bugra 17015 Jun  3 21:53 live-engineer.md
+
+--- live-engineer.md sections ---
+## The 6-stage flow
+## Structured event reference
+## State machine
+## Site-type → test catalog matrix
+## Credential security contract
+## Forbidden vocabulary
+## Structured event JSON schema
+## Implementation map
+
+--- endpoints.md Live QA Engineer section count ---
+11
+--- /api/engineer/* endpoints documented ---
+### Start Session
+### Send Message
+### Stream Events (SSE)
+### Get Session Metrics
+### Resume Session
+
+--- endpoints.md line count ---
+868 docs/api/endpoints.md
+--- live-engineer.md line count ---
+385 docs/api/live-engineer.md
+
+--- components.md line 21 ---
+- `command_center/main.py` — FastAPI application with all endpoints
+- `command_center/obsidian_reader.py` — Vault file watcher and parser
+- `command_center/engineer/` — Live QA Engineer modules
+- `command_center/live_engineer.py` — LiveEngineer orchestrator class
+- `command_center/static/index.html` — Dashboard UI
+- `command_center/static/result.html` — Test result page
+
+--- All 13 event types documented in live-engineer.md ---
+  GreetingEvent: 3 occurrences
+  AskQuestionEvent: 4 occurrences
+  AskCredentialEvent: 3 occurrences
+  ClassifySiteEvent: 2 occurrences
+  ConfirmClassificationEvent: 2 occurrences
+  PlanProposedEvent: 3 occurrences
+  NarrateEvent: 2 occurrences
+  TestStartedEvent: 2 occurrences
+  TestProgressEvent: 2 occurrences
+  TestCompletedEvent: 2 occurrences
+  ReportEvent: 3 occurrences
+  DoneEvent: 4 occurrences
+  ErrorEvent: 1 occurrences

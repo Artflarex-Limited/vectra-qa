@@ -10,13 +10,6 @@ import asyncio
 import os
 import tempfile
 
-# Redirect the Obsidian vault to a temp dir BEFORE importing the engineer
-# modules — EngineerSessionStore() tries to create Runs/Engineer_Sessions/
-# on instantiation and the default path (/app/obsidian_vault) is not
-# writable in this environment.
-_VAULT_TMPDIR = tempfile.mkdtemp(prefix="vectra_test_vault_engineer_")
-os.environ["OBSIDIAN_VAULT_PATH"] = _VAULT_TMPDIR
-
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -56,8 +49,15 @@ from command_center.engineer.events import (
     TestProgressEvent,
     TestStartedEvent,
 )
-from command_center.engineer.site_catalog import SITE_TYPES, SiteType
+from command_center.engineer.site_catalog import SiteType
 from command_center.engineer.state_machine import Credentials, SessionState, Stage
+
+# Redirect the Obsidian vault to a temp dir BEFORE importing LiveEngineer
+# in the test methods — EngineerSessionStore() tries to create
+# Runs/Engineer_Sessions/ on instantiation and the default path
+# (/app/obsidian_vault) is not writable in this environment.
+_VAULT_TMPDIR = tempfile.mkdtemp(prefix="vectra_test_vault_engineer_")
+os.environ["OBSIDIAN_VAULT_PATH"] = _VAULT_TMPDIR
 
 
 def test_vocabulary() -> None:
@@ -791,7 +791,6 @@ async def test_credential_never_leaks() -> None:
 
     from command_center.engineer import session as session_module
     from command_center.engineer.credentials import (
-        CredentialHandler,
         assert_no_credential_in_text,
         scrub_log_record,
     )
@@ -917,7 +916,6 @@ def test_e2e_happy_path() -> None:
         TestProgressEvent,
         TestStartedEvent,
     )
-    from command_center.engineer.narrator import Narrator
     from command_center.engineer.session import EngineerSessionStore
     from command_center.engineer.site_catalog import SiteType
     from command_center.engineer.state_machine import Stage
@@ -1477,7 +1475,8 @@ class TestHeuristicStateAdvance:
     @pytest.mark.asyncio
     async def test_url_in_greeting_advances_to_recon(self):
         """When user types a URL in GREETING stage (LLM down), state advances to RECON."""
-        import os, tempfile
+        import os
+        import tempfile
         os.environ['OBSIDIAN_VAULT_PATH'] = tempfile.mkdtemp(prefix='test_')
         from command_center.live_engineer import LiveEngineer
         from command_center.engineer.state_machine import STAGE_RANK
@@ -1519,7 +1518,7 @@ class TestHeuristicStateAdvance:
 
         le.classifier.classify = mock_classify
         sess, _ = await le.start_session()
-        events = await le.handle_message(sess.session_id, "example.com")
+        await le.handle_message(sess.session_id, "example.com")
         assert STAGE_RANK[sess.state.current_stage] >= STAGE_RANK[Stage.RECON]
         assert sess.state.url == "http://example.com"  # bare domain gets http://
 
@@ -1540,7 +1539,7 @@ class TestHeuristicStateAdvance:
 
         le.classifier.classify = mock_classify
         sess, _ = await le.start_session()
-        events = await le.handle_message(sess.session_id, "check out https://shop.example.com please")
+        await le.handle_message(sess.session_id, "check out https://shop.example.com please")
         assert STAGE_RANK[sess.state.current_stage] >= STAGE_RANK[Stage.RECON]
         assert sess.state.url == "https://shop.example.com"
 
@@ -1554,7 +1553,7 @@ class TestHeuristicStateAdvance:
         sess.state.site_type = SiteType.ECOMMERCE
         sess.state.confirmed_plan = ["homepage", "cart_flow"]
         # Inject events that simulate PLAN being proposed
-        events = await le.handle_message(sess.session_id, "test everything")
+        await le.handle_message(sess.session_id, "test everything")
         # _run_execution advances through EXECUTE/REPORT to DONE
         assert sess.state.current_stage != Stage.PLAN
 
@@ -1567,7 +1566,7 @@ class TestHeuristicStateAdvance:
         sess.state.current_stage = Stage.PLAN
         sess.state.site_type = SiteType.ECOMMERCE
         sess.state.confirmed_plan = ["homepage"]
-        events = await le.handle_message(sess.session_id, "yes")
+        await le.handle_message(sess.session_id, "yes")
         # _run_execution advances through EXECUTE/REPORT to DONE
         assert sess.state.current_stage != Stage.PLAN
 
@@ -1589,7 +1588,8 @@ class TestCascadeFlow:
     async def test_url_triggers_full_cascade_to_done(self):
         """User types a URL in GREETING → engineer cascades through all stages
         → ends in DONE state."""
-        import os, tempfile
+        import os
+        import tempfile
         os.environ['OBSIDIAN_VAULT_PATH'] = tempfile.mkdtemp(prefix='cascade_')
         from command_center.live_engineer import LiveEngineer
         from command_center.engineer.state_machine import Stage
@@ -1608,7 +1608,8 @@ class TestCascadeFlow:
     @pytest.mark.asyncio
     async def test_cascade_emits_thinking_per_stage(self):
         """Each cascaded stage should emit a thinking narration event."""
-        import os, tempfile
+        import os
+        import tempfile
         os.environ['OBSIDIAN_VAULT_PATH'] = tempfile.mkdtemp(prefix='cascade_')
         from command_center.live_engineer import LiveEngineer
         le = LiveEngineer()
@@ -1630,7 +1631,8 @@ class TestReportAgentIntegration:
     async def test_cascade_uses_new_report_fallback(self):
         """Smoke: cascade to DONE should produce a ReportEvent with the
         new plain-English offline text."""
-        import os, tempfile
+        import os
+        import tempfile
         os.environ['OBSIDIAN_VAULT_PATH'] = tempfile.mkdtemp(prefix='report_')
         from command_center.live_engineer import LiveEngineer
         from command_center.engineer.events import ReportEvent

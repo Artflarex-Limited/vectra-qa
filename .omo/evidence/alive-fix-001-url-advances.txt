@@ -1,0 +1,10 @@
+EVIDENCE: alive-fix-001-url-advances
+DATE: 2026-06-04
+TEST: test_url_in_greeting_advances_to_recon
+RESULT: PASS
+
+When user types a URL in GREETING stage with LLM down:
+- _extract_url detects https://example.com
+- State advances from GREETING to RECON
+- RECON agent runs and emits ClassifySiteEvent
+- Stage continues through CONTEXT/PLAN via existing event-loop handlers

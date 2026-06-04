@@ -514,7 +514,7 @@ with patch('httpx.AsyncClient.get', slow):
 
   **Commit**: YES | Message: `feat(engineer): add site classifier` | Files: `command_center/engineer/classifier.py`
 
-- [ ] 9. Build ConversationEngine — stage guard logic, structured event emission, JSON-mode LLM
+- [x] 9. Build ConversationEngine — stage guard logic, structured event emission, JSON-mode LLM
 
   **What to do**: Create `command_center/engineer/conversation.py`. Define `ConversationEngine` class. Method `async generate_turn(state: SessionState, user_message: str, history: List[EngineerEvent]) -> List[EngineerEvent]`. Logic: (1) determine current stage; (2) check `can_transition`; (3) build stage-specific system prompt with `vocabulary.VOCABULARY_GLOSSARY`, `enforce_word_budget`, and stage-specific rules (e.g., "in CONTEXT stage, NEVER ask for credentials unless site_type in CREDENTIAL_REQUIRED"); (4) call LLM with `response_format={"type":"json_object"}` and a strict schema-aware prompt that lists the allowed event types; (5) parse the response into `List[EngineerEvent]`; (6) for each event, run through `vocabulary.scrub_forbidden` and `vocabulary.enforce_word_budget`; (7) validate via Pydantic. Define `async generate_greeting() -> GreetingEvent`, `async generate_ask_question(state, question_id, prompt, choices=None) -> AskQuestionEvent`, etc., as helpers for stage-specific emission. Wire up the "test everything" intent: if user_message contains "test everything" or "run all", auto-derive plan from site_type and emit `PlanProposedEvent` directly (skip CONTEXT).
 
@@ -720,7 +720,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `feat(engineer): add plain-English report builder` | Files: `command_center/engineer/report.py`
 
-- [ ] 13. Build LiveEngineer class — top-level orchestrator wiring everything
+- [x] 13. Build LiveEngineer class — top-level orchestrator wiring everything
 
   **What to do**: Create `command_center/live_engineer.py`. Define `LiveEngineer` class. Constructor: instantiates `EngineerSessionStore`, `SiteClassifier`, `ConversationEngine`, `CredentialHandler`, `Narrator`, `ReportBuilder`, `MetricsRecorder`, `Orchestrator`. Method `async start_session(url: Optional[str] = None) -> Tuple[EngineerSession, List[EngineerEvent]]` (creates session, returns greeting). Method `async handle_message(session_id: str, user_message: str, credential_value: Optional[str] = None) -> List[EngineerEvent]`: (1) load session; (2) if `credential_value`, call `CredentialHandler.submit_credential`; (3) call `ConversationEngine.generate_turn`; (4) if event is `ClassifySiteEvent`, call `SiteClassifier.classify` (if not already done); (5) if stage is `EXECUTE` and plan confirmed, call `Orchestrator.execute_test_plan`; (6) for each agent, subscribe to progress and call `Narrator.narrate_event`; (7) when all agents complete, call `ReportBuilder.build_report`; (8) update session state at each transition. Method `async resume_session(session_id: str) -> List[EngineerEvent]` for page refresh (loads from vault, returns current state event). Method `get_metrics(session_id) -> dict` for the metrics endpoint. Wire `FeatureTesterWorker.set_pending_credentials` before spawning each test agent (via `Orchestrator` if possible, else direct call).
 
@@ -794,7 +794,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `feat(engineer): add LiveEngineer orchestrator class` | Files: `command_center/live_engineer.py`
 
-- [ ] 14. Add new API endpoints under `/api/engineer/*`
+- [x] 14. Add new API endpoints under `/api/engineer/*`
 
   **What to do**: In `command_center/main.py`, add 5 new endpoints (do NOT remove existing endpoints yet — T15 does that):
   1. `POST /api/engineer/start` — body `{url?: string, session_id?: string}` → returns `{session_id, events: [EngineerEvent], stage}`.
@@ -846,7 +846,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `feat(api): add /api/engineer/* endpoints` | Files: `command_center/main.py`
 
-- [ ] 15. Refactor command_center/main.py — remove /api/chat/*, keep /api/engineer/*
+- [x] 15. Refactor command_center/main.py — remove /api/chat/*, keep /api/engineer/*
 
   **What to do**: In `command_center/main.py`: (1) remove lines 687-879 (all `/api/chat/*` endpoints), the import of `chat_engine, TEST_TYPES` from `chatbot` (line 17), and the global `chat_engine` usage. (2) Add the new `live_engineer` import and singleton. (3) Verify that no other file in the repo imports `chatbot` or `chat_engine` — `grep -rn "from command_center.chatbot\|import command_center.chatbot" .` should return zero matches. (4) Verify all existing non-chat endpoints still work: `/health`, `/ready`, `/`, `/api/orchestrator/status`, `/api/agents/active`, `/api/nodes/*`, `/api/results*`, `/api/sse/*` (stream, agents, orchestrator, results/{id}). (5) The `/api/tests/run` endpoint (line 139-216) stays for now but is no longer the primary user-facing path — it's now used by the chat panel's "Run" buttons. (6) Run the full test suite and confirm no new failures.
 
@@ -894,7 +894,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `refactor(command-center): replace chat endpoints with engineer endpoints` | Files: `command_center/main.py`
 
-- [ ] 16. Frontend chat panel in index.html — consume structured events
+- [x] 16. Frontend chat panel in index.html — consume structured events
 
   **What to do**: In `command_center/static/index.html`, replace the existing chat widget (lines 1600-1959) with a new panel that: (1) on click, calls `POST /api/engineer/start` and renders the greeting event; (2) on user input, calls `POST /api/engineer/{sid}/message` and renders each event; (3) opens an `EventSource` to `/api/engineer/{sid}/stream` for live narration; (4) renders each event type with a specific UI: `AskQuestionEvent` → text input + optional choice buttons, `AskCredentialEvent` → password input (handled in T17), `ClassifySiteEvent` → "Classified as: X" badge + "Confirm or change" buttons, `ConfirmClassificationEvent` → "Does this look right?" prompt, `PlanProposedEvent` → test list + "Run" / "Edit" buttons, `NarrateEvent` → typing-style narration bubble, `TestStartedEvent` / `TestProgressEvent` / `TestCompletedEvent` → progress bar + status badge, `ReportEvent` → formatted report panel, `DoneEvent` → "All done" + restart button, `ErrorEvent` → red error banner. (5) On page load, call `GET /api/engineer/{sid}/resume` (if cookie present) and restore. (6) Style with the existing dark-mode palette (`bg-gray-900`, `text-gray-100`).
 
@@ -939,7 +939,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `feat(ui): add chat panel consuming structured events` | Files: `command_center/static/index.html`
 
-- [ ] 17. Frontend password input component — masked, never sent in chat log
+- [x] 17. Frontend password input component — masked, never sent in chat log
 
   **What to do**: In `command_center/static/index.html` chat panel, add a dedicated password input component for `AskCredentialEvent`. (1) Render an `<input type="password">` (NOT a chat bubble) with a label like "I need to log in. What's the password?" and a "Submit" button. (2) The Submit handler calls `POST /api/engineer/{sid}/message` with body `{message: '[credential_submitted]', credential: {field: 'password', value: <input>}}` — the value goes ONLY to the credential field, never to `message`. (3) Clear the input on submit. (4) Display a "Submitted. I won't show this again." confirmation. (5) The component must use `<input type="password">` (not `text`) and must not have an "unmask" toggle. (6) Add a small link: "Need a test account? See the [best practices guide]." linking to a `#best-practices` section in the same page (write 3 sentences about test accounts).
 
@@ -984,7 +984,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `feat(ui): add masked password input` | Files: `command_center/static/index.html`
 
-- [ ] 18. Rewrite tests/unit/test_command_center.py for the new engine
+- [x] 18. Rewrite tests/unit/test_command_center.py for the new engine
 
   **What to do**: Replace `tests/unit/test_command_center.py` (525 lines, currently imports `ChatEngine, ChatMessage, TEST_TYPES` from `chatbot`) with a new test file that imports `LiveEngineer, EngineerSessionStore, ConversationEngine, SiteClassifier, CredentialHandler, Narrator, ReportBuilder, Stage, SiteType, FORBIDDEN_WORDS, TEST_CATALOG, MetricsConfig, MetricsRecorder, EngineerEvent, AskCredentialEvent, ...` from the new `command_center/engineer/` and `command_center/live_engineer.py`. Cover: session lifecycle, state machine transitions, vocabulary scrub, credential scrubbing, classifier signals, narrator word budget, report builder sections, metrics recording, event schema validation, E2E happy path with a fake LLM. Aim for ≥ 60 unit tests with ≥ 90% line coverage of the new `command_center/engineer/` package.
 
@@ -1022,7 +1022,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `test(engineer): rewrite command-center tests for new engine` | Files: `tests/unit/test_command_center.py`
 
-- [ ] 19. Rewrite tests/unit/test_command_center_main.py for new endpoints
+- [x] 19. Rewrite tests/unit/test_command_center_main.py for new endpoints
 
   **What to do**: Replace `tests/unit/test_command_center_main.py` (881 lines, currently mocks `chat_engine` from `command_center.main`) with tests that mock `live_engineer` from `command_center.main`. Cover: `/api/engineer/start` sets cookie, `/api/engineer/{sid}/message` returns events, `/api/engineer/{sid}/stream` returns SSE, `/api/engineer/{sid}/resume` returns state, `/api/engineer/{sid}/metrics` returns metrics. Verify: no `/api/chat/*` endpoints exist, existing `/health`, `/`, `/api/agents/active`, `/api/orchestrator/status`, `/api/nodes/*`, `/api/results*`, `/api/sse/*` still respond. Use `TestClient(app)` with patched `live_engineer`. Aim for ≥ 30 tests.
 
@@ -1054,7 +1054,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `test(engineer): rewrite main endpoint tests` | Files: `tests/unit/test_command_center_main.py`
 
-- [ ] 20. New tests: state machine monotonicity, vocabulary scrub, credential never-leak
+- [x] 20. New tests: state machine monotonicity, vocabulary scrub, credential never-leak
 
   **What to do**: Create `tests/unit/test_live_engineer.py` with three critical test groups. (1) **State machine monotonicity** (~10 tests): cannot skip stages, cannot go backwards without "go back" keyword, can resume from any stage, terminal DONE rejects new events, ALLOWED_TRANSITIONS matrix is symmetric with `requires_credential` policy. (2) **Vocabulary scrub** (~15 tests): each forbidden word in `FORBIDDEN_WORDS` is detected by `scrub_forbidden`, glossary covers all forbidden words, `enforce_word_budget` truncates at sentence boundary, plural forms detected ("selectors", "schemas"). (3) **Credential never-leak** (5 tests, security contract): submit credential, run a full simulated test cycle, assert the credential string does NOT appear in (a) any `structlog` record, (b) any vault node content or frontmatter, (c) any agent objective, (d) the chat session's `SessionState` when re-loaded from vault, (e) the SSE event stream.
 
@@ -1101,7 +1101,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `test(engineer): add state, vocab, credential security tests` | Files: `tests/unit/test_live_engineer.py`
 
-- [ ] 21. New tests: site classifier + override, structured event schema validation
+- [x] 21. New tests: site classifier + override, structured event schema validation
 
   **What to do**: In `tests/unit/test_live_engineer.py`, add two more test groups. (1) **Site classifier** (~12 tests): Shopify-style HTML → ECOMMERCE, WordPress blog → BLOG, Vercel landing page → LANDING, dashboard with charts → SAAS_APP, login-required site → reclassify to SAAS_APP on 30x redirect, low-confidence → user override UI is shown, signal-only classification (no LLM) for each type. (2) **Event schema validation** (~14 tests): one test per event type asserting `extra="forbid"` works, one test asserting `model_validate` accepts valid JSON, one test asserting `model_validate` rejects missing required fields, one test asserting the discriminator round-trips through `model_dump_json`/`model_validate_json`.
 
@@ -1139,7 +1139,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `test(engineer): add classifier and event schema tests` | Files: `tests/unit/test_live_engineer.py`
 
-- [ ] 22. New tests: end-to-end happy path with fake LLM
+- [x] 22. New tests: end-to-end happy path with fake LLM
 
   **What to do**: In `tests/unit/test_live_engineer.py`, add an E2E happy-path test that runs through all 6 stages with a fully-faked LLM (no real API calls). Steps: (1) `start_session('https://example.com')` → assert `GreetingEvent`; (2) send "https://shop.example.com" → assert `ClassifySiteEvent` with `site_type=ECOMMERCE`; (3) confirm classification → assert `AskCredentialEvent` for password; (4) submit password → assert `AskQuestionEvent` for "what to test"; (5) reply "test everything" → assert `PlanProposedEvent`; (6) confirm plan → assert `TestStartedEvent` (mock the agent to complete in 1s); (7) wait → assert `NarrateEvent`, `TestProgressEvent`, `TestCompletedEvent`; (8) wait for all → assert `ReportEvent` with 5 sections; (9) assert `DoneEvent`. Use a fake LLM class that returns scripted responses per call. Time the run: assert total < 5 seconds.
 
@@ -1171,7 +1171,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `test(engineer): add E2E happy-path test` | Files: `tests/unit/test_live_engineer.py`
 
-- [ ] 23. Delete command_center/chatbot.py
+- [x] 23. Delete command_center/chatbot.py
 
   **What to do**: `git rm command_center/chatbot.py`. Run `grep -rn "from command_center.chatbot\|import command_center.chatbot" --include="*.py" .` to confirm no remaining references. Run full test suite to confirm nothing breaks.
 
@@ -1208,7 +1208,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `chore: remove obsolete chatbot.py` | Files: `command_center/chatbot.py` (deleted)
 
-- [ ] 24. Rewrite API docs (docs/api/endpoints.md, docs/api/chatbot.md → live-engineer.md)
+- [x] 24. Rewrite API docs (docs/api/endpoints.md, docs/api/chatbot.md → live-engineer.md)
 
   **What to do**: (1) Delete `docs/api/chatbot.md`. (2) Update `docs/api/endpoints.md` to remove all `/api/chat/*` sections (lines 499-606) and add the new `/api/engineer/*` endpoints with full request/response examples. (3) Create `docs/api/live-engineer.md` (replacing chatbot.md) with: persona description, 6-stage flow diagram, structured event reference, state machine diagram, site-type → test catalog matrix, credential security contract, "forbidden vocabulary" glossary, structured event JSON schema. (4) Update `docs/architecture/components.md` line 21 to reference `command_center/engineer/` and `command_center/live_engineer.py` instead of `command_center/chatbot.py`.
 
@@ -1248,7 +1248,7 @@ asyncio.run(run())"`
 
   **Commit**: YES | Message: `docs: replace chatbot docs with live-engineer docs` | Files: `docs/api/chatbot.md` (deleted), `docs/api/endpoints.md`, `docs/api/live-engineer.md` (new), `docs/architecture/components.md`
 
-- [ ] 25. Update CHANGELOG.md, README.md, USER_GUIDE.md for new persona
+- [x] 25. Update CHANGELOG.md, README.md, USER_GUIDE.md for new persona
 
   **What to do**: (1) `CHANGELOG.md`: add a top entry under "## [Unreleased]" titled "Live QA Engineer (BREAKING)" with a section listing: removed `/api/chat/*` endpoints, removed `command_center/chatbot.py`, added `/api/engineer/*` endpoints, added `command_center/engineer/` package, added `command_center/live_engineer.py`, updated frontend. (2) `README.md` line 17-30 ("The Death of Static E2E Testing" intro): add a paragraph: "Vectra QA now includes a Live QA Engineer — a conversational persona that walks you through testing your site in 6 stages, asks plain-English questions, prompts for credentials only when needed, and narrates test progress in real time. Run it from the dashboard chat panel." (3) `USER_GUIDE.md`: replace the "Writing Your First Test" section (lines 101-201) with a 30-line "Talk to Vectra" quickstart: open dashboard → click "Talk to Vectra" → give a URL → answer questions → watch narration → read report. Add a "What Vectra Will Ask" subsection listing the 6 stages.
 
@@ -1286,10 +1286,10 @@ asyncio.run(run())"`
 > 4 review agents run in PARALLEL. ALL must APPROVE. Present consolidated results to user and get explicit "okay" before completing.
 > **Do NOT auto-proceed after verification. Wait for user's explicit approval before marking work complete.**
 > **Never mark F1-F4 as checked before getting user's okay.** Rejection or user feedback → fix → re-run → present again → wait for okay.
-- [ ] F1. Plan Compliance Audit — oracle (verify all 25 tasks complete, acceptance criteria verifiable, all referenced files exist, no scope creep)
-- [ ] F2. Code Quality Review — unspecified-high (ruff, mypy, security review of credential flow, dead code check, public API surface)
-- [ ] F3. Real Manual QA — unspecified-high (start server, open dashboard, run E2E through all 6 stages with a fake site, capture screenshots, verify forbidden vocabulary absent, verify password never appears in vault/log)
-- [ ] F4. Scope Fidelity Check — deep (verify nothing from Must NOT Have list shipped; verify all Must Have items present; verify no agent invented test types)
+- [x] F1. Plan Compliance Audit — oracle (verify all 25 tasks complete, acceptance criteria verifiable, all referenced files exist, no scope creep)
+- [x] F2. Code Quality Review — unspecified-high (ruff, mypy, security review of credential flow, dead code check, public API surface)
+- [x] F3. Real Manual QA — unspecified-high (start server, open dashboard, run E2E through all 6 stages with a fake site, capture screenshots, verify forbidden vocabulary absent, verify password never appears in vault/log)
+- [x] F4. Scope Fidelity Check — deep (verify nothing from Must NOT Have list shipped; verify all Must Have items present; verify no agent invented test types)
 
 ## Commit Strategy
 - One commit per task; conventional commits.

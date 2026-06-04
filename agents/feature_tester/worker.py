@@ -19,6 +19,7 @@ import os
 import asyncio
 import json
 import re
+import warnings
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
@@ -41,6 +42,8 @@ logger = structlog.get_logger()
 
 VAULT_PATH = Path(os.getenv("OBSIDIAN_VAULT_PATH", "/app/obsidian_vault"))
 
+_pending_credentials: Dict[str, dict] = {}
+
 
 class FeatureTesterWorker:
     """Worker that executes specialized feature tests."""
@@ -54,6 +57,15 @@ class FeatureTesterWorker:
         self.start_time = datetime.now(timezone.utc)
         self.results: Dict[str, Any] = {}
 
+    @staticmethod
+    def set_pending_credentials(agent_id: str, username: str, password: str) -> None:
+        """Store credentials in the side-channel for the given agent_id."""
+        _pending_credentials[agent_id] = {"username": username, "password": password}
+
+    def _get_pending_credentials(self) -> Optional[dict]:
+        """Retrieve and consume pending credentials for this agent."""
+        return _pending_credentials.pop(self.agent_id, None)
+
     def _parse_url(self) -> Optional[str]:
         """Extract URL from objective."""
         # Look for URLs in the objective
@@ -63,21 +75,14 @@ class FeatureTesterWorker:
             return str(matches[0])
         return None
 
-    def _parse_credentials(self) -> Dict[str, str]:
-        """Extract credentials from objective if present."""
-        creds = {}
-        # Look for username: "value" or username: value patterns
-        username_match = re.search(
-            r'username[:\s]+["\']?([^"\'\s]+)["\']?', self.objective, re.IGNORECASE
+    def _parse_credentials(self, objective: str = None) -> Optional[dict]:
+        """Deprecated: credentials are now supplied via set_pending_credentials()."""
+        warnings.warn(
+            "_parse_credentials is deprecated. Use set_pending_credentials() and _get_pending_credentials() instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
-        password_match = re.search(
-            r'password[:\s]+["\']?([^"\'\s]+)["\']?', self.objective, re.IGNORECASE
-        )
-        if username_match:
-            creds["username"] = username_match.group(1)
-        if password_match:
-            creds["password"] = password_match.group(1)
-        return creds
+        return None
 
     def _parse_schema_path(self) -> Optional[str]:
         """Extract OpenAPI schema path from objective."""
@@ -94,7 +99,7 @@ class FeatureTesterWorker:
 
         try:
             tester = AuthFlowTester(browser)
-            creds = self._parse_credentials()
+            creds = self._get_pending_credentials() or {}
 
             # Test login if credentials provided
             if creds.get("username") and creds.get("password"):

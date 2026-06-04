@@ -24,11 +24,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime, timezone
 
+import structlog
+
 from dotenv import load_dotenv
 
 load_dotenv()  # load .env into os.environ for the LLM router
-
-import structlog
 
 logger = structlog.get_logger()
 
