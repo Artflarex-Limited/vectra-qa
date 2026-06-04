@@ -1,0 +1,11 @@
+Warning: anthropic package not installed. Anthropic provider unavailable.
+Warning: google-genai package not installed. Google provider unavailable.
+LLM cache enabled (TTL: 3600s, path: /app/obsidian_vault/.llm_cache.json)
+REPORT_OK sections=['Summary', 'What Works', 'What Needs Attention', 'Recommendations', 'Next Steps']
+CAPTURED_EVENTS=1
+  DEBUG: 1 event(s)
+    event='report_generation_fallback' kwargs={'error': 'simulated LLM outage (no API keys)'}
+ERROR_COUNT=0
+WARNING_COUNT=0
+DEBUG_COUNT=1
+PASS: report_generation_fallback logged at DEBUG; no ERROR/WARNING events
