@@ -1,0 +1,101 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/bugra/Documents/projects/vectra-qa
+configfile: pyproject.toml
+plugins: postgresql-8.1.0, cov-7.1.0, asyncio-1.4.0, anyio-4.13.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 72 items
+
+tests/unit/test_live_engineer.py::test_vocabulary PASSED                 [  1%]
+tests/unit/test_live_engineer.py::test_scrub_returns_ordered_unique_offenders PASSED [  2%]
+tests/unit/test_live_engineer.py::test_enforce_word_budget_preserves_trailing_punctuation PASSED [  4%]
+tests/unit/test_live_engineer.py::test_narrator PASSED                   [  5%]
+tests/unit/test_live_engineer.py::test_session_lifecycle PASSED          [  6%]
+tests/unit/test_live_engineer.py::test_credentials_never_written_to_vault PASSED [  8%]
+tests/unit/test_live_engineer.py::test_classifier_basic_landing PASSED   [  9%]
+tests/unit/test_live_engineer.py::test_classifier_shopify_ecommerce PASSED [ 11%]
+tests/unit/test_live_engineer.py::test_classifier_timeout PASSED         [ 12%]
+tests/unit/test_live_engineer.py::test_validate_override PASSED          [ 13%]
+tests/unit/test_live_engineer.py::test_classifier_merge_heuristic_wins PASSED [ 15%]
+tests/unit/test_live_engineer.py::test_classifier_fallback_landing PASSED [ 16%]
+tests/unit/test_live_engineer.py::test_credential_handler PASSED         [ 18%]
+tests/unit/test_live_engineer.py::test_report_builder PASSED             [ 19%]
+tests/unit/test_live_engineer.py::test_conversation_engine PASSED        [ 20%]
+tests/unit/test_live_engineer.py::test_state_machine PASSED              [ 22%]
+tests/unit/test_live_engineer.py::test_vocabulary_individual_forbidden_words PASSED [ 23%]
+tests/unit/test_live_engineer.py::test_vocabulary_plural_detection PASSED [ 25%]
+tests/unit/test_live_engineer.py::test_vocabulary_enforce_word_budget_edge_cases PASSED [ 26%]
+tests/unit/test_live_engineer.py::test_vocabulary_glossary_entries_are_plain_english PASSED [ 27%]
+tests/unit/test_live_engineer.py::test_credential_never_leaks PASSED     [ 29%]
+tests/unit/test_live_engineer.py::test_e2e_happy_path PASSED             [ 30%]
+tests/unit/test_live_engineer.py::test_live_engineer PASSED              [ 31%]
+tests/unit/test_live_engineer.py::test_classifier[shopify_html_to_ecommerce] PASSED [ 33%]
+tests/unit/test_live_engineer.py::test_classifier[wordpress_blog_to_blog] PASSED [ 34%]
+tests/unit/test_live_engineer.py::test_classifier[vercel_landing_to_landing] PASSED [ 36%]
+tests/unit/test_live_engineer.py::test_classifier[dashboard_charts_to_saas_app] PASSED [ 37%]
+tests/unit/test_live_engineer.py::test_classifier[login_required_reclassify_saas_app] PASSED [ 38%]
+tests/unit/test_live_engineer.py::test_classifier[low_confidence_triggers_override] PASSED [ 40%]
+tests/unit/test_live_engineer.py::test_classifier[signal_only_heuristic_wins] PASSED [ 41%]
+tests/unit/test_live_engineer.py::test_classifier[llm_high_confidence_wins] PASSED [ 43%]
+tests/unit/test_live_engineer.py::test_classifier[heuristic_beats_low_confidence_llm] PASSED [ 44%]
+tests/unit/test_live_engineer.py::test_classifier[fallback_to_landing] PASSED [ 45%]
+tests/unit/test_live_engineer.py::test_classifier[no_heuristic_llm_blog] PASSED [ 47%]
+tests/unit/test_live_engineer.py::test_classifier[mixed_signals_ecommerce] PASSED [ 48%]
+tests/unit/test_live_engineer.py::test_event_schema[greeting_event] PASSED [ 50%]
+tests/unit/test_live_engineer.py::test_event_schema[ask_question_event] PASSED [ 51%]
+tests/unit/test_live_engineer.py::test_event_schema[ask_credential_event] PASSED [ 52%]
+tests/unit/test_live_engineer.py::test_event_schema[classify_site_event] PASSED [ 54%]
+tests/unit/test_live_engineer.py::test_event_schema[confirm_classification_event] PASSED [ 55%]
+tests/unit/test_live_engineer.py::test_event_schema[plan_proposed_event] PASSED [ 56%]
+tests/unit/test_live_engineer.py::test_event_schema[narrate_event] PASSED [ 58%]
+tests/unit/test_live_engineer.py::test_event_schema[test_started_event] PASSED [ 59%]
+tests/unit/test_live_engineer.py::test_event_schema[test_progress_event] PASSED [ 61%]
+tests/unit/test_live_engineer.py::test_event_schema[test_completed_event] PASSED [ 62%]
+tests/unit/test_live_engineer.py::test_event_schema[report_event] PASSED [ 63%]
+tests/unit/test_live_engineer.py::test_event_schema[done_event] PASSED   [ 65%]
+tests/unit/test_live_engineer.py::test_event_schema[error_event] PASSED  [ 66%]
+tests/unit/test_live_engineer.py::test_event_schema[base_event] PASSED   [ 68%]
+tests/unit/test_live_engineer.py::test_event_schema_invalid_discriminator PASSED [ 69%]
+tests/unit/test_live_engineer.py::TestHeuristicStateAdvance::test_url_in_greeting_advances_to_recon PASSED [ 70%]
+tests/unit/test_live_engineer.py::TestHeuristicStateAdvance::test_bare_domain_advances_to_recon PASSED [ 72%]
+tests/unit/test_live_engineer.py::TestHeuristicStateAdvance::test_url_in_substring_advances PASSED [ 73%]
+tests/unit/test_live_engineer.py::TestHeuristicStateAdvance::test_test_everything_in_plan_advances_to_execute PASSED [ 75%]
+tests/unit/test_live_engineer.py::TestHeuristicStateAdvance::test_yes_in_plan_advances_to_execute PASSED [ 76%]
+tests/unit/test_live_engineer.py::TestHeuristicStateAdvance::test_extract_url_helper PASSED [ 77%]
+tests/unit/test_live_engineer.py::TestCascadeFlow::test_url_triggers_full_cascade_to_done PASSED [ 79%]
+tests/unit/test_live_engineer.py::TestCascadeFlow::test_cascade_emits_thinking_per_stage PASSED [ 80%]
+tests/unit/test_agents.py::test_greeting_agent_with_llm PASSED           [ 81%]
+tests/unit/test_agents.py::test_greeting_agent_without_llm PASSED        [ 83%]
+tests/unit/test_agents.py::test_recon_agent_classifies PASSED            [ 84%]
+tests/unit/test_agents.py::test_recon_agent_heuristic_fallback PASSED    [ 86%]
+tests/unit/test_agents.py::test_context_agent_asks_credential_for_ecom PASSED [ 87%]
+tests/unit/test_agents.py::test_context_agent_asks_question_for_landing PASSED [ 88%]
+tests/unit/test_agents.py::test_plan_agent_proposes_default PASSED       [ 90%]
+tests/unit/test_agents.py::test_plan_agent_fallback_uses_catalog PASSED  [ 91%]
+tests/unit/test_agents.py::test_execute_agent_emits_narration PASSED     [ 93%]
+tests/unit/test_agents.py::test_report_agent_fallback_offline_message PASSED [ 94%]
+tests/unit/test_agents.py::test_all_stage_agents_emit_thinking_event PASSED [ 95%]
+tests/unit/test_agents.py::test_no_warning_on_llm_failure PASSED         [ 97%]
+tests/unit/test_agents.py::test_stage_agents_dict_covers_all_stages PASSED [ 98%]
+tests/unit/test_agents.py::test_thinking_messages_cover_all_stages PASSED [100%]
+
+=============================== warnings summary ===============================
+command_center/engineer/events.py:128
+  /home/bugra/Documents/projects/vectra-qa/command_center/engineer/events.py:128: PytestCollectionWarning: cannot collect test class 'TestCompletedEvent' because it has a __init__ constructor (from: tests/unit/test_live_engineer.py)
+    class TestCompletedEvent(BaseEngineerEvent):
+
+command_center/engineer/events.py:119
+  /home/bugra/Documents/projects/vectra-qa/command_center/engineer/events.py:119: PytestCollectionWarning: cannot collect test class 'TestProgressEvent' because it has a __init__ constructor (from: tests/unit/test_live_engineer.py)
+    class TestProgressEvent(BaseEngineerEvent):
+
+command_center/engineer/events.py:111
+  /home/bugra/Documents/projects/vectra-qa/command_center/engineer/events.py:111: PytestCollectionWarning: cannot collect test class 'TestStartedEvent' because it has a __init__ constructor (from: tests/unit/test_live_engineer.py)
+    class TestStartedEvent(BaseEngineerEvent):
+
+command_center/engineer/events.py:128
+  /home/bugra/Documents/projects/vectra-qa/command_center/engineer/events.py:128: PytestCollectionWarning: cannot collect test class 'TestCompletedEvent' because it has a __init__ constructor (from: tests/unit/test_agents.py)
+    class TestCompletedEvent(BaseEngineerEvent):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 72 passed, 4 warnings in 12.12s ========================

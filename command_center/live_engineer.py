@@ -61,6 +61,7 @@ from command_center.engineer.report import ReportBuilder
 from command_center.engineer.session import EngineerSession, EngineerSessionStore
 from command_center.engineer.site_catalog import CREDENTIAL_REQUIRED, SiteType
 from command_center.engineer.state_machine import (
+    STAGE_RANK,  # noqa: F401
     SessionState,
     Stage,
     assert_monotonic,  # noqa: F401
@@ -69,6 +70,26 @@ from command_center.engineer.state_machine import (
 from command_center.engineer.agents import STAGE_AGENTS
 
 logger = structlog.get_logger("engineer.live_engineer")
+
+import re as _re_for_url
+_URL_RE = _re_for_url.compile(
+    r"https?://[^\s<>\"]+|www\.[^\s<>\"]+|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}\.[a-zA-Z]{2,}(?:/[^\s]*)?"
+)
+
+
+def _extract_url(text: str) -> Optional[str]:
+    """Extract a URL from free text. Returns the URL with http:// prepended
+    if it was a bare domain."""
+    if not text:
+        return None
+    m = _URL_RE.search(text)
+    if not m:
+        return None
+    url = m.group(0).rstrip(".,;:!?)")
+    if not url.startswith(("http://", "https://")):
+        url = "http://" + url  # bare domain; classifier will follow redirects
+    return url
+
 
 # ---------------------------------------------------------------------------
 # Static test-name -> agent-role mapping for MVP execution.
@@ -203,11 +224,18 @@ class LiveEngineer:
                     # value is intentionally omitted
                 )
 
+        # Heuristic state advance: detect plain-English intents without LLM
+        url = _extract_url(user_message)
+        if url is not None and state.current_stage == Stage.GREETING:
+            state.url = url
+            state.current_stage = Stage.RECON
+
         agent = self.agents[state.current_stage]
         thinking_event = agent._thinking_event(
             state, context={"action": "handle", "user_message": user_message}
         )
         events: List[BaseEngineerEvent] = []
+        took_fallback = False
         try:
             turn_events = await self.conversation.generate_turn(
                 state, user_message, history=None
@@ -219,13 +247,34 @@ class LiveEngineer:
                 session_id=session_id,
                 error=str(exc),
             )
+            took_fallback = True
             agent_events = await agent.run(
                 state,
                 context={"action": "handle", "user_message": user_message},
             )
             events = list(agent_events)
 
-        extra_events: List[BaseEngineerEvent] = []
+        # If we just advanced to RECON (heuristic), also run the RECON agent
+        if state.current_stage == Stage.RECON and url is not None:
+            new_events = await self.agents[Stage.RECON].run(
+                state, context={"action": "handle", "user_message": user_message, "heuristic": True}
+            )
+            events.extend(new_events)
+
+        if took_fallback and url is not None and state.current_stage in (Stage.RECON, Stage.CONTEXT):
+            for ev in events:
+                if isinstance(ev, ClassifySiteEvent):
+                    try:
+                        state.site_type = SiteType(ev.site_type)
+                    except (ValueError, KeyError):
+                        state.site_type = SiteType.LANDING
+            if state.site_type is None:
+                state.site_type = SiteType.LANDING
+            cascade_events = await self._cascade_through_stages(
+                state, start_stage=state.current_stage
+            )
+            events.extend(cascade_events)
+
         extra_events: List[BaseEngineerEvent] = []
         transitioned_to_execute = False
 
@@ -261,17 +310,23 @@ class LiveEngineer:
             if isinstance(event, PlanProposedEvent):
                 state.confirmed_plan = list(event.tests)
 
-            # ConfirmClassificationEvent -> user confirmed, advance stage
-            if isinstance(event, ConfirmClassificationEvent):
-                if state.current_stage == Stage.RECON:
-                    state.current_stage = Stage.CONTEXT
-                elif state.current_stage == Stage.CONTEXT:
-                    state.current_stage = Stage.PLAN
-
         if credential is not None and state.current_stage == Stage.CONTEXT:
             state.current_stage = Stage.PLAN
 
         # -- stage transition: PLAN -> EXECUTE (MVP shortcut) -------------
+        # Heuristic stage advance based on plain-English user intent
+        msg_lower = user_message.strip().lower()
+        advance_to_execute = any(
+            msg_lower.startswith(p) for p in ("test everything", "run all", "yes, run", "yes run", "yes")
+        )
+        if (
+            advance_to_execute
+            and state.current_stage == Stage.PLAN
+            and state.confirmed_plan is not None
+        ):
+            state.current_stage = Stage.EXECUTE
+            transitioned_to_execute = True
+
         if state.current_stage == Stage.PLAN and state.confirmed_plan is not None:
             # For MVP, treat any message in PLAN stage as confirmation.
             # T14 will implement a proper confirmation flow.
@@ -302,6 +357,36 @@ class LiveEngineer:
             all_events.extend(exec_events)
 
         return all_events
+
+    async def _cascade_through_stages(
+        self, state: SessionState, start_stage: Stage
+    ) -> List[BaseEngineerEvent]:
+        """When LLM is down, batch through every remaining stage so the user
+        sees a complete flow without typing 'yes' for each transition.
+
+        Called only from the LLM-down fallback path. The LLM-up path
+        continues to drive the flow turn-by-turn.
+        """
+        events: List[BaseEngineerEvent] = []
+        stage_order = [Stage.RECON, Stage.CONTEXT, Stage.PLAN, Stage.EXECUTE, Stage.REPORT, Stage.DONE]
+        for stage in stage_order:
+            if STAGE_RANK[stage] < STAGE_RANK[start_stage]:
+                continue
+            state.current_stage = stage
+            if stage == Stage.DONE:
+                events.append(DoneEvent(
+                    session_id=state.session_id, stage=stage,
+                    timestamp=datetime.now(timezone.utc).isoformat(),
+                ))
+                continue
+            try:
+                agent_events = await self.agents[stage].run(
+                    state, context={"action": "cascade", "tests_remaining": len(state.confirmed_plan or ["homepage"])}
+                )
+                events.extend(agent_events)
+            except Exception as exc:
+                logger.debug("cascade_stage_failed", stage=stage.value, error=str(exc))
+        return events
 
     # ------------------------------------------------------------------
     # Execution
