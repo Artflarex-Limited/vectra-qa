@@ -383,10 +383,36 @@ class LiveEngineer:
                 agent_events = await self.agents[stage].run(
                     state, context={"action": "cascade", "tests_remaining": len(state.confirmed_plan or ["homepage"])}
                 )
+                if stage == Stage.REPORT:
+                    agent_events = self._ensure_new_report_fallback(
+                        agent_events, state, {"action": "cascade"}
+                    )
                 events.extend(agent_events)
             except Exception as exc:
                 logger.debug("cascade_stage_failed", stage=stage.value, error=str(exc))
         return events
+
+    def _ensure_new_report_fallback(
+        self,
+        events: List[BaseEngineerEvent],
+        state: SessionState,
+        context: Dict[str, Any],
+    ) -> List[BaseEngineerEvent]:
+        """Replace stale 'encountered an error' ReportEvents with the new
+        ReportAgent plain-English offline fallback.
+        """
+        result: List[BaseEngineerEvent] = []
+        for ev in events:
+            if (
+                isinstance(ev, ReportEvent)
+                and "encountered an error" in ev.sections.get("Summary", "")
+            ):
+                result.extend(
+                    self.agents[Stage.REPORT]._fallback(state, context)
+                )
+            else:
+                result.append(ev)
+        return result
 
     # ------------------------------------------------------------------
     # Execution
@@ -428,12 +454,26 @@ class LiveEngineer:
                 )
 
         if plan:
-            report_event = await self.report.build_report(
-                state.session_id,
-                agent_findings=[],
-                stage="report",
+            # Use ReportAgent so the fallback uses the new plain-English offline text
+            report_events = await self.agents[Stage.REPORT].run(
+                state, context={"action": "report"}
             )
-            events.append(report_event)
+            report_events = self._ensure_new_report_fallback(
+                report_events, state, {"action": "report"}
+            )
+            report_event = None
+            for ev in report_events:
+                if isinstance(ev, ReportEvent):
+                    report_event = ev
+                    break
+            if report_event is not None:
+                events.append(report_event)
+            else:
+                # Fallback if ReportAgent returns no ReportEvent (shouldn't happen)
+                report_event = await self.report.build_report(
+                    state.session_id, agent_findings=[], stage="report"
+                )
+                events.append(report_event)
             state.current_stage = Stage.REPORT
             self.session_store.update(
                 state.session_id,

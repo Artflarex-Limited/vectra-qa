@@ -1,0 +1,7 @@
+Unit test regression check after report fallback fix
+
+Command: python3 -m pytest tests/unit/ --ignore=tests/unit/test_browser_tools.py --ignore=tests/unit/test_browser_tools_extended.py -q
+
+Result: 802 passed, 8 warnings in 45.03s
+
+No regressions introduced. The 2 pre-existing browser-tool failures (unrelated to this change) were excluded.

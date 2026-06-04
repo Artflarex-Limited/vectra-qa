@@ -1,0 +1,10 @@
+Smoke test: cascade to DONE with no LLM API key
+
+Command: unset OPENAI_API_KEY; python3 -c "..."
+
+Output:
+Summary: Tests could not be analyzed — the AI provider is offline. Please retry once OPENAI_API_KEY is configured in your .env.
+OK new report text
+
+Assertion passed: 'AI provider is offline' in summary
+Assertion passed: 'encountered an error' NOT in summary

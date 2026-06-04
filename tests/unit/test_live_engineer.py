@@ -1620,3 +1620,27 @@ class TestCascadeFlow:
         assert any("Putting together" in m for m in thinking)
         assert any("Running tests" in m for m in thinking)
         assert any("Writing up" in m for m in thinking)
+
+
+class TestReportAgentIntegration:
+    """The final ReportEvent should use the new ReportAgent fallback
+    (plain English), not the old 'encountered an error' text."""
+
+    @pytest.mark.asyncio
+    async def test_cascade_uses_new_report_fallback(self):
+        """Smoke: cascade to DONE should produce a ReportEvent with the
+        new plain-English offline text."""
+        import os, tempfile
+        os.environ['OBSIDIAN_VAULT_PATH'] = tempfile.mkdtemp(prefix='report_')
+        from command_center.live_engineer import LiveEngineer
+        from command_center.engineer.events import ReportEvent
+        le = LiveEngineer()
+        sess, _ = await le.start_session()
+        events = await le.handle_message(sess.session_id, "https://example.com")
+        report_events = [e for e in events if isinstance(e, ReportEvent)]
+        assert len(report_events) >= 1
+        summary = report_events[0].sections.get("Summary", "")
+        # Old text said "encountered an error" — must NOT contain that
+        assert "encountered an error" not in summary.lower(), f"Old text leaked: {summary}"
+        # New text should mention AI provider
+        assert "ai provider" in summary.lower() or "openai_api_key" in summary.lower(), f"Missing new text: {summary}"
